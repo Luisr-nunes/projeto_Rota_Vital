@@ -218,7 +218,7 @@ Resumo de até **8 minutos** abordando:
 | Gerente de Projetos | 2025200183 | Luis Felipe Farias Nunes | lffn@cesar.school |
 | Desenvolvedor Backend | 2025200142 | João Pedro Cavalcanti Souza | jpcs2@cesar.school |
 | Desenvolvedor Backend | 2025200197 | Luis Lucena Wanderley G. | llwg@cesar.school |
-| Desenvolvedor Backend | 2025200043 | Matheus Larré | mrl2@cesar.school |
+| Desenvolvedor Backend | 2025200043 | Matheus Rodrigues Larré | mrl2@cesar.school |
 | Engenheiro de Dados | 2025200311 | Micaella Maria Barbosa Cabral | mmbc2@cesar.school |
 | Desenvolvedor Frontend | 2025200139 | Mariana Xavier Bezerra | mxb@cesar.school |
 
