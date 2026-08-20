@@ -214,7 +214,7 @@ Resumo de até **8 minutos** abordando:
 
 | Função | Matrícula | Responsável | E-mail |
 |---|---|---|---|
-| Tech Lead | 2025200261 | Lucas Henrique Gomes | Medeiroslhgm@cesar.school |
+| Tech Lead | 2025200261 | Lucas Henrique Gomes Medeiros | lhgm@cesar.school |
 | Gerente de Projetos | 2025200183 | Luis Felipe Farias Nunes | lffn@cesar.school |
 | Desenvolvedor Backend | 2025200142 | João Pedro Cavalcanti Souza | jpcs2@cesar.school |
 | Desenvolvedor Backend | 2025200197 | Luis Lucena Wanderley G. | llwg@cesar.school |
