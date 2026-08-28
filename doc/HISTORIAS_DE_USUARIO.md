@@ -2,9 +2,8 @@
 
 ## HU01 - Cadastrar uma bolsa no estoque
 
-```diff
-+ Como atendente do hemocentro, quero registrar uma doação e cadastrar a bolsa coletada, para que ela fique disponível no estoque e possa atender futuras solicitações dos hospitais.
-```
+> [!TIP]
+> **Como** atendente do hemocentro, **quero** registrar uma doação e cadastrar a bolsa coletada, **para** que ela fique disponível no estoque e possa atender futuras solicitações dos hospitais.
 
 ### Regras de negócio
 
@@ -30,9 +29,8 @@ Cenário: Impedir cadastro de bolsa para doador inativo
 
 ## HU02 - Consultar estoque
 
-```diff
-+ Como profissional do hemocentro, quero consultar o estoque por tipo sanguíneo, hemocomponente e validade, para saber quais bolsas estão disponíveis para atendimento.
-```
+> [!TIP]
+> **Como** profissional do hemocentro, **quero** consultar o estoque por tipo sanguíneo, hemocomponente e validade, **para** saber quais bolsas estão disponíveis para atendimento.
 
 ### Regras de negócio
 
@@ -57,9 +55,8 @@ Cenário: Consultar estoque sem resultado
 
 ## HU03 - Registrar requisição hospitalar
 
-```diff
-+ Como profissional de um hospital, quero solicitar hemocomponentes informando tipo, quantidade e prioridade, para que o hemocentro possa atender à necessidade do hospital.
-```
+> [!TIP]
+> **Como** profissional de um hospital, **quero** solicitar hemocomponentes informando tipo, quantidade e prioridade, **para** que o hemocentro possa atender à necessidade do hospital.
 
 ### Regras de negócio
 
@@ -85,9 +82,8 @@ Cenário: Rejeitar quantidade inválida
 
 ## HU04 - Alocar bolsas compatíveis por FEFO
 
-```diff
-+ Como profissional do hemocentro, quero alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, para atender o hospital e reduzir perdas por validade.
-```
+> [!TIP]
+> **Como** profissional do hemocentro, **quero** alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, **para** atender o hospital e reduzir perdas por validade.
 
 ### Regras de negócio
 
@@ -114,9 +110,8 @@ Cenário: Não encontrar bolsa compatível
 
 ## HU05 - Planejar rota de entrega
 
-```diff
-+ Como operador de logística, quero calcular a rota de menor custo até o hospital solicitante, para planejar uma entrega eficiente e rastreável.
-```
+> [!TIP]
+> **Como** operador de logística, **quero** calcular a rota de menor custo até o hospital solicitante, **para** planejar uma entrega eficiente e rastreável.
 
 ### Regras de negócio
 
@@ -143,9 +138,8 @@ Cenário: Não existir caminho para o hospital
 
 ## HU06 - Confirmar entrega ao hospital
 
-```diff
-+ Como operador de logística, quero confirmar a entrega das bolsas ao hospital, para registrar que a solicitação foi atendida e manter o histórico da operação atualizado.
-```
+> [!TIP]
+> **Como** operador de logística, **quero** confirmar a entrega das bolsas ao hospital, **para** registrar que a solicitação foi atendida e manter o histórico da operação atualizado.
 
 ### Regras de negócio
 
@@ -172,9 +166,8 @@ Cenário: Impedir confirmação sem bolsas associadas
 
 ## HU07 - Visualizar painel gerencial
 
-```diff
-+ Como gestor da rede simulada, quero visualizar indicadores de estoque, requisições e transportes, para acompanhar a operação e tomar decisões com base nos dados do sistema.
-```
+> [!TIP]
+> **Como** gestor da rede simulada, **quero** visualizar indicadores de estoque, requisições e transportes, **para** acompanhar a operação e tomar decisões com base nos dados do sistema.
 
 ### Regras de negócio
 
