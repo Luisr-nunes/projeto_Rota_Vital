@@ -1,7 +1,5 @@
 # Histórias de Usuário - Rota Vital
 
-O Rota Vital é um sistema de gestão e distribuição de hemocomponentes desenvolvido com dados totalmente sintéticos. Todas as histórias abaixo consultam e/ou gravam informações no banco de dados.
-
 ## HU01 - Registrar doação
 
 **Como** atendente do hemocentro, **quero** registrar uma doação e gerar sua bolsa, **para** disponibilizar o hemocomponente no estoque com origem e validade rastreáveis.
