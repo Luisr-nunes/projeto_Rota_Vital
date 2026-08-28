@@ -2,8 +2,7 @@
 
 ## HU01 - Cadastrar uma bolsa no estoque
 
-> [!TIP]
-> **Como** atendente do hemocentro, **quero** registrar uma doação e cadastrar a bolsa coletada, **para** que ela fique disponível no estoque e possa atender futuras solicitações dos hospitais.
+> “Como atendente do hemocentro, quero registrar uma doação e cadastrar a bolsa coletada, para que ela fique disponível no estoque e possa atender futuras solicitações dos hospitais.”
 
 ### Regras de negócio
 
@@ -29,8 +28,7 @@ Cenário: Impedir cadastro de bolsa para doador inativo
 
 ## HU02 - Consultar estoque
 
-> [!TIP]
-> **Como** profissional do hemocentro, **quero** consultar o estoque por tipo sanguíneo, hemocomponente e validade, **para** saber quais bolsas estão disponíveis para atendimento.
+> “Como profissional do hemocentro, quero consultar o estoque por tipo sanguíneo, hemocomponente e validade, para saber quais bolsas estão disponíveis para atendimento.”
 
 ### Regras de negócio
 
@@ -55,8 +53,7 @@ Cenário: Consultar estoque sem resultado
 
 ## HU03 - Registrar requisição hospitalar
 
-> [!TIP]
-> **Como** profissional de um hospital, **quero** solicitar hemocomponentes informando tipo, quantidade e prioridade, **para** que o hemocentro possa atender à necessidade do hospital.
+> “Como profissional de um hospital, quero solicitar hemocomponentes informando tipo, quantidade e prioridade, para que o hemocentro possa atender à necessidade do hospital.”
 
 ### Regras de negócio
 
@@ -82,8 +79,7 @@ Cenário: Rejeitar quantidade inválida
 
 ## HU04 - Alocar bolsas compatíveis por FEFO
 
-> [!TIP]
-> **Como** profissional do hemocentro, **quero** alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, **para** atender o hospital e reduzir perdas por validade.
+> “Como profissional do hemocentro, quero alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, para atender o hospital e reduzir perdas por validade.”
 
 ### Regras de negócio
 
@@ -110,8 +106,7 @@ Cenário: Não encontrar bolsa compatível
 
 ## HU05 - Planejar rota de entrega
 
-> [!TIP]
-> **Como** operador de logística, **quero** calcular a rota de menor custo até o hospital solicitante, **para** planejar uma entrega eficiente e rastreável.
+> “Como operador de logística, quero calcular a rota de menor custo até o hospital solicitante, para planejar uma entrega eficiente e rastreável.”
 
 ### Regras de negócio
 
@@ -138,8 +133,7 @@ Cenário: Não existir caminho para o hospital
 
 ## HU06 - Confirmar entrega ao hospital
 
-> [!TIP]
-> **Como** operador de logística, **quero** confirmar a entrega das bolsas ao hospital, **para** registrar que a solicitação foi atendida e manter o histórico da operação atualizado.
+> “Como operador de logística, quero confirmar a entrega das bolsas ao hospital, para registrar que a solicitação foi atendida e manter o histórico da operação atualizado.”
 
 ### Regras de negócio
 
@@ -166,20 +160,19 @@ Cenário: Impedir confirmação sem bolsas associadas
 
 ## HU07 - Visualizar painel gerencial
 
-> [!TIP]
-> **Como** gestor da rede simulada, **quero** visualizar indicadores de estoque, requisições e transportes, **para** acompanhar a operação e tomar decisões com base nos dados do sistema.
+> “Como gestor da rede simulada, quero visualizar indicadores de estoque, requisições e entregas, para acompanhar a operação e tomar decisões com base nos dados do sistema.”
 
 ### Regras de negócio
 
 - Os indicadores devem ser calculados usando os dados sintéticos armazenados.
-- O painel deve mostrar estoque por tipo sanguíneo, requisições pendentes e alertas de transporte.
+- O painel deve mostrar estoque por tipo sanguíneo, requisições pendentes e entregas realizadas.
 - Quando não houver dados, o sistema não deve apresentar números inventados.
 
 ### Cenários BDD
 
 ```gherkin
 Cenário: Exibir indicadores do sistema
-  Dado que existem bolsas, requisições e transportes registrados
+  Dado que existem bolsas, requisições e entregas registradas
   Quando o gestor acessar o painel
   Então o sistema deve calcular e exibir os indicadores usando os dados armazenados
   E deve informar que os dados são sintéticos
