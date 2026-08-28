@@ -1,34 +1,38 @@
 # Histórias de Usuário - Rota Vital
 
-## HU01 - Registrar doação
+## HU01 - Cadastrar uma bolsa no estoque
 
-**Como** atendente do hemocentro, **quero** registrar uma doação e gerar sua bolsa, **para** disponibilizar o hemocomponente no estoque com origem e validade rastreáveis.
+```diff
++ Como atendente do hemocentro, quero registrar uma doação e cadastrar a bolsa coletada, para que ela fique disponível no estoque e possa atender futuras solicitações dos hospitais.
+```
 
 ### Regras de negócio
 
-- O doador sintético deve existir e estar ativo.
-- A doação e a bolsa devem ser salvas juntas.
-- A bolsa deve receber tipo sanguíneo, hemocomponente, validade e status `DISPONIVEL`.
+- O atendente deve informar o doador sintético, o tipo sanguíneo, o hemocomponente e a validade da bolsa.
+- O doador informado deve existir e estar ativo.
+- A doação e a bolsa devem ser salvas juntas, e a bolsa deve entrar no estoque com status `DISPONIVEL`.
 
 ### Cenários BDD
 
 ```gherkin
-Cenário: Registrar uma doação válida
+Cenário: Cadastrar uma nova bolsa no estoque
   Dado que o doador sintético está ativo
-  Quando o atendente registrar uma doação com dados válidos
+  Quando o atendente registrar a doação e os dados da bolsa coletada
   Então o sistema deve salvar a doação
-  E deve gerar uma bolsa disponível no estoque
+  E deve cadastrar a bolsa como disponível no estoque
 
-Cenário: Impedir doação de doador inativo
+Cenário: Impedir cadastro de bolsa para doador inativo
   Dado que o doador sintético está inativo
-  Quando o atendente tentar registrar uma doação
-  Então o sistema não deve salvar a doação nem gerar a bolsa
+  Quando o atendente tentar registrar a doação e cadastrar a bolsa
+  Então o sistema não deve salvar a doação nem cadastrar a bolsa
   E deve informar que o doador está inativo
 ```
 
 ## HU02 - Consultar estoque
 
-**Como** profissional do hemocentro, **quero** consultar o estoque por tipo sanguíneo, hemocomponente e validade, **para** saber quais bolsas estão disponíveis para atendimento.
+```diff
++ Como profissional do hemocentro, quero consultar o estoque por tipo sanguíneo, hemocomponente e validade, para saber quais bolsas estão disponíveis para atendimento.
+```
 
 ### Regras de negócio
 
@@ -53,7 +57,9 @@ Cenário: Consultar estoque sem resultado
 
 ## HU03 - Registrar requisição hospitalar
 
-**Como** profissional de um hospital, **quero** solicitar hemocomponentes informando tipo, quantidade e prioridade, **para** que o hemocentro possa atender à necessidade do hospital.
+```diff
++ Como profissional de um hospital, quero solicitar hemocomponentes informando tipo, quantidade e prioridade, para que o hemocentro possa atender à necessidade do hospital.
+```
 
 ### Regras de negócio
 
@@ -79,7 +85,9 @@ Cenário: Rejeitar quantidade inválida
 
 ## HU04 - Alocar bolsas compatíveis por FEFO
 
-**Como** profissional do hemocentro, **quero** alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, **para** atender o hospital e reduzir perdas por validade.
+```diff
++ Como profissional do hemocentro, quero alocar bolsas compatíveis a uma requisição, priorizando as que vencem primeiro, para atender o hospital e reduzir perdas por validade.
+```
 
 ### Regras de negócio
 
@@ -106,7 +114,9 @@ Cenário: Não encontrar bolsa compatível
 
 ## HU05 - Planejar rota de entrega
 
-**Como** operador de logística, **quero** calcular a rota de menor custo até o hospital solicitante, **para** planejar uma entrega eficiente e rastreável.
+```diff
++ Como operador de logística, quero calcular a rota de menor custo até o hospital solicitante, para planejar uma entrega eficiente e rastreável.
+```
 
 ### Regras de negócio
 
@@ -131,35 +141,40 @@ Cenário: Não existir caminho para o hospital
   E deve informar que não existe rota disponível
 ```
 
-## HU06 - Monitorar a temperatura do transporte
+## HU06 - Confirmar entrega ao hospital
 
-**Como** operador de logística, **quero** acompanhar a temperatura durante o transporte, **para** identificar desvios na cadeia fria antes da conclusão da entrega.
+```diff
++ Como operador de logística, quero confirmar a entrega das bolsas ao hospital, para registrar que a solicitação foi atendida e manter o histórico da operação atualizado.
+```
 
 ### Regras de negócio
 
-- Cada leitura sintética deve ser salva com transporte, valor, data e hora.
-- A faixa aceitável deve estar configurada para o hemocomponente transportado.
-- Uma leitura fora da faixa deve gerar um alerta.
+- A entrega só pode ser confirmada quando existir uma rota e houver bolsas associadas à requisição.
+- O sistema deve registrar a data e a hora da entrega.
+- Ao confirmar a entrega, a requisição deve mudar para `ATENDIDA` e as bolsas para `ENTREGUE`.
 
 ### Cenários BDD
 
 ```gherkin
-Cenário: Registrar temperatura dentro da faixa
-  Dado que existe um transporte ativo
-  Quando o sistema receber uma leitura dentro da faixa configurada
-  Então deve salvar a leitura no banco de dados
-  E deve manter o transporte sem alerta de temperatura
+Cenário: Confirmar uma entrega realizada
+  Dado que a requisição possui bolsas associadas e uma rota registrada
+  Quando o operador confirmar a entrega ao hospital
+  Então o sistema deve registrar a data e a hora da entrega
+  E deve alterar a requisição para atendida
+  E deve alterar as bolsas para entregues
 
-Cenário: Alertar temperatura fora da faixa
-  Dado que existe um transporte ativo
-  Quando o sistema receber uma leitura fora da faixa configurada
-  Então deve salvar a leitura
-  E deve gerar um alerta associado ao transporte
+Cenário: Impedir confirmação sem bolsas associadas
+  Dado que a requisição não possui bolsas associadas
+  Quando o operador tentar confirmar a entrega
+  Então o sistema não deve concluir a requisição
+  E deve informar que não existem bolsas para entregar
 ```
 
 ## HU07 - Visualizar painel gerencial
 
-**Como** gestor da rede simulada, **quero** visualizar indicadores de estoque, requisições e transportes, **para** acompanhar a operação e tomar decisões com base nos dados do sistema.
+```diff
++ Como gestor da rede simulada, quero visualizar indicadores de estoque, requisições e transportes, para acompanhar a operação e tomar decisões com base nos dados do sistema.
+```
 
 ### Regras de negócio
 
