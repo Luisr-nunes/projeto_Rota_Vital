@@ -1,7 +1,7 @@
 # Escopo do Grafo — Rota Vital
 
 **Task:** PI2-13 — Escopo do Grafo
-**Responsáveis:** @Matheus Larré + @~Luis
+**Responsáveis:** Matheus Larré + Luis Lucena
 **Disciplina:** Algoritmos e Estruturas de Dados (AED)
 **Sprint:** U1 — Estruturas-base (grafo de rotas, estoque e FEFO)
 
@@ -252,7 +252,7 @@ totalDisponivelPorTipo(tipoSanguineo):
 
 ## Próximos passos
 
-- Validar com @~Luis os pesos definitivos da matriz de distâncias.
+- Validar os pesos definitivos da matriz de distâncias.
 - Escrever casos de teste unitários para o Dijkstra (pelo menos 3
   cenários: rota direta mais barata, rota indireta mais barata, nó
   isolado/sem estoque).
