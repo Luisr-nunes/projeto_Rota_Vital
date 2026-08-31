@@ -121,8 +121,8 @@ cd projeto_Rota_Vital
 
 - [✅] **Histórias de Usuário** — Mínimo de 7 histórias bem definidas (formato BDD, arquivo `.md` no GitHub)
   - [Link para as Histórias](doc/historias_de_usuario.md)
-- [ ] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
-  - [Link para o Figma](https://www.figma.com/design/ysp6gg2pz24cMYD1zUOxYC/marirata-s-team-library?m=auto&t=bL7QBDZxJXV2m1Pe-6) <!-- inserir link do Figma -->
+- [✅] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
+  - [Link para o Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6)
 - [ ] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
   - [Assistir no YouTube](#) <!-- inserir link do YouTube -->
 
