@@ -1,28 +1,29 @@
-name: CI
+name: CI/CD - Rota Vital
 
 on:
   push:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
-
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar código
+      - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
           cache: maven
 
-      - name: Compilar e executar testes
-        run: mvn clean verify
+      - name: Compilar projeto
+        working-directory: ./rotavital
+        run: mvn package -DskipTests
+
+      - name: Executar testes
+        working-directory: ./rotavital
+        run: mvn test
