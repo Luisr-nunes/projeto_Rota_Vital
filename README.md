@@ -74,7 +74,7 @@ O **Rota Vital** é uma aplicação web que:
 | **Spring Boot** | Framework web (Controllers, Services, Repositories) |
 | **HTML / CSS** | Interface web (Thymeleaf ou API REST + Frontend) |
 | **Banco de Dados** | Persistência de dados (a definir pela equipe) |
-| **Jira** | Gestão e controle de atividades do projeto |
+| [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
 | **GitHub** | Versionamento de código e Issue/Bug Tracker |
 | **Figma** | Prototipação Lo-Fi |
 | **YouTube** | Screencasts das entregas |
