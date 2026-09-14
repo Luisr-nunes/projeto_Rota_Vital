@@ -125,7 +125,7 @@ cd projeto_Rota_Vital
 - [✅] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
   - [Link para o Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6)
 - [ ] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link do YouTube -->
+  - [Assistir no YouTube]((https://youtu.be/-Tl4rPthJ5Q)) <!-- inserir link do YouTube -->
 
 ---
 
