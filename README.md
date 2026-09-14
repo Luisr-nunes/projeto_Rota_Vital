@@ -78,7 +78,7 @@ O **Rota Vital** é uma aplicação web que:
 | [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
 | **GitHub** | Versionamento de código e Issue/Bug Tracker |
 | **Figma** | Prototipação Lo-Fi |
-| **YouTube** (https://youtu.be/-Tl4rPthJ5Q) | Screencasts das entregas |
+| **YouTube** | Screencasts das entregas |
 
 > **Observação:** O uso de Lombok ou qualquer outro mecanismo de geração de código boilerplate **NÃO é permitido**.
 
@@ -124,8 +124,8 @@ cd projeto_Rota_Vital
   - [Link para as Histórias](doc/historias_de_usuario.md)
 - [✅] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
   - [Link para o Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6)
-- [ ] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
-  - [Assistir no YouTube]((https://youtu.be/-Tl4rPthJ5Q)) <!-- inserir link do YouTube -->
+- [✅] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
+  - [Assistir no YouTube](https://www.youtube.com/watch?v=-Tl4rPthJ5Q) <!-- inserir link do YouTube -->
 
 ---
 
