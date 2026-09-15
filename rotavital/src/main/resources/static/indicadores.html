@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rota Vital - Indicadores</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --vermelho: #9f1239;
+            --vermelho-claro: #ffe4e6;
+            --azul: #1d4ed8;
+            --texto: #1f2937;
+            --muted: #64748b;
+            --fundo: #f8fafc;
+            --cartao: #ffffff;
+            --borda: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--fundo);
+            color: var(--texto);
+        }
+
+        header {
+            padding: 2rem max(1.25rem, calc((100% - 1100px) / 2));
+            color: white;
+            background: linear-gradient(135deg, #881337, #be123c);
+        }
+
+        header h1 { margin: 0 0 .35rem; }
+        header p { margin: 0; opacity: .9; }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem 1.25rem 3rem;
+        }
+
+        .controles {
+            display: flex;
+            gap: .75rem;
+            align-items: end;
+            margin-bottom: 1rem;
+        }
+
+        label { font-size: .9rem; font-weight: 650; }
+
+        input, button {
+            display: block;
+            margin-top: .35rem;
+            padding: .65rem .8rem;
+            border: 1px solid var(--borda);
+            border-radius: .55rem;
+            font: inherit;
+        }
+
+        button {
+            color: white;
+            border-color: var(--vermelho);
+            background: var(--vermelho);
+            cursor: pointer;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1rem;
+        }
+
+        .card, .painel {
+            background: var(--cartao);
+            border: 1px solid var(--borda);
+            border-radius: .8rem;
+            box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
+        }
+
+        .card { padding: 1.15rem; }
+        .card span { display: block; color: var(--muted); font-size: .9rem; }
+        .card strong { display: block; margin-top: .35rem; font-size: 1.7rem; }
+
+        .grade {
+            display: grid;
+            grid-template-columns: 1.25fr .75fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .painel { padding: 1.25rem; }
+        .painel h2 { margin: 0 0 1rem; font-size: 1.1rem; }
+
+        .barra-linha {
+            display: grid;
+            grid-template-columns: 72px 1fr 35px;
+            gap: .7rem;
+            align-items: center;
+            margin: .7rem 0;
+        }
+
+        .barra-fundo {
+            height: 12px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: var(--vermelho-claro);
+        }
+
+        .barra {
+            height: 100%;
+            border-radius: inherit;
+            background: var(--vermelho);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: .55rem; border-bottom: 1px solid var(--borda); text-align: left; }
+        th { color: var(--muted); font-size: .85rem; }
+
+        .metodologia {
+            margin-top: 1rem;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        #erro {
+            display: none;
+            margin-bottom: 1rem;
+            padding: .8rem;
+            border-radius: .55rem;
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        @media (max-width: 760px) {
+            .grade { grid-template-columns: 1fr; }
+            .controles { align-items: stretch; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Rota Vital</h1>
+    <p>Painel de indicadores de estoque e distribuição</p>
+</header>
+
+<main>
+    <div class="controles">
+        <label>
+            Janela para próximo vencimento (dias)
+            <input id="janela" type="number" min="0" value="5">
+        </label>
+        <button id="atualizar" type="button">Atualizar indicadores</button>
+    </div>
+
+    <div id="erro"></div>
+
+    <section class="cards" aria-label="Resumo dos indicadores">
+        <article class="card">
+            <span>Bolsas disponíveis e válidas</span>
+            <strong id="total-bolsas">-</strong>
+        </article>
+        <article class="card">
+            <span>Próximas do vencimento</span>
+            <strong id="percentual-vencimento">-</strong>
+        </article>
+        <article class="card">
+            <span>Tempo médio de atendimento</span>
+            <strong id="tempo-medio">-</strong>
+        </article>
+        <article class="card">
+            <span>Requisições atendidas</span>
+            <strong id="requisicoes-atendidas">-</strong>
+        </article>
+    </section>
+
+    <section class="grade">
+        <article class="painel">
+            <h2>Nível de estoque por tipo sanguíneo</h2>
+            <div id="grafico-estoque"></div>
+            <p class="metodologia" id="resumo-estatistico"></p>
+        </article>
+
+        <article class="painel">
+            <h2>Requisições por status</h2>
+            <table>
+                <thead>
+                <tr><th>Status</th><th>Quantidade</th></tr>
+                </thead>
+                <tbody id="tabela-status"></tbody>
+            </table>
+        </article>
+    </section>
+
+    <p class="metodologia" id="atualizado-em"></p>
+</main>
+
+<script>
+    const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+
+    function nomeLegivel(valor) {
+        return valor.replaceAll('_', ' ');
+    }
+
+    async function carregarIndicadores() {
+        const janela = document.querySelector('#janela').value;
+        const erro = document.querySelector('#erro');
+        erro.style.display = 'none';
+
+        try {
+            const resposta = await fetch(`/api/indicadores?diasProximoVencimento=${janela}`);
+            if (!resposta.ok) throw new Error(`A API respondeu com status ${resposta.status}`);
+            const dados = await resposta.json();
+
+            document.querySelector('#total-bolsas').textContent = dados.estoque.totalDisponivel;
+            document.querySelector('#percentual-vencimento').textContent =
+                `${numero.format(dados.vencimento.percentualProximoDoVencimento)}%`;
+            document.querySelector('#tempo-medio').textContent =
+                dados.requisicoes.tempoMedioAtendimentoEmMinutos === null
+                    ? 'Sem dados'
+                    : `${numero.format(dados.requisicoes.tempoMedioAtendimentoEmMinutos)} min`;
+            document.querySelector('#requisicoes-atendidas').textContent =
+                `${dados.requisicoes.atendidas} de ${dados.requisicoes.total}`;
+
+            const estoque = Object.entries(dados.estoque.porTipoSanguineo);
+            const maiorQuantidade = Math.max(1, ...estoque.map(([, quantidade]) => quantidade));
+            document.querySelector('#grafico-estoque').innerHTML = estoque.map(([tipo, quantidade]) => `
+                <div class="barra-linha">
+                    <span>${nomeLegivel(tipo)}</span>
+                    <div class="barra-fundo" aria-label="${tipo}: ${quantidade} bolsas">
+                        <div class="barra" style="width: ${(quantidade / maiorQuantidade) * 100}%"></div>
+                    </div>
+                    <strong>${quantidade}</strong>
+                </div>
+            `).join('');
+
+            document.querySelector('#resumo-estatistico').textContent =
+                `Média: ${numero.format(dados.estoque.mediaPorTipo)} | ` +
+                `Mediana: ${numero.format(dados.estoque.medianaPorTipo)} | ` +
+                `Mínimo: ${dados.estoque.minimoPorTipo} | Máximo: ${dados.estoque.maximoPorTipo} | ` +
+                `Desvio-padrão: ${numero.format(dados.estoque.desvioPadraoPorTipo)}`;
+
+            document.querySelector('#tabela-status').innerHTML =
+                Object.entries(dados.requisicoes.porStatus)
+                    .map(([status, quantidade]) =>
+                        `<tr><td>${nomeLegivel(status)}</td><td>${quantidade}</td></tr>`)
+                    .join('');
+
+            document.querySelector('#atualizado-em').textContent =
+                `Indicadores gerados em ${new Date(dados.geradoEm).toLocaleString('pt-BR')}. ` +
+                'Os dados exibidos no ambiente de desenvolvimento são sintéticos.';
+        } catch (falha) {
+            erro.textContent = `Não foi possível carregar os indicadores: ${falha.message}`;
+            erro.style.display = 'block';
+        }
+    }
+
+    document.querySelector('#atualizar').addEventListener('click', carregarIndicadores);
+    carregarIndicadores();
+</script>
+</body>
+</html>
