@@ -19,11 +19,27 @@ public class GlobalExceptionHandler {
             RotaIndisponivelException.class
     })
     public ResponseEntity<Map<String, Object>> handleRegraNegocio(RuntimeException ex) {
+        return corpoErro(HttpStatus.UNPROCESSABLE_ENTITY, ex);
+    }
+
+    // IllegalArgumentException é usada nos controllers/services para "recurso não encontrado".
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleNaoEncontrado(IllegalArgumentException ex) {
+        return corpoErro(HttpStatus.NOT_FOUND, ex);
+    }
+
+    // IllegalStateException é usada para requisições em um estado que não permite a operação.
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleEstadoInvalido(IllegalStateException ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    private ResponseEntity<Map<String, Object>> corpoErro(HttpStatus status, RuntimeException ex) {
         Map<String, Object> body = Map.of(
                 "timestamp", LocalDateTime.now().toString(),
                 "erro", ex.getClass().getSimpleName(),
                 "mensagem", ex.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+        return ResponseEntity.status(status).body(body);
     }
 }
