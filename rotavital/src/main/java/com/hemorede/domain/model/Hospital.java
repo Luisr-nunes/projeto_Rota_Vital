@@ -31,6 +31,16 @@ public class Hospital {
 
     private Double longitude;
 
+     /**
+     * Identificador do nó correspondente a este hospital no grafo de rotas
+     * sintético definido em {@code doc/escopo-grafo.md} e construído por
+     * {@code DadosSinteticos.criarGrafoRotaVital()} (ex.: "N1".."N5").
+     * Usado pelo {@code RoteirizacaoService} para calcular a rota mínima
+     * (Dijkstra) do Hemocentro até este hospital.
+     */
+    @Column(name = "codigo_no", unique = true)
+    private String codigoNo;
+
     @Builder.Default
     @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL)
     private List<Estoque> estoques = new ArrayList<>();

@@ -15,7 +15,8 @@ public class GlobalExceptionHandler {
             IncompatibilidadeSanguineaException.class,
             EstoqueInsuficienteException.class,
             DoacaoForaDoIntervaloException.class,
-            VeiculoIncompativelException.class
+            VeiculoIncompativelException.class,
+            RotaIndisponivelException.class
     })
     public ResponseEntity<Map<String, Object>> handleRegraNegocio(RuntimeException ex) {
         Map<String, Object> body = Map.of(

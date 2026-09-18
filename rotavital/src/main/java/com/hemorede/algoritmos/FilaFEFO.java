@@ -91,6 +91,16 @@ public class FilaFEFO {
                 .toList();
     }
 
+     /**
+     * Consulta a bolsa com a data de validade mais próxima do vencimento
+     * (topo do min-heap), sem removê-la da fila.
+     *
+     * @return Bolsa no topo da fila, ou {@code null} se a fila estiver vazia.
+     */
+    public Bolsa peek() {
+        return fila.peek();
+    }
+
     /**
      * Verifica se a fila FEFO está vazia.
      *

@@ -1,6 +1,10 @@
 package com.hemorede.service;
 
+import com.hemorede.algoritmos.FilaFEFO;
+import com.hemorede.algoritmos.IndiceEstoque;
+import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.StatusBolsa;
+import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.exception.EstoqueInsuficienteException;
@@ -66,5 +70,45 @@ public class AlocacaoService {
                     "Estoque insuficiente para o item de requisição " + item.getId()
                             + ". Necessário: " + necessario + ", alocado: " + alocadas);
         }
+    }
+
+     /**
+     * Monta o {@link IndiceEstoque} em memória com todas as bolsas
+     * disponíveis de um hemocomponente (qualquer tipo sanguíneo), prontas
+     * para consulta O(1) por tipo e alocação FEFO O(log n) dentro de cada tipo.
+     */
+    private IndiceEstoque construirIndiceEstoque(HemoComponente hemoComponente) {
+        IndiceEstoque indice = new IndiceEstoque();
+        bolsaRepository.findByHemoComponenteAndStatus(hemoComponente, StatusBolsa.DISPONIVEL)
+                .forEach(indice::adicionarBolsa);
+        return indice;
+    }
+
+    /**
+     * Entre todos os tipos sanguíneos doadores compatíveis, encontra e aloca
+     * a bolsa com a validade mais próxima do vencimento (FEFO cruzado).
+     * <p>
+     * Usa {@link FilaFEFO#peek()} para comparar o topo de cada fila
+     * compatível sem removê-lo, e só efetiva a remoção ({@link IndiceEstoque#alocarBolsa})
+     * na fila vencedora.
+     * </p>
+     *
+     * @return A bolsa alocada, ou {@code null} se nenhum tipo compatível tiver estoque.
+     */
+    private Bolsa alocarProximaCompativel(IndiceEstoque indice, List<TipoSanguineo> tiposCompativeis) {
+        TipoSanguineo melhorTipo = null;
+        Bolsa melhorBolsa = null;
+
+        for (TipoSanguineo doador : tiposCompativeis) {
+            FilaFEFO fila = indice.consultarEstoque(doador);
+            Bolsa topo = fila.peek();
+            if (topo != null && (melhorBolsa == null
+                    || topo.getDataValidade().isBefore(melhorBolsa.getDataValidade()))) {
+                melhorBolsa = topo;
+                melhorTipo = doador;
+            }
+        }
+
+        return melhorTipo != null ? indice.alocarBolsa(melhorTipo) : null;
     }
 }
