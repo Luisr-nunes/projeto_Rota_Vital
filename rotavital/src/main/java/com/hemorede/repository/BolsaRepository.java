@@ -21,4 +21,11 @@ public interface BolsaRepository extends JpaRepository<Bolsa, Long> {
 
     long countByEstoqueIdAndTipoSanguineoAndHemoComponenteAndStatus(
             Long estoqueId, TipoSanguineo tipoSanguineo, HemoComponente hemoComponente, StatusBolsa status);
+
+    // Usada pelo AlocacaoService para montar o índice de estoque em memória por hemocomponente.
+    List<Bolsa> findByHemoComponenteAndStatus(HemoComponente hemoComponente, StatusBolsa status);
+
+    // Mesma ideia, mas restrita a um estoque específico (EstoqueService).
+    List<Bolsa> findByEstoqueIdAndHemoComponenteAndStatus(
+            Long estoqueId, HemoComponente hemoComponente, StatusBolsa status);
 }

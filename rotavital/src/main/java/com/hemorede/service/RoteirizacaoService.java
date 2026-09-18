@@ -1,10 +1,14 @@
 package com.hemorede.service;
 
+import com.hemorede.algoritmos.DadosSinteticos;
+import com.hemorede.algoritmos.GrafoRotas;
 import com.hemorede.domain.enums.Prioridade;
 import com.hemorede.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.StatusVeiculo;
+import com.hemorede.domain.model.Hospital;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.domain.model.Veiculo;
+import com.hemorede.exception.RotaIndisponivelException;
 import com.hemorede.exception.VeiculoIncompativelException;
 import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.repository.VeiculoRepository;
@@ -24,6 +28,7 @@ public class RoteirizacaoService {
 
     private final RequisicaoRepository requisicaoRepository;
     private final VeiculoRepository veiculoRepository;
+    private final GrafoRotas grafoRotas;
 
     /**
      * Retorna as requisições pendentes de roteirização, com as urgentes
@@ -60,5 +65,29 @@ public class RoteirizacaoService {
 
     public boolean isUrgente(Requisicao requisicao) {
         return requisicao.getPrioridade() == Prioridade.URGENTE;
+    }
+
+    /**
+     * HU05: calcula a rota de menor custo do Hemocentro até o hospital
+     * solicitante da requisição, via Dijkstra ({@link GrafoRotas}).
+     */
+    public GrafoRotas.ResultadoRota calcularRotaMinima(Requisicao requisicao) {
+        Hospital hospital = requisicao.getHospitalSolicitante();
+        if (hospital == null || hospital.getCodigoNo() == null || hospital.getCodigoNo().isBlank()) {
+            throw new RotaIndisponivelException(
+                    "Hospital solicitante da requisição " + requisicao.getId()
+                            + " não possui nó associado no grafo de rotas.");
+        }
+
+        GrafoRotas.ResultadoRota resultado = grafoRotas.calcularMenorRota(
+                DadosSinteticos.N0_HEMOCENTRO, hospital.getCodigoNo());
+
+        if (resultado.caminho().isEmpty()) {
+            throw new RotaIndisponivelException(
+                    "Não há rota alcançável do Hemocentro até " + hospital.getNome()
+                            + " (nó " + hospital.getCodigoNo() + ").");
+        }
+
+        return resultado;
     }
 }

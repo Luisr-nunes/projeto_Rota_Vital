@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Regra de negócio 7: estoque mínimo de segurança.
  * Verifica se a quantidade disponível de um tipo sanguíneo/componente
