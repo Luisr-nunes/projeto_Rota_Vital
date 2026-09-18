@@ -28,4 +28,16 @@ public enum TipoSanguineo {
     public static boolean compativel(TipoSanguineo doador, TipoSanguineo receptor) {
         return DOADORES_COMPATIVEIS.get(receptor).contains(doador);
     }
+    
+    /**
+     * Lista, em ordem, os tipos sanguíneos doadores compatíveis com um
+     * receptor (do mais específico ao mais universal), conforme a matriz
+     * ABO/Rh. Usada pela alocação de estoque para buscar bolsas
+     * compatíveis além do tipo exato do receptor (ex.: um paciente O+
+     * também pode receber bolsas O-).
+     */
+    public static List<TipoSanguineo> doadoresCompativeis(TipoSanguineo receptor) {
+        return DOADORES_COMPATIVEIS.get(receptor);
+    }
+
 }

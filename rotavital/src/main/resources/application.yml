@@ -21,3 +21,5 @@ hemorede:
     intervalo-minimo-dias-mulher: 90
   estoque:
     limite-minimo-padrao: 5
+  rota:
+    velocidade-media-kmh: 60
