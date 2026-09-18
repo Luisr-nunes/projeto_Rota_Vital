@@ -7,7 +7,6 @@ import com.hemorede.dto.CalcularRotaRequest;
 import com.hemorede.dto.RotaCalculadaResponse;
 import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.service.RoteirizacaoService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/rotas")
-@RequiredArgsConstructor
 public class RotaController {
 
     private final RoteirizacaoService roteirizacaoService;
@@ -24,6 +22,11 @@ public class RotaController {
 
     @Value("${hemorede.rota.velocidade-media-kmh:60}")
     private double velocidadeMediaKmH;
+
+    public RotaController(RoteirizacaoService roteirizacaoService, RequisicaoRepository requisicaoRepository) {
+        this.roteirizacaoService = roteirizacaoService;
+        this.requisicaoRepository = requisicaoRepository;
+    }
 
     @GetMapping("/proximas-requisicoes")
     public List<Requisicao> proximasParaRoteirizar() {

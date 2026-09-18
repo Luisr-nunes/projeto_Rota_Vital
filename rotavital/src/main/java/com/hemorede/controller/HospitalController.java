@@ -2,7 +2,6 @@ package com.hemorede.controller;
 
 import com.hemorede.domain.model.Hospital;
 import com.hemorede.repository.HospitalRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,10 +9,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/hospitais")
-@RequiredArgsConstructor
 public class HospitalController {
 
     private final HospitalRepository hospitalRepository;
+
+    public HospitalController(HospitalRepository hospitalRepository) {
+        this.hospitalRepository = hospitalRepository;
+    }
 
     @GetMapping
     public List<Hospital> listar() {

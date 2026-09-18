@@ -3,7 +3,6 @@ package com.hemorede.controller;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.service.RequisicaoService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,11 +10,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/requisicoes")
-@RequiredArgsConstructor
 public class RequisicaoController {
 
     private final RequisicaoRepository requisicaoRepository;
     private final RequisicaoService requisicaoService;
+
+    public RequisicaoController(RequisicaoRepository requisicaoRepository, RequisicaoService requisicaoService) {
+        this.requisicaoRepository = requisicaoRepository;
+        this.requisicaoService = requisicaoService;
+    }
 
     @GetMapping
     public List<Requisicao> listar() {

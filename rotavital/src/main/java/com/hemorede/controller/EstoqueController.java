@@ -5,7 +5,6 @@ import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Estoque;
 import com.hemorede.repository.EstoqueRepository;
 import com.hemorede.service.EstoqueService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,11 +12,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/estoques")
-@RequiredArgsConstructor
 public class EstoqueController {
 
     private final EstoqueRepository estoqueRepository;
     private final EstoqueService estoqueService;
+
+    public EstoqueController(EstoqueRepository estoqueRepository, EstoqueService estoqueService) {
+        this.estoqueRepository = estoqueRepository;
+        this.estoqueService = estoqueService;
+    }
 
     @GetMapping
     public List<Estoque> listar() {
