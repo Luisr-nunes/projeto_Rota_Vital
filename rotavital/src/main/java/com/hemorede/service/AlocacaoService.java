@@ -10,7 +10,6 @@ import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.exception.EstoqueInsuficienteException;
 import com.hemorede.exception.IncompatibilidadeSanguineaException;
 import com.hemorede.repository.BolsaRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +22,13 @@ import java.util.List;
  * Regra de negócio 2 (FEFO - First Expired, First Out) são aplicadas aqui.
  */
 @Service
-@RequiredArgsConstructor
 public class AlocacaoService {
 
     private final BolsaRepository bolsaRepository;
+
+    public AlocacaoService(BolsaRepository bolsaRepository) {
+        this.bolsaRepository = bolsaRepository;
+    }
 
     @Transactional
     public void alocar(ItemRequisicao item) {

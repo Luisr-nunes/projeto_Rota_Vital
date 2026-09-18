@@ -3,18 +3,12 @@ package com.hemorede.domain.model;
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.TipoSanguineo;
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "item_requisicao")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ItemRequisicao {
 
     @Id
@@ -36,7 +30,6 @@ public class ItemRequisicao {
     @Column(nullable = false)
     private Integer quantidade;
 
-    @Builder.Default
     @ManyToMany
     @JoinTable(
             name = "item_requisicao_bolsa",
@@ -45,7 +38,68 @@ public class ItemRequisicao {
     )
     private List<Bolsa> bolsasAlocadas = new ArrayList<>();
 
+    public ItemRequisicao() {
+    }
+
+    public ItemRequisicao(Long id, Requisicao requisicao, HemoComponente hemoComponente,
+                           TipoSanguineo tipoSanguineo, Integer quantidade, List<Bolsa> bolsasAlocadas) {
+        this.id = id;
+        this.requisicao = requisicao;
+        this.hemoComponente = hemoComponente;
+        this.tipoSanguineo = tipoSanguineo;
+        this.quantidade = quantidade;
+        this.bolsasAlocadas = bolsasAlocadas != null ? bolsasAlocadas : new ArrayList<>();
+    }
+
     public boolean isTotalmenteAlocado() {
         return bolsasAlocadas.size() >= quantidade;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Requisicao getRequisicao() {
+        return requisicao;
+    }
+
+    public void setRequisicao(Requisicao requisicao) {
+        this.requisicao = requisicao;
+    }
+
+    public HemoComponente getHemoComponente() {
+        return hemoComponente;
+    }
+
+    public void setHemoComponente(HemoComponente hemoComponente) {
+        this.hemoComponente = hemoComponente;
+    }
+
+    public TipoSanguineo getTipoSanguineo() {
+        return tipoSanguineo;
+    }
+
+    public void setTipoSanguineo(TipoSanguineo tipoSanguineo) {
+        this.tipoSanguineo = tipoSanguineo;
+    }
+
+    public Integer getQuantidade() {
+        return quantidade;
+    }
+
+    public void setQuantidade(Integer quantidade) {
+        this.quantidade = quantidade;
+    }
+
+    public List<Bolsa> getBolsasAlocadas() {
+        return bolsasAlocadas;
+    }
+
+    public void setBolsasAlocadas(List<Bolsa> bolsasAlocadas) {
+        this.bolsasAlocadas = bolsasAlocadas;
     }
 }

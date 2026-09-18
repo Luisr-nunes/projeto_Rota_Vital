@@ -7,7 +7,6 @@ import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.repository.BolsaRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +18,13 @@ import java.util.List;
  * em um estoque está abaixo do limite mínimo configurado.
  */
 @Service
-@RequiredArgsConstructor
 public class EstoqueService {
 
     private final BolsaRepository bolsaRepository;
+
+    public EstoqueService(BolsaRepository bolsaRepository) {
+        this.bolsaRepository = bolsaRepository;
+    }
 
     @Value("${hemorede.estoque.limite-minimo-padrao:5}")
     private int limiteMinimoPadrao;

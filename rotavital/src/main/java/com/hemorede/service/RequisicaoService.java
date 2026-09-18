@@ -4,7 +4,6 @@ import com.hemorede.domain.enums.StatusRequisicao;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.repository.RequisicaoRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,11 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
  * itens conseguem ter a quantidade total de bolsas compatíveis alocadas.
  */
 @Service
-@RequiredArgsConstructor
 public class RequisicaoService {
 
     private final RequisicaoRepository requisicaoRepository;
     private final AlocacaoService alocacaoService;
+
+    public RequisicaoService(RequisicaoRepository requisicaoRepository, AlocacaoService alocacaoService) {
+        this.requisicaoRepository = requisicaoRepository;
+        this.alocacaoService = alocacaoService;
+    }
 
     @Transactional
     public Requisicao aprovar(Long requisicaoId) {

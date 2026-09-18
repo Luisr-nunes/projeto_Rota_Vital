@@ -3,7 +3,6 @@ package com.hemorede.service;
 import com.hemorede.domain.model.Doador;
 import com.hemorede.exception.DoacaoForaDoIntervaloException;
 import com.hemorede.repository.DoadorRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +14,13 @@ import java.time.LocalDate;
  * receber o sexo do doador para diferenciar 60/90 dias, por exemplo.)
  */
 @Service
-@RequiredArgsConstructor
 public class DoacaoService {
 
     private final DoadorRepository doadorRepository;
+
+    public DoacaoService(DoadorRepository doadorRepository) {
+        this.doadorRepository = doadorRepository;
+    }
 
     @Value("${hemorede.doacao.intervalo-minimo-dias-homem:60}")
     private int intervaloMinimoDias;

@@ -3,7 +3,6 @@ package com.hemorede.service;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.repository.BolsaRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +15,13 @@ import java.util.List;
  * Job diário que varre o estoque e descarta automaticamente bolsas vencidas.
  */
 @Service
-@RequiredArgsConstructor
 public class ValidadeService {
 
     private final BolsaRepository bolsaRepository;
+
+    public ValidadeService(BolsaRepository bolsaRepository) {
+        this.bolsaRepository = bolsaRepository;
+    }
 
     @Scheduled(cron = "0 0 3 * * *") // todo dia às 03h
     @Transactional

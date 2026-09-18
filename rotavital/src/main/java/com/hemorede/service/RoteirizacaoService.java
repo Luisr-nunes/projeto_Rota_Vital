@@ -12,7 +12,6 @@ import com.hemorede.exception.RotaIndisponivelException;
 import com.hemorede.exception.VeiculoIncompativelException;
 import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.repository.VeiculoRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,12 +22,18 @@ import java.util.List;
  * compatível com o hemocomponente transportado.
  */
 @Service
-@RequiredArgsConstructor
 public class RoteirizacaoService {
 
     private final RequisicaoRepository requisicaoRepository;
     private final VeiculoRepository veiculoRepository;
     private final GrafoRotas grafoRotas;
+
+    public RoteirizacaoService(RequisicaoRepository requisicaoRepository, VeiculoRepository veiculoRepository,
+                                GrafoRotas grafoRotas) {
+        this.requisicaoRepository = requisicaoRepository;
+        this.veiculoRepository = veiculoRepository;
+        this.grafoRotas = grafoRotas;
+    }
 
     /**
      * Retorna as requisições pendentes de roteirização, com as urgentes

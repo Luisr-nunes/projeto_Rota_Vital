@@ -1,18 +1,12 @@
 package com.hemorede.domain.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "estoque")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Estoque {
 
     @Id
@@ -26,7 +20,48 @@ public class Estoque {
     @Column(nullable = false)
     private Integer capacidadeMaxima;
 
-    @Builder.Default
     @OneToMany(mappedBy = "estoque", cascade = CascadeType.ALL)
     private List<Bolsa> bolsas = new ArrayList<>();
+
+    public Estoque() {
+    }
+
+    public Estoque(Long id, Hospital hospital, Integer capacidadeMaxima, List<Bolsa> bolsas) {
+        this.id = id;
+        this.hospital = hospital;
+        this.capacidadeMaxima = capacidadeMaxima;
+        this.bolsas = bolsas != null ? bolsas : new ArrayList<>();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Hospital getHospital() {
+        return hospital;
+    }
+
+    public void setHospital(Hospital hospital) {
+        this.hospital = hospital;
+    }
+
+    public Integer getCapacidadeMaxima() {
+        return capacidadeMaxima;
+    }
+
+    public void setCapacidadeMaxima(Integer capacidadeMaxima) {
+        this.capacidadeMaxima = capacidadeMaxima;
+    }
+
+    public List<Bolsa> getBolsas() {
+        return bolsas;
+    }
+
+    public void setBolsas(List<Bolsa> bolsas) {
+        this.bolsas = bolsas;
+    }
 }

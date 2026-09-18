@@ -3,15 +3,9 @@ package com.hemorede.domain.model;
 import com.hemorede.domain.enums.StatusVeiculo;
 import com.hemorede.domain.enums.TipoRefrigeracao;
 import jakarta.persistence.*;
-import lombok.*;
 
 @Entity
 @Table(name = "veiculo")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Veiculo {
 
     @Id
@@ -30,6 +24,57 @@ public class Veiculo {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
     private StatusVeiculo status = StatusVeiculo.DISPONIVEL;
+
+    public Veiculo() {
+    }
+
+    public Veiculo(Long id, String placa, TipoRefrigeracao tipoRefrigeracao,
+                   Integer capacidadeCarga, StatusVeiculo status) {
+        this.id = id;
+        this.placa = placa;
+        this.tipoRefrigeracao = tipoRefrigeracao;
+        this.capacidadeCarga = capacidadeCarga;
+        this.status = status != null ? status : StatusVeiculo.DISPONIVEL;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
+    }
+
+    public TipoRefrigeracao getTipoRefrigeracao() {
+        return tipoRefrigeracao;
+    }
+
+    public void setTipoRefrigeracao(TipoRefrigeracao tipoRefrigeracao) {
+        this.tipoRefrigeracao = tipoRefrigeracao;
+    }
+
+    public Integer getCapacidadeCarga() {
+        return capacidadeCarga;
+    }
+
+    public void setCapacidadeCarga(Integer capacidadeCarga) {
+        this.capacidadeCarga = capacidadeCarga;
+    }
+
+    public StatusVeiculo getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusVeiculo status) {
+        this.status = status;
+    }
 }
