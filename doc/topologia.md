@@ -1,9 +1,9 @@
 # Topologia de Rede — Rota Vital
 
-**Task:** PI2-16 — W04-Topologia (RSD)
+**Task:** PI2-22 — W06e07-Topologia (RSD)
 **Responsável:** Micaella Cabral
 **Disciplina:** Infraestrutura de Comunicação (RSD)
-**Sprint:** W04
+**Sprint:** W06e07
 
 Este documento consolida a topologia de rede do sistema **Rota Vital**, evoluindo o esboço inicial registrado em `doc/contratos-api.md` (Seções 2, 3 e 4) para a versão final exigida na entrega de RSD: diagrama de arquitetura, tabela de ligações/protocolos e mapeamento dos requisitos de negócio para requisitos de rede.
 
@@ -13,9 +13,9 @@ Este documento consolida a topologia de rede do sistema **Rota Vital**, evoluind
 
 O diagrama abaixo mostra todos os componentes do sistema — clientes, borda, aplicação, dados, serviços simulados e pipeline de deploy — e como eles se comunicam entre si.
 
-![Diagrama de Arquitetura de Rede — Rota Vital](imagens/topologia_rede.png)
+![Diagrama de Arquitetura de Rede — Rota Vital](img/topologia_rede.png)
 
-*(Exportado em PNG a partir do desenho de arquitetura; a fonte editável — .drawio/.excalidraw — deve ser versionada em `doc/topologia/` junto a este arquivo.)*
+*(Exportado em PNG a partir do desenho de arquitetura, já refletindo a Zona 5 com a plataforma de deploy definida — Render, via Docker.)*
 
 ### Visão geral das zonas
 
@@ -71,11 +71,11 @@ O diagrama abaixo mostra todos os componentes do sistema — clientes, borda, ap
 
 ## 4. URL da Aplicação em Produção
 
-🔲 **Pendente.** Conforme o `README.md` do projeto, a seção "Como Rodar o Projeto" e o deploy em nuvem estão previstos a partir da **Entrega 02 (21/09/2026)**. O ambiente de produção descrito em `doc/contratos-api.md` (Seção 4) prevê **PostgreSQL hospedado em nuvem**, mas a plataforma de hospedagem (ex.: Render, Railway ou similar) ainda não foi definida/publicada pela equipe.
+✅ **Plataforma definida: Render**, via imagem Docker (workspace QMS, conta do Luis). O `Dockerfile` (multi-stage: build com Maven/JDK 17 → runtime JRE 17) e o perfil `rotavital/src/main/resources/application-prod.yml` (datasource PostgreSQL via variáveis de ambiente) já estão versionados no repositório.
 
-> **Ação para a equipe:** assim que o deploy da Entrega 02 for concluído, atualizar esta seção com a URL pública da aplicação, por exemplo:
->
-> `URL de Produção: https://rota-vital.<provedor-escolhido>.app`
+🔲 **Pendente:** criação efetiva do Web Service + instância PostgreSQL no Render (feita após o push deste código para o GitHub, já que o Render builda a partir do repositório). Assim que o deploy for concluído, esta seção será atualizada com a URL pública real, por exemplo:
+
+> `URL de Produção: https://rota-vital.onrender.com` *(exemplo — não confirmado até a criação do serviço)*
 
 ---
 
