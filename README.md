@@ -86,29 +86,42 @@ O **Rota Vital** é uma aplicação web que:
 
 ## Como Rodar o Projeto
 
-> *Seção a ser preenchida a partir da Entrega 02.*
-
-<!--
 ### Pré-requisitos
-- Java 17+
-- Maven
-- Banco de dados (ex: PostgreSQL / MySQL / H2)
+- **Java 17+** (JDK 17 ou superior)
+- **Maven 3.8+** (ou através de extensão na sua IDE — VS Code, IntelliJ IDEA ou Eclipse)
+- **Git**
 
-### Instalação
-```bash
-# Clone o repositório
-git clone https://github.com/Luisr-nunes/projeto_Rota_Vital.git
+### Passo a Passo de Execução
 
-# Acesse a pasta do projeto
-cd projeto_Rota_Vital
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/Luisr-nunes/projeto_Rota_Vital.git
+   ```
 
-# Instale as dependências e rode
-./mvnw spring-boot:run
-```
+2. **Acesse o diretório do backend:**
+   ```bash
+   cd projeto_Rota_Vital/rotavital
+   ```
 
-### Acesso
-- Aplicação: `http://localhost:8080`
--->
+3. **Execute a aplicação:**
+   * **Via Maven:**
+     ```bash
+     mvn spring-boot:run
+     ```
+   * **Ou gerando o pacote JAR e executando:**
+     ```bash
+     mvn clean package -DskipTests
+     java -jar target/hemorede-0.0.1-SNAPSHOT.jar
+     ```
+
+### Acessos e Endpoints Principais
+* **Aplicação / Base API:** `http://localhost:8080`
+* **Painel Web de Indicadores:** `http://localhost:8080/indicadores.html`
+* **Health Check (Spring Boot Actuator):** `http://localhost:8080/actuator/health`
+* **Console H2 (Banco em Memória):** `http://localhost:8080/h2-console`
+  * **JDBC URL:** `jdbc:h2:mem:hemorede`
+  * **Usuário:** `sa`
+  * **Senha:** *(vazia)*
 
 ---
 
@@ -135,18 +148,67 @@ cd projeto_Rota_Vital
 
 #### Histórias Implementadas
 
-> *Adicionar aqui a descrição (formato POST-IT) das histórias implementadas nesta entrega.*
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 1 — HU04: Alocar bolsas compatíveis por FEFO                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Profissional do hemocentro                                         │
+│ 🎯 QUERO: Alocar bolsas de sangue compatíveis a uma requisição hospitalar,  │
+│           priorizando estritamente as de validade mais próxima              │
+│ 💡 PARA QUE: Seja possível atender aos hospitais com segurança e reduzir o  │
+│              descarte de hemocomponentes por vencimento                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • Apenas bolsas compatíveis (matriz ABO/Rh) e dentro da validade são       │
+│    alocadas.                                                                │
+│  • Ordenação FEFO (First Expired, First Out) via Min-Heap (FilaFEFO).       │
+│  • A bolsa alocada passa para o status RESERVADA.                           │
+│  • Caso o estoque não supra a quantidade total solicitada, a transação      │
+│    é revertida (rollback) e a requisição permanece com status PENDENTE.     │
+│ 💻 Módulos: RequisicaoController, RequisicaoService, AlocacaoService,        │
+│             FilaFEFO, IndiceEstoque, BolsaRepository.                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 2 — HU05: Planejar rota de entrega de menor custo                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Operador de logística da Hemorrede                                 │
+│ 🎯 QUERO: Calcular a rota de menor custo (tempo/distância) do Hemocentro    │
+│           até o hospital solicitante                                        │
+│ 💡 PARA QUE: A entrega de hemocomponentes seja rápida, eficiente e          │
+│              respeite a cadeia de temperatura de transporte                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • Roteirização parte obrigatoriamente do Hemocentro (N0) para o hospital.  │
+│  • Menor caminho computado pelo algoritmo de Dijkstra manual sobre a        │
+│    malha viária sintética de 6 nós (N0 a N5).                               │
+│  • Retorno com nós visitados, distância total (km) e tempo estimado (min).  │
+│  • Se o hospital não possuir nó alcançável no grafo, retorna HTTP 422       │
+│    (RotaIndisponivelException).                                             │
+│ 💻 Módulos: RotaController (POST /api/rotas/calcular), RoteirizacaoService,  │
+│             GrafoRotas, DadosSinteticos.                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 #### Artefatos
 
-- [ ] Ao menos **2 histórias implementadas** (Spring Boot rodando)
-- [ ] Ambiente de versionamento atuante (commits frequentes, no mínimo semanais)
-- [ ] Issue/Bug Tracker atualizado (GitHub Issues)
-  - *Print do Bug Tracker:* <!-- inserir screenshot -->
+- [x] Ao menos **2 histórias implementadas** (Spring Boot rodando com **HU04** e **HU05**)
+- [x] **Ambiente de versionamento atuante** (commits frequentes de código semanais na branch principal `main`)
+- [x] **Issue/Bug Tracker atualizado (GitHub Issues)**
+  - *Histórico de Issues Fechadas:*
+    
+    ![GitHub Issues Fechadas](doc/img/github_issues_closed.png)
+
+  - *Issues Abertas / Backlog das Sprints:*
+    
+    ![GitHub Issues Abertas](doc/img/github_issues_open.png)
+
 - [ ] **Screencast do sistema** — Vídeo no YouTube demonstrando as histórias implementadas (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
+  - [Assistir no YouTube](#) <!-- Inserir link do YouTube após a gravação -->
 - [ ] **Screencast do código** — Vídeo no YouTube explicando o código Spring Boot (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
+  - [Assistir no YouTube](#) <!-- Inserir link do YouTube após a gravação -->
 
 ---
 
