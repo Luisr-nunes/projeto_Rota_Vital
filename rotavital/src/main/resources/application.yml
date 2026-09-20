@@ -16,6 +16,8 @@ spring:
       path: /h2-console
 
 hemorede:
+  seed:
+    enabled: true
   doacao:
     intervalo-minimo-dias-homem: 60
     intervalo-minimo-dias-mulher: 90
