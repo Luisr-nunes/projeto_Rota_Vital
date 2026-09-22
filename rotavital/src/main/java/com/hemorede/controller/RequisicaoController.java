@@ -1,5 +1,6 @@
 package com.hemorede.controller;
 
+import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.service.RequisicaoService;
@@ -27,6 +28,11 @@ public class RequisicaoController {
 
     @PostMapping
     public ResponseEntity<Requisicao> criar(@RequestBody Requisicao requisicao) {
+        if (requisicao.getItens() != null) {
+            for (ItemRequisicao item : requisicao.getItens()) {
+                item.setRequisicao(requisicao);
+            }
+        }
         return ResponseEntity.ok(requisicaoRepository.save(requisicao));
     }
 

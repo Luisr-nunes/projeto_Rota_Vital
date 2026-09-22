@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rota Vital - Operação & Roteirização</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --vermelho-escuro: #881337;
+            --vermelho: #be123c;
+            --vermelho-hover: #9f1239;
+            --vermelho-claro: #ffe4e6;
+            --vermelho-borda: #fecdd3;
+            --verde: #15803d;
+            --verde-claro: #dcfce7;
+            --azul: #1d4ed8;
+            --azul-claro: #dbeafe;
+            --amarelo: #b45309;
+            --amarelo-claro: #fef3c7;
+            --texto: #1e293b;
+            --muted: #64748b;
+            --fundo: #f8fafc;
+            --cartao: #ffffff;
+            --borda: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--fundo);
+            color: var(--texto);
+            line-height: 1.5;
+        }
+
+        header {
+            padding: 1.5rem max(1.25rem, calc((100% - 1200px) / 2));
+            color: white;
+            background: linear-gradient(135deg, var(--vermelho-escuro), var(--vermelho));
+            box-shadow: 0 4px 20px rgba(136, 19, 55, 0.15);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-brand h1 {
+            margin: 0 0 .25rem;
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .header-brand p {
+            margin: 0;
+            opacity: .92;
+            font-size: 0.95rem;
+        }
+
+        nav.nav-links {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+        }
+
+        nav.nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: .5rem .85rem;
+            border-radius: .5rem;
+            font-size: .88rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.15);
+            transition: all .2s;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        nav.nav-links a:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+
+        nav.nav-links a.active {
+            background: white;
+            color: var(--vermelho-escuro);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.75rem 1.25rem 4rem;
+        }
+
+        /* Banner de contexto das Histórias */
+        .info-banner {
+            background: white;
+            border: 1px solid var(--borda);
+            border-left: 5px solid var(--vermelho);
+            padding: 1rem 1.25rem;
+            border-radius: .6rem;
+            margin-bottom: 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+
+        .info-banner-text h3 {
+            margin: 0 0 .25rem;
+            font-size: 1.05rem;
+            color: var(--vermelho-escuro);
+        }
+
+        .info-banner-text p {
+            margin: 0;
+            font-size: .88rem;
+            color: var(--muted);
+        }
+
+        .badges-sprint {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge-tag {
+            padding: .3rem .65rem;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 700;
+        }
+
+        .tag-red { background: var(--vermelho-claro); color: var(--vermelho-escuro); }
+        .tag-blue { background: var(--azul-claro); color: var(--azul); }
+        .tag-green { background: var(--verde-claro); color: var(--verde); }
+
+        /* Grid de Seções Principais */
+        .grid-duplo {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .grid-duplo { grid-template-columns: 1fr; }
+        }
+
+        .painel {
+            background: var(--cartao);
+            border: 1px solid var(--borda);
+            border-radius: .85rem;
+            padding: 1.35rem;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+        }
+
+        .painel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--borda);
+            padding-bottom: .85rem;
+        }
+
+        .painel-header h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--texto);
+        }
+
+        .painel-header p {
+            margin: .25rem 0 0;
+            font-size: .82rem;
+            color: var(--muted);
+        }
+
+        /* Botões */
+        button, .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            padding: .6rem 1rem;
+            border-radius: .55rem;
+            font-weight: 600;
+            font-size: .88rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all .15s ease-in-out;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--vermelho);
+            color: white;
+            border-color: var(--vermelho);
+        }
+
+        .btn-primary:hover {
+            background: var(--vermelho-hover);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--texto);
+            border-color: var(--borda);
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-success {
+            background: var(--verde);
+            color: white;
+            border-color: var(--verde);
+        }
+
+        .btn-sm {
+            padding: .35rem .7rem;
+            font-size: .8rem;
+        }
+
+        /* Cartão de Requisição */
+        .requisicao-card {
+            border: 1px solid var(--borda);
+            border-radius: .7rem;
+            padding: 1.15rem;
+            margin-bottom: 1rem;
+            background: #ffffff;
+            transition: border-color .2s;
+        }
+
+        .requisicao-card.aprovada {
+            border-color: #86efac;
+            background: #fafdfb;
+        }
+
+        .req-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: .6rem;
+        }
+
+        .req-id {
+            font-weight: 800;
+            color: var(--vermelho-escuro);
+            font-size: 1rem;
+        }
+
+        .status-badge {
+            font-size: .75rem;
+            font-weight: 700;
+            padding: .25rem .55rem;
+            border-radius: 999px;
+            text-transform: uppercase;
+        }
+
+        .status-PENDENTE { background: var(--amarelo-claro); color: var(--amarelo); }
+        .status-APROVADA { background: var(--verde-claro); color: var(--verde); }
+
+        .req-hospital {
+            font-size: .95rem;
+            font-weight: 700;
+            margin-bottom: .25rem;
+        }
+
+        .req-meta {
+            font-size: .82rem;
+            color: var(--muted);
+            margin-bottom: .85rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .req-itens {
+            background: var(--fundo);
+            padding: .75rem;
+            border-radius: .5rem;
+            font-size: .85rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--borda);
+        }
+
+        .bolsas-alocadas-box {
+            margin-top: .75rem;
+            padding-top: .75rem;
+            border-top: 1px dashed var(--borda);
+        }
+
+        .bolsa-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            background: white;
+            border: 1px solid #86efac;
+            padding: .35rem .6rem;
+            border-radius: .4rem;
+            font-size: .8rem;
+            margin: .25rem .25rem 0 0;
+            font-weight: 600;
+        }
+
+        .fefo-destaque {
+            font-size: .75rem;
+            color: var(--verde);
+            font-weight: 700;
+            margin-top: .35rem;
+            display: flex;
+            align-items: center;
+            gap: .35rem;
+        }
+
+        .req-actions {
+            display: flex;
+            gap: .6rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* Painel Dijkstra & Grafo */
+        .resultado-rota-box {
+            background: var(--fundo);
+            border: 1px solid var(--borda);
+            border-radius: .65rem;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .rota-trajeto {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .4rem;
+            margin: .6rem 0;
+        }
+
+        .no-badge {
+            background: var(--vermelho);
+            color: white;
+            padding: .3rem .6rem;
+            border-radius: .4rem;
+            font-weight: 700;
+            font-size: .85rem;
+        }
+
+        .no-seta {
+            color: var(--muted);
+            font-weight: bold;
+        }
+
+        .metricas-rota {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+            margin-top: .75rem;
+        }
+
+        .metrica-card {
+            background: white;
+            border: 1px solid var(--borda);
+            padding: .65rem .85rem;
+            border-radius: .5rem;
+        }
+
+        .metrica-card span {
+            display: block;
+            font-size: .75rem;
+            color: var(--muted);
+        }
+
+        .metrica-card strong {
+            font-size: 1.15rem;
+            color: var(--vermelho-escuro);
+        }
+
+        /* SVG do Grafo */
+        .grafo-container {
+            background: white;
+            border: 1px solid var(--borda);
+            border-radius: .65rem;
+            padding: .5rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .grafo-container h4 {
+            margin: .5rem 0 .25rem;
+            font-size: .85rem;
+            color: var(--muted);
+        }
+
+        svg#grafo-svg {
+            width: 100%;
+            height: auto;
+            max-height: 270px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Estilização dos nós e arestas do Grafo */
+        .edge {
+            stroke: #cbd5e1;
+            stroke-width: 2.5;
+            transition: all 0.3s;
+        }
+
+        .edge.active {
+            stroke: var(--vermelho);
+            stroke-width: 5;
+            stroke-dasharray: 6 3;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -18; }
+        }
+
+        .edge-label {
+            font-size: 10px;
+            fill: #64748b;
+            font-weight: 600;
+            text-anchor: middle;
+        }
+
+        .node-circle {
+            fill: #ffffff;
+            stroke: #475569;
+            stroke-width: 2.5;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .node-circle.active {
+            fill: var(--vermelho-claro);
+            stroke: var(--vermelho);
+            stroke-width: 4;
+        }
+
+        .node-circle.hemocentro {
+            fill: var(--vermelho-escuro);
+            stroke: var(--vermelho-escuro);
+        }
+
+        .node-text {
+            font-size: 11px;
+            font-weight: 800;
+            fill: #1e293b;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+        }
+
+        .node-text.hemocentro {
+            fill: #ffffff;
+        }
+
+        /* Modal / Formulário Nova Requisição */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+            margin-bottom: .75rem;
+        }
+
+        label {
+            display: block;
+            font-size: .82rem;
+            font-weight: 600;
+            margin-bottom: .25rem;
+            color: var(--texto);
+        }
+
+        select, input {
+            width: 100%;
+            padding: .5rem .65rem;
+            border: 1px solid var(--borda);
+            border-radius: .45rem;
+            font: inherit;
+            font-size: .85rem;
+        }
+
+        #mensagem-toast {
+            display: none;
+            padding: .75rem 1rem;
+            border-radius: .55rem;
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+            font-size: .88rem;
+            transition: all .3s;
+        }
+        .toast-success { background: var(--verde-claro); color: var(--verde); border: 1px solid #86efac; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="header-brand">
+            <h1>🩸 Rota Vital</h1>
+            <p>Gestão e Distribuição de Hemocomponentes na Hemorrede</p>
+        </div>
+        <nav class="nav-links">
+            <a href="/" class="active">Operação (HU04 & HU05)</a>
+            <a href="/indicadores.html">Painel de Indicadores</a>
+            <a href="/h2-console" target="_blank" title="JDBC URL: jdbc:h2:mem:hemorede | Usuário: sa">Console H2 ↗</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="info-banner">
+        <div class="info-banner-text">
+            <h3>Demonstração da Entrega 02 — Regras de Negócio e Algoritmos</h3>
+            <p>Integração completa: Alocação FEFO (Min-Heap) + Cálculo de Rota de Menor Custo (Dijkstra manual no Grafo de 6 nós).</p>
+        </div>
+        <div class="badges-sprint">
+            <span class="badge-tag tag-red">HU04: FEFO por Validade</span>
+            <span class="badge-tag tag-blue">HU05: Menor Rota Dijkstra</span>
+            <span class="badge-tag tag-green">Spring Boot 3</span>
+        </div>
+    </div>
+
+    <div id="mensagem-toast"></div>
+
+    <div class="grid-duplo">
+        <!-- COLUNA 1: HU04 - GESTÃO DE REQUISIÇÕES & ALOCAÇÃO FEFO -->
+        <section class="painel">
+            <div class="painel-header">
+                <div>
+                    <h2>📋 Requisições Hospitalares (HU04)</h2>
+                    <p>Alocação de bolsas compatíveis (ABO/Rh) priorizando o menor vencimento (FEFO)</p>
+                </div>
+                <button id="btn-toggle-novo" class="btn btn-outline btn-sm">+ Novo Pedido</button>
+            </div>
+
+            <!-- FORMULÁRIO COLAPSÁVEL DE NOVA REQUISIÇÃO -->
+            <div id="box-novo-pedido" style="display: none; background: var(--fundo); border: 1px solid var(--borda); border-radius: .65rem; padding: 1rem; margin-bottom: 1.25rem;">
+                <h4 style="margin: 0 0 .75rem; font-size: .95rem; color: var(--vermelho-escuro);">Registrar Pedido Hospitalar Sintético</h4>
+                <div class="form-row">
+                    <div>
+                        <label for="form-hospital">Hospital Solicitante</label>
+                        <select id="form-hospital"></select>
+                    </div>
+                    <div>
+                        <label for="form-prioridade">Prioridade</label>
+                        <select id="form-prioridade">
+                            <option value="URGENTE">URGENTE</option>
+                            <option value="ALTA">ALTA</option>
+                            <option value="MEDIA">MÉDIA</option>
+                            <option value="BAIXA">BAIXA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label for="form-componente">Hemocomponente</label>
+                        <select id="form-componente">
+                            <option value="HEMACIAS">HEMÁCIAS</option>
+                            <option value="PLAQUETAS">PLAQUETAS</option>
+                            <option value="PLASMA">PLASMA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="form-tipo">Tipo Sanguíneo</label>
+                        <select id="form-tipo">
+                            <option value="O_POS">O+</option>
+                            <option value="A_POS">A+</option>
+                            <option value="B_POS">B+</option>
+                            <option value="AB_POS">AB+</option>
+                            <option value="O_NEG">O-</option>
+                            <option value="A_NEG">A-</option>
+                            <option value="B_NEG">B-</option>
+                            <option value="AB_NEG">AB-</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: .5rem; margin-top: .5rem;">
+                    <button id="btn-criar-requisicao" class="btn btn-primary btn-sm">Criar Requisição</button>
+                    <button id="btn-cancelar-novo" class="btn btn-outline btn-sm">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- LISTAGEM DE REQUISIÇÕES -->
+            <div id="lista-requisicoes">
+                <p style="color: var(--muted); font-size: .9rem;">Carregando requisições...</p>
+            </div>
+        </section>
+
+        <!-- COLUNA 2: HU05 - PLANEJAMENTO DE ROTA DIJKSTRA & GRAFO -->
+        <section class="painel">
+            <div class="painel-header">
+                <div>
+                    <h2>🗺️ Roteirização de Entrega (HU05)</h2>
+                    <p>Menor caminho computado pelo algoritmo de Dijkstra manual sobre a malha de 6 nós</p>
+                </div>
+            </div>
+
+            <div id="box-detalhe-rota">
+                <div style="text-align: center; padding: 2rem 1rem; color: var(--muted); border: 2px dashed var(--borda); border-radius: .65rem;">
+                    <p style="margin: 0; font-size: .95rem;">👈 Selecione ou aprove uma requisição ao lado e clique em <b>"Calcular Menor Rota (Dijkstra)"</b> para ver o resultado.</p>
+                </div>
+            </div>
+
+            <!-- DIAGRAMA VISUAL DO GRAFO SINTÉTICO (6 NÓS) -->
+            <div class="grafo-container">
+                <h4>Topologia da Malha Viária Sintética (Recife)</h4>
+                <svg id="grafo-svg" viewBox="0 0 420 250">
+                    <!-- Arestas (Linhas) -->
+                    <!-- N0 -> N1 -->
+                    <line id="edge-N0-N1" class="edge" x1="210" y1="130" x2="210" y2="35"/>
+                    <text class="edge-label" x="225" y="85">18km</text>
+
+                    <!-- N0 -> N2 -->
+                    <line id="edge-N0-N2" class="edge" x1="210" y1="130" x2="210" y2="225"/>
+                    <text class="edge-label" x="225" y="180">15km</text>
+
+                    <!-- N0 -> N3 -->
+                    <line id="edge-N0-N3" class="edge" x1="210" y1="130" x2="360" y2="130"/>
+                    <text class="edge-label" x="285" y="122">20km</text>
+
+                    <!-- N0 -> N4 -->
+                    <line id="edge-N0-N4" class="edge" x1="210" y1="130" x2="60" y2="130"/>
+                    <text class="edge-label" x="135" y="122">17km</text>
+
+                    <!-- N0 -> N5 -->
+                    <line id="edge-N0-N5" class="edge" x1="210" y1="130" x2="290" y2="70"/>
+                    <text class="edge-label" x="260" y="95">10km</text>
+
+                    <!-- N1 -> N5 -->
+                    <line id="edge-N1-N5" class="edge" x1="210" y1="35" x2="290" y2="70"/>
+                    <text class="edge-label" x="255" y="45">12km</text>
+
+                    <!-- N5 -> N2 -->
+                    <line id="edge-N2-N5" class="edge" x1="210" y1="225" x2="290" y2="70"/>
+                    <text class="edge-label" x="270" y="160">12km</text>
+
+                    <!-- N4 -> N1 -->
+                    <line id="edge-N1-N4" class="edge" x1="210" y1="35" x2="60" y2="130"/>
+                    <text class="edge-label" x="120" y="70">22km</text>
+
+                    <!-- Nós (Círculos) -->
+                    <!-- N0: Hemocentro Central -->
+                    <g id="node-group-N0">
+                        <circle id="node-N0" class="node-circle hemocentro" cx="210" cy="130" r="22"/>
+                        <text class="node-text hemocentro" x="210" y="130">N0</text>
+                    </g>
+
+                    <!-- N1: Hospital Norte -->
+                    <g id="node-group-N1">
+                        <circle id="node-N1" class="node-circle" cx="210" cy="35" r="18"/>
+                        <text class="node-text" x="210" y="35">N1</text>
+                    </g>
+
+                    <!-- N2: Hospital Sul -->
+                    <g id="node-group-N2">
+                        <circle id="node-N2" class="node-circle" cx="210" cy="225" r="18"/>
+                        <text class="node-text" x="210" y="225">N2</text>
+                    </g>
+
+                    <!-- N3: Hospital Leste -->
+                    <g id="node-group-N3">
+                        <circle id="node-N3" class="node-circle" cx="360" cy="130" r="18"/>
+                        <text class="node-text" x="360" y="130">N3</text>
+                    </g>
+
+                    <!-- N4: Hospital Oeste -->
+                    <g id="node-group-N4">
+                        <circle id="node-N4" class="node-circle" cx="60" cy="130" r="18"/>
+                        <text class="node-text" x="60" y="130">N4</text>
+                    </g>
+
+                    <!-- N5: Central II -->
+                    <g id="node-group-N5">
+                        <circle id="node-N5" class="node-circle" cx="290" cy="70" r="18"/>
+                        <text class="node-text" x="290" y="70">N5</text>
+                    </g>
+                </svg>
+                <div style="font-size: .75rem; color: var(--muted); margin-top: .4rem;">
+                    🔴 N0 = Hemocentro Central | ⚪ N1 a N5 = Hospitais da Rede
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    const NOMES_NOS = {
+        "N0": "Hemocentro Central (Origem)",
+        "N1": "Hospital Regional Norte",
+        "N2": "Hospital Metropolitano Sul",
+        "N3": "Hospital Esperança Leste",
+        "N4": "Hospital Universitário Oeste",
+        "N5": "Hospital Central de Emergência II"
+    };
+
+    let hospitaisCache = [];
+
+    function showToast(msg, tipo = 'success') {
+        const toast = document.getElementById('mensagem-toast');
+        toast.className = tipo === 'success' ? 'toast-success' : 'toast-error';
+        toast.innerHTML = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 6000);
+    }
+
+    async function carregarHospitais() {
+        try {
+            const resp = await fetch('/api/hospitais');
+            if (resp.ok) {
+                hospitaisCache = await resp.json();
+                const select = document.getElementById('form-hospital');
+                select.innerHTML = hospitaisCache.map(h =>
+                    `<option value="${h.id}">${h.nome} (${h.codigoNo || 'Sem Nó'})</option>`
+                ).join('');
+            }
+        } catch (e) {
+            console.error('Erro ao carregar hospitais', e);
+        }
+    }
+
+    async function carregarRequisicoes() {
+        const container = document.getElementById('lista-requisicoes');
+        try {
+            const resp = await fetch('/api/requisicoes');
+            if (!resp.ok) throw new Error('Falha ao obter requisições');
+            const lista = await resp.json();
+
+            if (lista.length === 0) {
+                container.innerHTML = '<p style="color: var(--muted); font-size: .9rem;">Nenhuma requisição registrada.</p>';
+                return;
+            }
+
+            container.innerHTML = lista.map(req => {
+                const hospital = req.hospitalSolicitante || {};
+                const isAprovada = req.status === 'APROVADA';
+                const itens = req.itens || [];
+
+                let itensHtml = itens.map(it => `
+                    <div>
+                        <b>${it.quantidade}x</b> ${it.hemoComponente} (${(it.tipoSanguineo || '').replace('_', ' ')})
+                        ${it.bolsasAlocadas && it.bolsasAlocadas.length > 0 ? `
+                            <div class="bolsas-alocadas-box">
+                                <div style="font-size: .8rem; font-weight: 700; color: var(--verde);">
+                                    ✓ Bolsas Reservadas no Estoque:
+                                </div>
+                                ${it.bolsasAlocadas.map(b => `
+                                    <div class="bolsa-chip">
+                                        🩸 Bolsa #${b.id} | Tipo: ${(b.tipoSanguineo || '').replace('_', ' ')} | Vence em: <b>${b.dataValidade}</b>
+                                    </div>
+                                `).join('')}
+                                <div class="fefo-destaque">
+                                    ★ Alocada pelo algoritmo FEFO (Min-Heap / validade mais crítica)
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+                return `
+                    <article class="requisicao-card ${isAprovada ? 'aprovada' : ''}">
+                        <div class="req-topo">
+                            <span class="req-id">Requisição #${req.id}</span>
+                            <span class="status-badge status-${req.status}">${req.status}</span>
+                        </div>
+                        <div class="req-hospital">
+                            🏥 ${hospital.nome || 'Hospital'} 
+                            ${hospital.codigoNo ? `<span class="badge-tag tag-blue" style="font-size: .75rem;">Nó ${hospital.codigoNo}</span>` : ''}
+                        </div>
+                        <div class="req-meta">
+                            <span>Prioridade: <b>${req.prioridade}</b></span>
+                            <span>Data: ${new Date(req.dataSolicitacao).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="req-itens">
+                            ${itensHtml}
+                        </div>
+                        <div class="req-actions">
+                            ${!isAprovada ? `
+                                <button class="btn btn-primary btn-sm" onclick="alocarFEFO(${req.id})">
+                                    ⚡ Alocar Bolsas por FEFO (HU04)
+                                </button>
+                            ` : `
+                                <span style="color: var(--verde); font-size: .85rem; font-weight: 700;">
+                                    ✓ Alocação Concluída
+                                </span>
+                            `}
+                            <button class="btn btn-outline btn-sm" onclick="calcularRota(${req.id})">
+                                🗺️ Calcular Rota Dijkstra (HU05)
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = `<p style="color: #991b1b; font-size: .9rem;">Erro ao conectar com a API: ${e.message}</p>`;
+        }
+    }
+
+    async function alocarFEFO(requisicaoId) {
+        try {
+            const resp = await fetch(`/api/requisicoes/${requisicaoId}/aprovar`, { method: 'POST' });
+            if (!resp.ok) {
+                const erroData = await resp.json().catch(() => ({}));
+                throw new Error(erroData.message || `Erro HTTP ${resp.status} ao aprovar requisição.`);
+            }
+            showToast(`✅ <b>HU04 Executada com Sucesso!</b> Bolsas compatíveis alocadas e ordenadas por validade mais próxima via <b>FilaFEFO (Min-Heap)</b>.`);
+            await carregarRequisicoes();
+        } catch (e) {
+            showToast(`❌ Falha na alocação FEFO: ${e.message}`, 'error');
+        }
+    }
+
+    async function calcularRota(requisicaoId) {
+        destacarRotaGrafo([]); // limpa destaques anteriores
+        const boxRota = document.getElementById('box-detalhe-rota');
+        boxRota.innerHTML = '<p style="color: var(--muted);">Executando algoritmo de Dijkstra manual...</p>';
+
+        try {
+            // 1. Rota Dijkstra
+            const resp = await fetch('/api/rotas/calcular', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requisicaoId: requisicaoId })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.message || `Erro ${resp.status} ao calcular rota.`);
+            }
+
+            const rota = await resp.json();
+
+            // 2. Veículo compatível sugerido
+            let veiculoInfo = 'Padrão da frota';
+            try {
+                const respV = await fetch(`/api/rotas/veiculo-compativel/${requisicaoId}`);
+                if (respV.ok) {
+                    const v = await respV.json();
+                    veiculoInfo = `${v.placa} (${(v.tipoRefrigeracao || '').replaceAll('_', ' ')})`;
+                }
+            } catch (_) {}
+
+            // Monta visual dos passos da rota
+            const trajetoHtml = rota.caminho.map((no, idx) => `
+                <div class="no-badge">${no}</div>
+                ${idx < rota.caminho.length - 1 ? `<span class="no-seta">➔</span>` : ''}
+            `).join('');
+
+            boxRota.innerHTML = `
+                <div class="resultado-rota-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; color: var(--vermelho-escuro); font-size: .95rem;">
+                            🚀 Rota de Menor Custo Calculada (Dijkstra)
+                        </span>
+                        <span class="badge-tag tag-green">Sucesso HTTP 200</span>
+                    </div>
+
+                    <div class="rota-trajeto">
+                        ${trajetoHtml}
+                    </div>
+
+                    <div style="font-size: .83rem; color: var(--muted); margin-bottom: .6rem;">
+                        <b>Origem:</b> ${NOMES_NOS[rota.caminho[0]] || rota.caminho[0]}<br/>
+                        <b>Destino:</b> ${NOMES_NOS[rota.caminho[rota.caminho.length - 1]] || rota.caminho[rota.caminho.length - 1]}
+                    </div>
+
+                    <div class="metricas-rota">
+                        <div class="metrica-card">
+                            <span>Distância Total (Dijkstra)</span>
+                            <strong>${rota.distanciaTotalKm.toFixed(1)} km</strong>
+                        </div>
+                        <div class="metrica-card">
+                            <span>Tempo Estimado (60 km/h)</span>
+                            <strong>${rota.tempoEstimadoMinutos.toFixed(1)} min</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: .75rem; font-size: .82rem; background: white; border: 1px solid var(--borda); padding: .5rem .75rem; border-radius: .4rem;">
+                        🚛 <b>Veículo Compatível Alocado:</b> ${veiculoInfo}
+                    </div>
+                </div>
+            `;
+
+            // Destaque visual no Grafo SVG
+            destacarRotaGrafo(rota.caminho);
+            showToast(`🗺️ <b>HU05 Executada!</b> Menor rota encontrada: ${rota.caminho.join(' ➔ ')} (${rota.distanciaTotalKm} km em ${rota.tempoEstimadoMinutos.toFixed(0)} min).`);
+
+        } catch (e) {
+            boxRota.innerHTML = `
+                <div class="resultado-rota-box" style="border-color: #fca5a5; background: #fff5f5;">
+                    <b style="color: #991b1b;">Não foi possível calcular rota:</b>
+                    <p style="margin: .35rem 0 0; font-size: .85rem; color: #7f1d1d;">${e.message}</p>
+                </div>
+            `;
+            showToast(`Erro no cálculo de rota: ${e.message}`, 'error');
+        }
+    }
+
+    function destacarRotaGrafo(caminho) {
+        // Reset de todos os nós
+        document.querySelectorAll('.node-circle').forEach(n => {
+            if (!n.classList.contains('hemocentro')) {
+                n.classList.remove('active');
+            }
+        });
+        // Reset de todas as arestas
+        document.querySelectorAll('.edge').forEach(e => e.classList.remove('active'));
+
+        if (!caminho || caminho.length === 0) return;
+
+        // Ativa nós do caminho
+        caminho.forEach(no => {
+            const el = document.getElementById(`node-${no}`);
+            if (el) el.classList.add('active');
+        });
+
+        // Ativa arestas entre nós consecutivos
+        for (let i = 0; i < caminho.length - 1; i++) {
+            const u = caminho[i];
+            const v = caminho[i + 1];
+            const edge1 = document.getElementById(`edge-${u}-${v}`);
+            const edge2 = document.getElementById(`edge-${v}-${u}`);
+            if (edge1) edge1.classList.add('active');
+            if (edge2) edge2.classList.add('active');
+        }
+    }
+
+    // Toggle de criação de nova requisição
+    document.getElementById('btn-toggle-novo').addEventListener('click', () => {
+        const box = document.getElementById('box-novo-pedido');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-cancelar-novo').addEventListener('click', () => {
+        document.getElementById('box-novo-pedido').style.display = 'none';
+    });
+
+    document.getElementById('btn-criar-requisicao').addEventListener('click', async () => {
+        const hospitalId = document.getElementById('form-hospital').value;
+        const prioridade = document.getElementById('form-prioridade').value;
+        const componente = document.getElementById('form-componente').value;
+        const tipo = document.getElementById('form-tipo').value;
+
+        const body = {
+            hospitalSolicitante: { id: parseInt(hospitalId) },
+            prioridade: prioridade,
+            itens: [{
+                hemoComponente: componente,
+                tipoSanguineo: tipo,
+                quantidade: 1
+            }]
+        };
+
+        try {
+            const resp = await fetch('/api/requisicoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!resp.ok) throw new Error('Erro ao cadastrar requisição.');
+
+            showToast('✅ Requisição cadastrada com sucesso! Pronto para alocar bolsas por FEFO.');
+            document.getElementById('box-novo-pedido').style.display = 'none';
+            await carregarRequisicoes();
+        } catch (e) {
+            showToast(`Falha ao cadastrar: ${e.message}`, 'error');
+        }
+    });
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarHospitais();
+        carregarRequisicoes();
+    });
+</script>
+</body>
+</html>
