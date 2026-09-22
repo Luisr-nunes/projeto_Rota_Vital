@@ -1,5 +1,6 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ public class Estoque {
     @Column(nullable = false)
     private Integer capacidadeMaxima;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "estoque", cascade = CascadeType.ALL)
     private List<Bolsa> bolsas = new ArrayList<>();
 

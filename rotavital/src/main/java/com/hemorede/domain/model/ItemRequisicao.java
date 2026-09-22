@@ -1,5 +1,6 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.TipoSanguineo;
 import jakarta.persistence.*;
@@ -15,6 +16,7 @@ public class ItemRequisicao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requisicao_id", nullable = false)
     private Requisicao requisicao;

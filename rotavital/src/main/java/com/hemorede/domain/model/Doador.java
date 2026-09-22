@@ -1,5 +1,6 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hemorede.domain.enums.TipoSanguineo;
 import jakarta.persistence.*;
 
@@ -27,6 +28,7 @@ public class Doador {
 
     private LocalDate dataUltimaDoacao;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "doador", cascade = CascadeType.ALL)
     private List<Bolsa> bolsas = new ArrayList<>();
 

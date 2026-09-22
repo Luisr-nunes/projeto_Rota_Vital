@@ -1,5 +1,7 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -7,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "hospital")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Hospital {
 
     @Id
@@ -35,9 +38,11 @@ public class Hospital {
     @Column(name = "codigo_no", unique = true)
     private String codigoNo;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL)
     private List<Estoque> estoques = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "hospitalSolicitante", cascade = CascadeType.ALL)
     private List<Requisicao> requisicoes = new ArrayList<>();
 

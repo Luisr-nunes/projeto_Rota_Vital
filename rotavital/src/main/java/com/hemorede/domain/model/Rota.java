@@ -1,5 +1,6 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hemorede.domain.enums.StatusRota;
 import jakarta.persistence.*;
 
@@ -23,6 +24,7 @@ public class Rota {
     @JoinColumn(name = "motorista_id", nullable = false)
     private Motorista motorista;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "rota")
     private List<Requisicao> requisicoes = new ArrayList<>();
 
