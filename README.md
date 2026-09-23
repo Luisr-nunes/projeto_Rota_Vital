@@ -207,7 +207,7 @@ O **Rota Vital** é uma aplicação web que:
 
 - [ ] **Screencast do sistema** — Vídeo no YouTube demonstrando as histórias implementadas (com áudio ou legenda)
   - [Assistir no YouTube](#) <!-- Inserir link do YouTube após a gravação -->
-- [x] **Screencast do código** — Vídeo no YouTube explicando o código Spring Boot (com áudio ou legenda)
+- [x] **Screencast do código** — Vídeo no YouTube explicando o código Spring Boot (legenda embutida via CC)
   - [Assistir no YouTube](https://youtu.be/SCN13gswS3U)
 
 ---
