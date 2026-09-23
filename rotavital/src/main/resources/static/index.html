@@ -561,9 +561,7 @@
                         <label for="form-prioridade">Prioridade</label>
                         <select id="form-prioridade">
                             <option value="URGENTE">URGENTE</option>
-                            <option value="ALTA">ALTA</option>
-                            <option value="MEDIA">MÉDIA</option>
-                            <option value="BAIXA">BAIXA</option>
+                            <option value="NORMAL">NORMAL</option>
                         </select>
                     </div>
                 </div>
@@ -574,6 +572,7 @@
                             <option value="HEMACIAS">HEMÁCIAS</option>
                             <option value="PLAQUETAS">PLAQUETAS</option>
                             <option value="PLASMA">PLASMA</option>
+                            <option value="CRIOPRECIPITADO">CRIOPRECIPITADO</option>
                         </select>
                     </div>
                     <div>
@@ -973,7 +972,10 @@
                 body: JSON.stringify(body)
             });
 
-            if (!resp.ok) throw new Error('Erro ao cadastrar requisição.');
+            if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                throw new Error(errData.message || `Erro HTTP ${resp.status}`);
+            }
 
             showToast('✅ Requisição cadastrada com sucesso! Pronto para alocar bolsas por FEFO.');
             document.getElementById('box-novo-pedido').style.display = 'none';
