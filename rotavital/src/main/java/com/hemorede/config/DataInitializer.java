@@ -5,6 +5,7 @@ import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.Prioridade;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.domain.enums.StatusRota;
 import com.hemorede.domain.enums.StatusVeiculo;
 import com.hemorede.domain.enums.TipoRefrigeracao;
 import com.hemorede.domain.enums.TipoSanguineo;
@@ -13,13 +14,17 @@ import com.hemorede.domain.model.Doador;
 import com.hemorede.domain.model.Estoque;
 import com.hemorede.domain.model.Hospital;
 import com.hemorede.domain.model.ItemRequisicao;
+import com.hemorede.domain.model.Motorista;
 import com.hemorede.domain.model.Requisicao;
+import com.hemorede.domain.model.Rota;
 import com.hemorede.domain.model.Veiculo;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.DoadorRepository;
 import com.hemorede.repository.EstoqueRepository;
 import com.hemorede.repository.HospitalRepository;
+import com.hemorede.repository.MotoristaRepository;
 import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.repository.RotaRepository;
 import com.hemorede.repository.VeiculoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +40,8 @@ import java.util.List;
 
 /**
  * Inicializador de dados sintéticos para demonstração e testes manuais da aplicação.
- * Atende à issue #9 ("Inicializar Dados Sintéticos com Hospitais e Estoque").
+ * Atende à issue #9 ("Inicializar Dados Sintéticos com Hospitais e Estoque") e
+ * fornece a massa para o painel de indicadores estatísticos e operacionais (HU07).
  *
  * Ativado apenas quando hemorede.seed.enabled=true (desativado por padrão em testes unitários/integrados).
  */
@@ -50,6 +56,8 @@ public class DataInitializer implements CommandLineRunner {
     private final DoadorRepository doadorRepository;
     private final BolsaRepository bolsaRepository;
     private final VeiculoRepository veiculoRepository;
+    private final MotoristaRepository motoristaRepository;
+    private final RotaRepository rotaRepository;
     private final RequisicaoRepository requisicaoRepository;
 
     public DataInitializer(HospitalRepository hospitalRepository,
@@ -57,12 +65,16 @@ public class DataInitializer implements CommandLineRunner {
                            DoadorRepository doadorRepository,
                            BolsaRepository bolsaRepository,
                            VeiculoRepository veiculoRepository,
+                           MotoristaRepository motoristaRepository,
+                           RotaRepository rotaRepository,
                            RequisicaoRepository requisicaoRepository) {
         this.hospitalRepository = hospitalRepository;
         this.estoqueRepository = estoqueRepository;
         this.doadorRepository = doadorRepository;
         this.bolsaRepository = bolsaRepository;
         this.veiculoRepository = veiculoRepository;
+        this.motoristaRepository = motoristaRepository;
+        this.rotaRepository = rotaRepository;
         this.requisicaoRepository = requisicaoRepository;
     }
 
@@ -105,26 +117,66 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // 5. Veículos com refrigerações diversas
-        veiculoRepository.save(new Veiculo(null, "ROTA-1001", TipoRefrigeracao.REFRIGERADO_2_6, 200, StatusVeiculo.DISPONIVEL));
+        Veiculo v1 = veiculoRepository.save(new Veiculo(null, "ROTA-1001", TipoRefrigeracao.REFRIGERADO_2_6, 200, StatusVeiculo.DISPONIVEL));
         veiculoRepository.save(new Veiculo(null, "ROTA-1002", TipoRefrigeracao.CONGELADO_MENOS_20, 150, StatusVeiculo.DISPONIVEL));
         veiculoRepository.save(new Veiculo(null, "ROTA-1003", TipoRefrigeracao.AMBIENTE_CONTROLADO_20_24, 100, StatusVeiculo.DISPONIVEL));
 
-        // 6. Requisição Inicial de Teste (vinculada ao Hospital Norte N1)
-        Requisicao req = new Requisicao();
-        req.setHospitalSolicitante(h1);
-        req.setPrioridade(Prioridade.URGENTE);
-        req.setDataSolicitacao(LocalDateTime.now());
-        req.setStatus(StatusRequisicao.PENDENTE);
+        // 6. Motorista Sintético
+        Motorista motorista = motoristaRepository.save(new Motorista(null, "Carlos Eduardo Silva", "12345678900", "(81) 98765-4321"));
 
-        ItemRequisicao item = new ItemRequisicao();
-        item.setRequisicao(req);
-        item.setHemoComponente(HemoComponente.HEMACIAS);
-        item.setTipoSanguineo(TipoSanguineo.O_POS);
-        item.setQuantidade(1);
-        req.setItens(List.of(item));
+        // 7. Rota Concluída para cálculo de atendimento e tempo nos indicadores (HU07)
+        Rota rotaConcluida = new Rota();
+        rotaConcluida.setVeiculo(v1);
+        rotaConcluida.setMotorista(motorista);
+        rotaConcluida.setStatus(StatusRota.CONCLUIDA);
+        rotaConcluida.setDataSaida(LocalDateTime.now().minusMinutes(75));
+        rotaConcluida.setDataChegadaPrevista(LocalDateTime.now().minusMinutes(30));
+        rotaRepository.save(rotaConcluida);
 
-        requisicaoRepository.save(req);
+        // 8. Requisições Sintéticas com múltiplos status (Pendente, Aprovada e Entregue)
+        Requisicao req1 = new Requisicao();
+        req1.setHospitalSolicitante(h1);
+        req1.setPrioridade(Prioridade.URGENTE);
+        req1.setDataSolicitacao(LocalDateTime.now().minusHours(1));
+        req1.setStatus(StatusRequisicao.PENDENTE);
 
-        log.info("Carga inicial de dados sintéticos concluída com sucesso! (Hospitais N1-N5, Bolsas, Veículos e Requisição #1 prontos para uso)");
+        ItemRequisicao item1 = new ItemRequisicao();
+        item1.setRequisicao(req1);
+        item1.setHemoComponente(HemoComponente.HEMACIAS);
+        item1.setTipoSanguineo(TipoSanguineo.O_POS);
+        item1.setQuantidade(1);
+        req1.setItens(List.of(item1));
+        requisicaoRepository.save(req1);
+
+        Requisicao req2 = new Requisicao();
+        req2.setHospitalSolicitante(h2);
+        req2.setPrioridade(Prioridade.URGENTE);
+        req2.setDataSolicitacao(LocalDateTime.now().minusHours(2));
+        req2.setStatus(StatusRequisicao.APROVADA);
+
+        ItemRequisicao item2 = new ItemRequisicao();
+        item2.setRequisicao(req2);
+        item2.setHemoComponente(HemoComponente.PLAQUETAS);
+        item2.setTipoSanguineo(TipoSanguineo.A_POS);
+        item2.setQuantidade(2);
+        req2.setItens(List.of(item2));
+        requisicaoRepository.save(req2);
+
+        Requisicao req3 = new Requisicao();
+        req3.setHospitalSolicitante(h3);
+        req3.setPrioridade(Prioridade.NORMAL);
+        req3.setDataSolicitacao(LocalDateTime.now().minusMinutes(75));
+        req3.setStatus(StatusRequisicao.ENTREGUE);
+        req3.setRota(rotaConcluida);
+
+        ItemRequisicao item3 = new ItemRequisicao();
+        item3.setRequisicao(req3);
+        item3.setHemoComponente(HemoComponente.HEMACIAS);
+        item3.setTipoSanguineo(TipoSanguineo.O_NEG);
+        item3.setQuantidade(1);
+        req3.setItens(List.of(item3));
+        requisicaoRepository.save(req3);
+
+        log.info("Carga inicial de dados sintéticos concluída com sucesso! (Hospitais N1-N5, Bolsas, Veículos, Motorista e Requisições prontos para uso)");
     }
 }
