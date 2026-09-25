@@ -61,10 +61,11 @@ class IndicadoresServiceTest {
     @DisplayName("Deve calcular indicadores sobre entidades JPA de Bolsa e Requisição")
     void deveCalcularIndicadoresComEntidades() {
         // Rota concluída com tempo de 45 minutos (chegada prevista - solicitação)
+        LocalDateTime base = LocalDateTime.now();
         Rota rota = new Rota();
         rota.setStatus(StatusRota.CONCLUIDA);
-        rota.setDataSaida(LocalDateTime.now().minusMinutes(60));
-        rota.setDataChegadaPrevista(LocalDateTime.now().minusMinutes(15));
+        rota.setDataSaida(base.minusMinutes(60));
+        rota.setDataChegadaPrevista(base.minusMinutes(15));
 
         Requisicao reqPendente = new Requisicao();
         reqPendente.setStatus(StatusRequisicao.PENDENTE);
@@ -77,7 +78,7 @@ class IndicadoresServiceTest {
         Requisicao reqEntregue = new Requisicao();
         reqEntregue.setStatus(StatusRequisicao.ENTREGUE);
         reqEntregue.setPrioridade(Prioridade.NORMAL);
-        reqEntregue.setDataSolicitacao(LocalDateTime.now().minusMinutes(60));
+        reqEntregue.setDataSolicitacao(base.minusMinutes(60));
         reqEntregue.setRota(rota);
 
         List<Bolsa> bolsas = DadosSinteticos.criarBolsasExemplo();

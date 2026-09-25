@@ -11,6 +11,8 @@ import com.hemorede.domain.model.Requisicao;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.HospitalRepository;
 import com.hemorede.repository.RequisicaoRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +46,16 @@ class IndicadoresControllerIntegrationTest {
     @Autowired
     private HospitalRepository hospitalRepository;
 
+    @BeforeEach
+    @AfterEach
+    void limparBanco() {
+        requisicaoRepository.deleteAll();
+        bolsaRepository.deleteAll();
+    }
+
     @Test
     @DisplayName("Cenário 2 da HU07: Banco vazio deve retornar estado neutro sem números inventados")
     void deveRetornarEstadoVazioQuandoBancoEstiverVazio() throws Exception {
-        requisicaoRepository.deleteAll();
-        bolsaRepository.deleteAll();
-
         mockMvc.perform(get("/api/indicadores"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estoque.totalDisponivel", is(0)))

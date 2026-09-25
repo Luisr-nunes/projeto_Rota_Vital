@@ -125,19 +125,20 @@ public class DataInitializer implements CommandLineRunner {
         Motorista motorista = motoristaRepository.save(new Motorista(null, "Carlos Eduardo Silva", "12345678900", "(81) 98765-4321"));
 
         // 7. Rota Concluída para cálculo de atendimento e tempo nos indicadores (HU07)
+        LocalDateTime base = LocalDateTime.now();
         Rota rotaConcluida = new Rota();
         rotaConcluida.setVeiculo(v1);
         rotaConcluida.setMotorista(motorista);
         rotaConcluida.setStatus(StatusRota.CONCLUIDA);
-        rotaConcluida.setDataSaida(LocalDateTime.now().minusMinutes(75));
-        rotaConcluida.setDataChegadaPrevista(LocalDateTime.now().minusMinutes(30));
+        rotaConcluida.setDataSaida(base.minusMinutes(75));
+        rotaConcluida.setDataChegadaPrevista(base.minusMinutes(30));
         rotaRepository.save(rotaConcluida);
 
         // 8. Requisições Sintéticas com múltiplos status (Pendente, Aprovada e Entregue)
         Requisicao req1 = new Requisicao();
         req1.setHospitalSolicitante(h1);
         req1.setPrioridade(Prioridade.URGENTE);
-        req1.setDataSolicitacao(LocalDateTime.now().minusHours(1));
+        req1.setDataSolicitacao(base.minusHours(1));
         req1.setStatus(StatusRequisicao.PENDENTE);
 
         ItemRequisicao item1 = new ItemRequisicao();
@@ -151,7 +152,7 @@ public class DataInitializer implements CommandLineRunner {
         Requisicao req2 = new Requisicao();
         req2.setHospitalSolicitante(h2);
         req2.setPrioridade(Prioridade.URGENTE);
-        req2.setDataSolicitacao(LocalDateTime.now().minusHours(2));
+        req2.setDataSolicitacao(base.minusHours(2));
         req2.setStatus(StatusRequisicao.APROVADA);
 
         ItemRequisicao item2 = new ItemRequisicao();
@@ -165,7 +166,7 @@ public class DataInitializer implements CommandLineRunner {
         Requisicao req3 = new Requisicao();
         req3.setHospitalSolicitante(h3);
         req3.setPrioridade(Prioridade.NORMAL);
-        req3.setDataSolicitacao(LocalDateTime.now().minusMinutes(75));
+        req3.setDataSolicitacao(base.minusMinutes(75));
         req3.setStatus(StatusRequisicao.ENTREGUE);
         req3.setRota(rotaConcluida);
 
