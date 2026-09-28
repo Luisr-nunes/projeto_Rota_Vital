@@ -6,6 +6,7 @@ import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Doador;
 import com.hemorede.exception.DoacaoForaDoIntervaloException;
+import com.hemorede.exception.DoadorInativoException;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.DoadorRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ public class DoacaoService {
 
     public void registrarDoacao(Long doadorId, LocalDate dataDoacao) {
         Doador doador = buscarDoador(doadorId);
+        validarDoadorAtivo(doador);
         validarIntervalo(doador, dataDoacao);
 
         doador.setDataUltimaDoacao(dataDoacao);
@@ -51,6 +53,7 @@ public class DoacaoService {
                                  LocalDate dataColeta,
                                  LocalDate validade) {
         Doador doador = buscarDoador(doadorId);
+        validarDoadorAtivo(doador);
         validarIntervalo(doador, dataColeta);
 
         doador.setDataUltimaDoacao(dataColeta);
@@ -71,6 +74,13 @@ public class DoacaoService {
     private Doador buscarDoador(Long doadorId) {
         return doadorRepository.findById(doadorId)
                 .orElseThrow(() -> new IllegalArgumentException("Doador não encontrado: " + doadorId));
+    }
+
+    private void validarDoadorAtivo(Doador doador) {
+        if (!doador.isAtivo()) {
+            throw new DoadorInativoException(
+                    "Doador " + doador.getId() + " está inativo e não pode realizar doações.");
+        }
     }
 
     private void validarIntervalo(Doador doador, LocalDate dataDoacao) {

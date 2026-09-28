@@ -68,6 +68,22 @@ class DoacaoControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("POST /api/doacoes retorna 422 quando o doador está inativo")
+    void deveRejeitarDoadorInativo() throws Exception {
+        Doador doador = criarDoador("100.200.300-03", LocalDate.now().minusDays(90));
+        doador.setAtivo(false);
+        doadorRepository.save(doador);
+
+        mockMvc.perform(post("/api/doacoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(novaRequisicao(doador.getId()))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.erro").value("DoadorInativoException"))
+                .andExpect(jsonPath("$.mensagem").value("Doador " + doador.getId()
+                        + " está inativo e não pode realizar doações."));
+    }
+
+    @Test
     @DisplayName("POST /api/doacoes retorna 400 quando falta campo obrigatório")
     void deveRejeitarCampoObrigatorioAusente() throws Exception {
         mockMvc.perform(post("/api/doacoes")
