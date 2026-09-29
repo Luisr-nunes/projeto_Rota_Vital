@@ -14,6 +14,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             IncompatibilidadeSanguineaException.class,
             EstoqueInsuficienteException.class,
+            DoadorInativoException.class,
             DoacaoForaDoIntervaloException.class,
             VeiculoIncompativelException.class,
             RotaIndisponivelException.class
