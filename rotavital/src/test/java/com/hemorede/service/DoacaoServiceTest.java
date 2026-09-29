@@ -2,6 +2,7 @@ package com.hemorede.service;
 
 import com.hemorede.domain.model.Doador;
 import com.hemorede.exception.DoacaoForaDoIntervaloException;
+import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.DoadorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +30,7 @@ class DoacaoServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(DoadorRepository.class);
-        service = new DoacaoService(repository);
+        service = new DoacaoService(repository, mock(BolsaRepository.class));
         ReflectionTestUtils.setField(service, "intervaloMinimoDias", INTERVALO);
     }
 
