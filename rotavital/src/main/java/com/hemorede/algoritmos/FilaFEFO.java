@@ -34,12 +34,15 @@ public class FilaFEFO {
 
     /**
      * Cria uma nova fila FEFO ordenada pela data de validade mais próxima.
-     * Em caso de empate de validade, utiliza a data de coleta (mais antiga primeiro).
+     * Em caso de empate de validade, utiliza a data de coleta (mais antiga primeiro) e,
+     * persistindo o empate, o id da bolsa (menor id primeiro), garantindo ordem determinística
+     * independentemente da ordem de inserção.
      */
     public FilaFEFO() {
         this.fila = new PriorityQueue<>(
                 Comparator.comparing(Bolsa::getDataValidade, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(Bolsa::getDataColeta, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Bolsa::getId, Comparator.nullsLast(Comparator.naturalOrder()))
         );
     }
 
