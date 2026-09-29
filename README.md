@@ -212,6 +212,34 @@ O **Rota Vital** é uma aplicação web que:
 
 ---
 
+### Entrega U1
+
+**Fechamento integrado da Unidade 1 — Sprint 08e09 (21/09 a 02/10/2026)**
+
+#### Links de evidência
+
+| Item | Link |
+|------|------|
+| Screencast do sistema (U1) | ⏳ pendente — PI2-131 (depende do deploy no Render) |
+| Screencast do código | [Assistir no YouTube](https://youtu.be/SCN13gswS3U) |
+| URL de produção (Render) | ⏳ pendente — PI2-88 |
+| Board Jira | [csprj-adsr-3p-e5.atlassian.net/browse/PI2](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
+| Histórias de usuário | [doc/historias_de_usuario.md](doc/historias_de_usuario.md) |
+| Protótipo Lo-Fi (Figma) | [Abrir no Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6) |
+| Screencast do protótipo | [Assistir no YouTube](https://www.youtube.com/watch?v=-Tl4rPthJ5Q) |
+
+#### Evidências por disciplina
+
+| Disciplina | Evidência |
+|------------|-----------|
+| **POO** | Controllers REST em [`rotavital/src/main/java/com/hemorede/controller`](rotavital/src/main/java/com/hemorede/controller) e testes de integração em [`rotavital/src/test/java/com/hemorede`](rotavital/src/test/java/com/hemorede) (HU01 doação, HU03 requisição, HU05 rota, indicadores) |
+| **AED** | [Complexidade Big-O](doc/aed-complexidade.md) e [escopo do grafo](doc/escopo-grafo.md); Dijkstra, FEFO e índice hash em `com.hemorede.algoritmos` |
+| **EST** | [Relatório de análise descritiva](doc/relatorio-analise-descritiva-u1.md) e [indicadores estatísticos](doc/indicadores-estatisticos.md) |
+| **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md) e [pipeline CI/CD](.github/workflows/ci.yml) |
+| **RSD** | [Topologia de rede](doc/topologia.md) e [contratos de API](doc/contratos-api.md) (telemetria: `doc/telemetria.md`, em elaboração) |
+
+---
+
 ### Entrega 03
 
 **Data de entrega:** 19/10/2026
