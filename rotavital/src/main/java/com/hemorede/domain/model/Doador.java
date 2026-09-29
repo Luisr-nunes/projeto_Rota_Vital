@@ -28,6 +28,13 @@ public class Doador {
 
     private LocalDate dataUltimaDoacao;
 
+    /**
+     * Indica se o doador pode participar de novas doações.
+     * O valor padrão preserva o comportamento dos cadastros existentes.
+     */
+    @Column(nullable = false)
+    private boolean ativo = true;
+
     @JsonIgnore
     @OneToMany(mappedBy = "doador", cascade = CascadeType.ALL)
     private List<Bolsa> bolsas = new ArrayList<>();
@@ -83,6 +90,14 @@ public class Doador {
 
     public void setDataUltimaDoacao(LocalDate dataUltimaDoacao) {
         this.dataUltimaDoacao = dataUltimaDoacao;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
     }
 
     public List<Bolsa> getBolsas() {
