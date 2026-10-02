@@ -233,7 +233,7 @@ O **Rota Vital** é uma aplicação web que:
 | Disciplina | Evidência |
 |------------|-----------|
 | **POO** | Controllers REST em [`rotavital/src/main/java/com/hemorede/controller`](rotavital/src/main/java/com/hemorede/controller) e testes de integração em [`rotavital/src/test/java/com/hemorede`](rotavital/src/test/java/com/hemorede) (HU01 doação, HU03 requisição, HU05 rota, indicadores) |
-| **AED** | [Complexidade Big-O](doc/aed-complexidade.md) e [escopo do grafo](doc/escopo-grafo.md); Dijkstra, FEFO e índice hash em `com.hemorede.algoritmos` |
+| **AED** | **Entrega U1:** estruturas em C com malloc/free em [`aed/u1/c`](aed/u1/c), reimplementação Java em [`com.hemorede.estruturas`](rotavital/src/main/java/com/hemorede/estruturas) e [tradução comentada C → Java](doc/aed-u1-traducao-c-java.md). Material de apoio: [complexidade Big-O](doc/aed-complexidade.md) e [escopo do grafo](doc/escopo-grafo.md) |
 | **EST** | [Relatório de análise descritiva](doc/relatorio-analise-descritiva-u1.md) e [indicadores estatísticos](doc/indicadores-estatisticos.md) |
 | **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md) e [pipeline CI/CD](.github/workflows/ci.yml) |
 | **RSD** | [Topologia de rede](doc/topologia.md) e [contratos de API](doc/contratos-api.md) (telemetria: `doc/telemetria.md`, em elaboração) |
