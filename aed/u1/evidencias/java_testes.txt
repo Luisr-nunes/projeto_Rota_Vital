@@ -1,0 +1,6 @@
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.hemorede.estruturas.EstruturasU1Test$Arvore
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.hemorede.estruturas.EstruturasU1Test$Fila
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.hemorede.estruturas.EstruturasU1Test$Gestao
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.hemorede.estruturas.EstruturasU1Test$Lista
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.hemorede.estruturas.EstruturasU1Test$Pilha
+Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.048 s -- in com.hemorede.estruturas.EstruturasU1Test
