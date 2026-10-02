@@ -1,0 +1,804 @@
+% Relatório técnico — AED, Unidade 1 — Projeto Integrador Rota Vital
+% Compilar com: xelatex relatorio-aed-u1.tex (duas vezes, para o sumário)
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage{fontspec}
+\setmainfont{Liberation Serif}
+\setmonofont{DejaVu Sans Mono}[Scale=0.82]
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=brazilian]{portuguese}
+\usepackage[top=3cm,left=3cm,bottom=2cm,right=2cm]{geometry}
+\usepackage{setspace}
+\usepackage{indentfirst}
+\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{float}
+\setlength{\emergencystretch}{3em}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\onehalfspacing
+
+% ---------- Títulos no estilo ABNT (NBR 6024) ----------
+\titleformat{\chapter}[hang]{\normalfont\bfseries}{\thechapter}{0.6em}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\titleformat{name=\chapter,numberless}[block]{\normalfont\bfseries\filcenter}{}{0pt}{\MakeUppercase}
+\titleformat{\section}[hang]{\normalfont\bfseries}{\thesection}{0.6em}{}
+\titlespacing*{\section}{0pt}{18pt}{12pt}
+\titleformat{\subsection}[hang]{\normalfont}{\thesubsection}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\newcommand{\semnumero}[1]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}}
+
+% ---------- Sumário ----------
+\renewcommand{\cftchapfont}{\bfseries}
+\renewcommand{\cftchappagefont}{\bfseries}
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\contentsname}{SUMÁRIO}
+\renewcommand{\cfttoctitlefont}{\hfill\bfseries}
+\renewcommand{\cftaftertoctitle}{\hfill}
+\setlength{\cftbeforechapskip}{4pt}
+
+% ---------- Legendas (título em cima, fonte embaixo) ----------
+\captionsetup{font=small,labelsep=endash,justification=centering,singlelinecheck=false,skip=4pt}
+\captionsetup[lstlisting]{font=small,labelsep=endash}
+\renewcommand{\lstlistingname}{Código}
+\newcommand{\fonte}[1][Elaborado pelos autores (2026).]{\par\vspace{2pt}{\centering\small Fonte: #1\par}\vspace{6pt}}
+
+% ---------- Listagens ----------
+\lstset{
+  basicstyle=\ttfamily\small\linespread{1.0}\selectfont,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{black!60},
+  stringstyle=\color{black!80},
+  frame=lines,
+  framesep=4pt,
+  xleftmargin=6pt,
+  numbers=left,
+  numberstyle=\tiny\color{black!50},
+  numbersep=6pt,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  tabsize=4,
+  aboveskip=8pt,
+  belowskip=2pt,
+  captionpos=t
+}
+
+% ---------- Cabeçalho: número da página no canto superior direito ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyhead[R]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+\newcommand{\cod}[1]{\texttt{#1}}
+
+\begin{document}
+\pagestyle{empty}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+% =====================================================================
+% CAPA
+% =====================================================================
+\begin{center}\thispagestyle{empty}
+\begin{center}
+\onehalfspacing
+\textbf{CESAR SCHOOL}\\
+\textbf{CURSO DE ANÁLISE E DESENVOLVIMENTO DE SISTEMAS}\\
+\textbf{PROJETO INTEGRADOR — 3º PERÍODO — 2026.2}
+
+\vspace{2.2cm}
+
+João Pedro Cavalcanti Souza\\
+Lucas Henrique Gomes Medeiros\\
+Luis Felipe Farias Nunes\\
+Luis Lucena Wanderley G.\\
+Mariana Xavier Bezerra\\
+Matheus Rodrigues Larré\\
+Micaella Maria Barbosa Cabral
+
+\vfill
+
+\textbf{ESTRUTURAS DE DADOS DO SISTEMA ROTA VITAL:}\\
+implementação em C com gerenciamento manual de memória\\
+e tradução comentada para Java
+
+\vfill
+
+RECIFE\\
+2026
+\end{center}
+\end{center}\newpage
+
+% =====================================================================
+% FOLHA DE ROSTO
+% =====================================================================
+\begin{center}\thispagestyle{empty}
+\begin{center}
+\onehalfspacing
+João Pedro Cavalcanti Souza\\
+Lucas Henrique Gomes Medeiros\\
+Luis Felipe Farias Nunes\\
+Luis Lucena Wanderley G.\\
+Mariana Xavier Bezerra\\
+Matheus Rodrigues Larré\\
+Micaella Maria Barbosa Cabral
+
+\vfill
+
+\textbf{ESTRUTURAS DE DADOS DO SISTEMA ROTA VITAL:}\\
+implementação em C com gerenciamento manual de memória\\
+e tradução comentada para Java
+\end{center}
+
+\vspace{1.5cm}
+
+\begin{flushright}
+\begin{minipage}{0.55\textwidth}
+\singlespacing
+\small
+Relatório técnico apresentado à disciplina de Algoritmos e Estruturas de Dados, como parte da entrega da Unidade 1 do Projeto Integrador do 3º período do curso de Análise e Desenvolvimento de Sistemas da CESAR School.
+\end{minipage}
+\end{flushright}
+
+\vfill
+
+\begin{center}
+RECIFE\\
+2026
+\end{center}
+\end{center}\newpage
+
+% =====================================================================
+% RESUMO
+% =====================================================================
+\chapter*{RESUMO}
+\thispagestyle{empty}
+
+\begin{singlespace}
+Este relatório descreve as estruturas de dados que sustentam o domínio do Rota Vital, sistema de gestão e distribuição de hemocomponentes desenvolvido no Projeto Integrador. Foram implementadas, primeiro em linguagem C e com alocação manual de memória, uma lista encadeada para o estoque de bolsas, uma fila para as requisições hospitalares, uma pilha para o histórico de operações do estoque e uma árvore binária de busca para o catálogo de bolsas por identificador. Em seguida, as mesmas estruturas foram reescritas em Java, sobre as entidades já usadas pela aplicação Spring Boot, preservando os algoritmos da versão em C. O texto justifica a escolha de cada estrutura a partir das necessidades do domínio, compara as duas implementações trecho a trecho e apresenta os testes aplicados às duas versões, com os mesmos cenários. Os resultados mostram que as operações de inserção, remoção e consulta se comportam da mesma forma nas duas linguagens e que a versão em C libera toda a memória que aloca.
+
+\vspace{12pt}
+\noindent\textbf{Palavras-chave:} estruturas de dados; listas encadeadas; árvore binária de busca; alocação dinâmica de memória; Java.
+\end{singlespace}
+
+% =====================================================================
+% SUMÁRIO
+% =====================================================================
+\chapter*{SUMÁRIO}
+\thispagestyle{empty}
+\makeatletter\@starttoc{toc}\makeatother
+
+\cleardoublepage
+\pagestyle{fancy}
+\fancypagestyle{plain}{\fancyhf{}\fancyhead[R]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+% =====================================================================
+\chapter{Introdução}
+% =====================================================================
+
+O Rota Vital é uma aplicação web em Java com Spring Boot que apoia a rede de sangue na gestão do estoque de hemocomponentes, no atendimento às requisições dos hospitais e na distribuição das bolsas. O sistema é desenvolvido ao longo do semestre no Projeto Integrador e reúne contribuições de cinco disciplinas, cabendo a Algoritmos e Estruturas de Dados (AED) as estruturas e os algoritmos que organizam os dados do domínio.
+
+Na Unidade 1, a disciplina de AED avalia o raciocínio por trás das estruturas lineares e das árvores binárias, e não apenas o funcionamento do código. Por esse motivo, a entrega exige que cada estrutura seja escrita primeiro em C, com alocação e liberação explícitas de memória (\cod{malloc} e \cod{free}) e manipulação direta de ponteiros, e depois reimplementada em Java, de forma que possa ser usada pela aplicação. Um texto de tradução comentada deve explicar por que a versão Java corresponde à versão em C.
+
+Este relatório cumpre essa exigência. O Capítulo 2 apresenta os objetivos; o Capítulo 3 descreve a modelagem do domínio e justifica a escolha das estruturas; o Capítulo 4 expõe a metodologia de desenvolvimento e de testes; o Capítulo 5, parte central do trabalho, traz a tradução comentada de cada estrutura; o Capítulo 6 apresenta os testes e seus resultados; o Capítulo 7 mostra como a aplicação consome as classes Java; e o Capítulo 8 reúne as considerações finais.
+
+% =====================================================================
+\chapter{Objetivos}
+% =====================================================================
+
+\section{Objetivo geral}
+
+Implementar as estruturas básicas de domínio do Rota Vital (estoque, requisições e histórico de operações) em C, com gerenciamento manual de memória, e reimplementá-las em Java, demonstrando a equivalência lógica entre as duas versões.
+
+\section{Objetivos específicos}
+
+\begin{enumerate}[label=\alph*), leftmargin=1.9cm, itemsep=0pt]
+  \item modelar as entidades do domínio necessárias às estruturas da Unidade 1;
+  \item justificar a escolha de lista, fila, pilha e árvore binária de busca para cada necessidade do sistema;
+  \item implementar as operações de inserção, remoção e consulta, incluindo funções recursivas;
+  \item reescrever as estruturas em Java sem dependência do framework, para que possam ser usadas pelos serviços da aplicação;
+  \item verificar as duas versões com os mesmos cenários de teste e confirmar a ausência de vazamento de memória na versão em C.
+\end{enumerate}
+
+% =====================================================================
+\chapter{Modelagem do domínio}
+% =====================================================================
+
+\section{Entidades}
+
+As estruturas da Unidade 1 manipulam duas entidades do domínio: a bolsa de hemocomponente e a requisição hospitalar. Na aplicação, elas já existiam como entidades JPA (\cod{Bolsa}, \cod{Requisicao} e \cod{ItemRequisicao}). Para facilitar a tradução, as estruturas (\cod{struct}) em C foram definidas a partir dessas classes, com os mesmos nomes de campos e de constantes de enumeração, como mostra a Tabela~\ref{tab:entidades}.
+
+\begin{table}[H]
+\caption{Correspondência entre as entidades Java e os tipos em C}
+\label{tab:entidades}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}p{3.4cm}X@{}}
+\toprule
+\textbf{Java} & \textbf{C (\cod{dominio.h})} & \textbf{Observação} \\
+\midrule
+\cod{Bolsa} & \cod{Bolsa} & Mesmos campos: identificador, componente, tipo sanguíneo, datas de coleta e validade, situação. \cod{LocalDate} foi representado por \cod{struct Data}. Os relacionamentos JPA (doador e estoque) não são usados pelas estruturas e ficaram de fora. \\
+\cod{Requisicao} e \cod{ItemRequisicao} & \cod{Requisicao} & Em C, a requisição carrega um único item (componente, tipo e quantidade). Em Java, a fila guarda a entidade completa, com sua lista de itens. \\
+\cod{HemoComponente}, \cod{TipoSanguineo}, \cod{StatusBolsa}, \cod{Prioridade} & enumerações homônimas & Mesmas constantes e na mesma ordem. \\
+\bottomrule
+\end{tabularx}
+\fonte
+\end{table}
+
+\section{Escolha das estruturas}
+
+O estoque do hemocentro muda de tamanho continuamente: doações entram, bolsas saem para hospitais e outras são descartadas, e não há um limite conhecido em tempo de compilação. Um vetor exigiria realocação e cópia dos elementos ao crescer, além de deslocamento ao remover uma bolsa do meio. Por isso optou-se por uma \textbf{lista simplesmente encadeada}, na qual cada bolsa ocupa um nó alocado individualmente e a remoção se resume a religar ponteiros (TENENBAUM; LANGSAM; AUGENSTEIN, 1995). A lista mantém um ponteiro para o último nó, o que permite inserir no fim sem percorrê-la.
+
+As requisições dos hospitais devem ser atendidas na ordem em que chegam, o que caracteriza a disciplina FIFO (\textit{first in, first out}). Uma \textbf{fila encadeada} com ponteiros para o início e para o fim realiza a inserção e a retirada em tempo constante (CORMEN \textit{et al.}, 2012).
+
+O histórico de operações do estoque tem duas finalidades: auditoria e a possibilidade de desfazer a última operação registrada por engano. Como desfazer sempre atua sobre a operação mais recente, a estrutura adequada é a \textbf{pilha} (LIFO, \textit{last in, first out}), também encadeada.
+
+Por fim, consultar uma bolsa pelo identificador na lista exige percorrê-la, com custo proporcional ao número de bolsas. Para essa consulta foi implementado um catálogo em \textbf{árvore binária de busca} (ABB), em que cada comparação descarta uma subárvore inteira, e cujo percurso em ordem simétrica lista as bolsas ordenadas pelo identificador (ZIVIANI, 2011). A ABB foi também o lugar natural para exercitar a recursão: inserção, busca, remoção, percurso, altura e liberação da memória são recursivos.
+
+\section{Delimitação do escopo}
+
+Conforme o enunciado da Unidade 1, roteirização, priorização por validade (FEFO), índice por \textit{hash} e compatibilidade ABO/Rh ficam para a Unidade 2. Por isso a lista do estoque mantém as bolsas na ordem de chegada, sem ordená-las por validade, e a fila de requisições é FIFO pura: a prioridade (urgente ou normal) é apenas um atributo da requisição e não altera a ordem de atendimento nesta etapa.
+
+% =====================================================================
+\chapter{Metodologia}
+% =====================================================================
+
+O trabalho seguiu três etapas. Na primeira, cada estrutura foi implementada em C (padrão C99, compilador GCC), em um par de arquivos de cabeçalho e de implementação, com alocação dinâmica por meio de \cod{malloc} e \cod{free} (KERNIGHAN; RITCHIE, 1989) e testes próprios escritos em C. Na segunda, a estrutura foi reescrita em Java 17, no pacote \cod{com.hemorede.estruturas} da aplicação, mantendo os mesmos nomes de campos e a mesma sequência de passos de cada operação. Na terceira, os cenários de teste da versão em C foram reproduzidos em JUnit 5, de modo que as duas versões fossem verificadas com as mesmas entradas e os mesmos resultados esperados.
+
+Na versão em C, os testes foram executados de duas formas: compilados com o AddressSanitizer, que interrompe a execução diante de acesso a memória já liberada, e sob o Valgrind, que contabiliza as alocações e liberações e acusa blocos não liberados ao final. Na versão em Java, além dos testes da Unidade 1, foi executada a suíte completa da aplicação, para confirmar que as novas classes não interferem no restante do sistema.
+
+Uma decisão de projeto orientou toda a implementação em Java: as estruturas são encadeadas manualmente, por meio de classes internas que representam os nós, sem uso de \cod{ArrayList}, \cod{LinkedList}, \cod{ArrayDeque} ou \cod{TreeMap}. Usar essas coleções esconderia exatamente a lógica que a disciplina pede para demonstrar e quebraria a correspondência com o código em C.
+
+O código-fonte está no repositório do projeto\footnote{\url{https://github.com/Luisr-nunes/projeto_Rota_Vital}}, organizado conforme o Apêndice A.
+
+% =====================================================================
+\chapter{Implementação e tradução comentada}
+% =====================================================================
+
+Este capítulo apresenta, para cada estrutura, o trecho central do código em C, o trecho correspondente em Java e a explicação da equivalência entre eles. Os trechos foram reproduzidos dos arquivos do repositório, com os comentários resumidos.
+
+\section{Estoque: lista encadeada}
+
+A lista é composta por nós do tipo \cod{NoBolsa}, cada um com uma bolsa e um ponteiro para o próximo nó, e por um descritor \cod{ListaEstoque} com os ponteiros \cod{inicio} e \cod{fim} e o contador \cod{tamanho}. O Código~\ref{cod:lista-c} mostra a inserção e a remoção em C.
+
+\begin{lstlisting}[language=C,caption={Inserção e remoção na lista do estoque, em C (\cod{lista\_estoque.c})},label=cod:lista-c]
+int lista_inserir(ListaEstoque *lista, Bolsa bolsa) {
+    NoBolsa *novo;
+    if (lista_buscar(lista, bolsa.id) != NULL)
+        return LISTA_DUPLICADA;
+    novo = (NoBolsa *) malloc(sizeof(NoBolsa));
+    if (novo == NULL)
+        return LISTA_SEM_MEMORIA;
+    novo->bolsa = bolsa;
+    novo->proximo = NULL;
+    if (lista->fim == NULL)
+        lista->inicio = novo;
+    else
+        lista->fim->proximo = novo;
+    lista->fim = novo;
+    lista->tamanho++;
+    return LISTA_OK;
+}
+
+int lista_remover(ListaEstoque *lista, long id, Bolsa *removida) {
+    NoBolsa *anterior = NULL;
+    NoBolsa *atual = lista->inicio;
+    while (atual != NULL && atual->bolsa.id != id) {
+        anterior = atual;
+        atual = atual->proximo;
+    }
+    if (atual == NULL)
+        return 0;
+    if (anterior == NULL)
+        lista->inicio = atual->proximo;
+    else
+        anterior->proximo = atual->proximo;
+    if (atual == lista->fim)
+        lista->fim = anterior;
+    if (removida != NULL)
+        *removida = atual->bolsa;   /* copia antes de liberar */
+    free(atual);
+    lista->tamanho--;
+    return 1;
+}
+\end{lstlisting}
+\fonte
+
+\begin{lstlisting}[language=Java,caption={Inserção e remoção na lista do estoque, em Java (\cod{ListaEstoque.java})},label=cod:lista-java]
+public boolean inserir(Bolsa bolsa) {
+    validar(bolsa);
+    if (buscar(bolsa.getId()) != null)
+        return false;
+    NoBolsa novo = new NoBolsa(bolsa);
+    if (fim == null)
+        inicio = novo;
+    else
+        fim.proximo = novo;
+    fim = novo;
+    tamanho++;
+    return true;
+}
+
+public Bolsa remover(long id) {
+    NoBolsa anterior = null;
+    NoBolsa atual = inicio;
+    while (atual != null && atual.bolsa.getId() != id) {
+        anterior = atual;
+        atual = atual.proximo;
+    }
+    if (atual == null)
+        return null;
+    if (anterior == null)
+        inicio = atual.proximo;
+    else
+        anterior.proximo = atual.proximo;
+    if (atual == fim)
+        fim = anterior;
+    atual.proximo = null;
+    tamanho--;
+    return atual.bolsa;
+}
+\end{lstlisting}
+\fonte
+
+A classe interna \cod{NoBolsa}, com os campos \cod{bolsa} e \cod{proximo}, corresponde ao \cod{struct NoBolsa}, e os campos \cod{inicio}, \cod{fim} e \cod{tamanho} da classe \cod{ListaEstoque} são os mesmos do descritor em C. Na inserção, a expressão \cod{new NoBolsa(bolsa)} cumpre o papel do \cod{malloc} seguido das atribuições \cod{novo->bolsa = bolsa} e \cod{novo->proximo = NULL}, já que o construtor guarda a bolsa e o Java inicializa a referência \cod{proximo} com \cod{null}. O encadeamento no fim segue a mesma sequência nas duas linguagens: se a lista está vazia, o novo nó passa a ser o início; caso contrário, o último nó passa a apontar para ele; em ambos os casos, \cod{fim} é atualizado. A verificação de identificador duplicado também acontece antes da alocação nas duas versões, mudando apenas a forma de sinalizar o resultado (código \cod{LISTA\_DUPLICADA} em C e \cod{false} em Java).
+
+A remoção percorre a lista com dois ponteiros, \cod{anterior} e \cod{atual}, e trata os mesmos casos: se o nó removido é o primeiro, o início avança; se está no meio ou no fim, o nó anterior passa a apontar para o sucessor do removido; e, se o removido era o último, \cod{fim} recua para \cod{anterior}. Esse último ajuste é verificado explicitamente nos testes das duas versões, que removem a bolsa do fim e conferem qual nó passou a ser o último. A diferença está na liberação da memória. Em C, o nó precisa ser liberado com \cod{free(atual)}, e por isso a bolsa é copiada para o parâmetro de saída \cod{*removida} antes dessa chamada, pois acessar o nó depois dela seria uso de memória liberada. Em Java não há liberação explícita: depois que o nó deixa de ser referenciado pela lista, ele se torna inalcançável e é recolhido pelo coletor de lixo (ORACLE, 2021), o que permite devolver a bolsa diretamente. O caso de falta de memória, tratado em C pelo teste do retorno de \cod{malloc}, não tem equivalente no código Java, porque a própria máquina virtual lança \cod{OutOfMemoryError}.
+
+Há uma diferença de semântica que foi mantida de forma deliberada. Em C, o nó guarda uma cópia da bolsa, já que a atribuição entre estruturas copia o valor. Em Java, o nó guarda uma referência ao objeto recebido. Optou-se por não clonar a entidade em Java porque ela é gerenciada pelo JPA: interessa à aplicação que o objeto mantido na estrutura seja o mesmo objeto persistido, para que uma alteração de situação gravada pelo repositório seja vista também pela lista.
+
+A consulta preserva o mesmo comportamento nas duas linguagens. A função \cod{lista\_buscar} devolve um ponteiro para a bolsa dentro do nó, de modo que alterar a situação da bolsa por meio dele altera o próprio estoque; o método \cod{buscar} devolve a referência ao mesmo objeto guardado, com o mesmo efeito. A lista oferece ainda uma contagem recursiva das bolsas disponíveis de um tipo e componente, cujo caso base é o fim da lista (ponteiro nulo, resultado zero) e cujo passo soma um, se o nó atual atende ao critério, à contagem do restante da lista.
+
+\section{Requisições: fila encadeada}
+
+A fila usa a mesma organização em nós, com acesso restrito às extremidades: inserção pelo fim e retirada pelo início.
+
+\begin{lstlisting}[language=C,caption={Enfileirar e desenfileirar requisições, em C (\cod{fila\_requisicoes.c})},label=cod:fila-c]
+int fila_enfileirar(FilaRequisicoes *fila, Requisicao requisicao) {
+    NoRequisicao *novo = (NoRequisicao *) malloc(sizeof(NoRequisicao));
+    if (novo == NULL)
+        return 0;
+    novo->requisicao = requisicao;
+    novo->proximo = NULL;
+    if (fila->fim == NULL)
+        fila->inicio = novo;
+    else
+        fila->fim->proximo = novo;
+    fila->fim = novo;
+    fila->tamanho++;
+    return 1;
+}
+
+int fila_desenfileirar(FilaRequisicoes *fila, Requisicao *saida) {
+    NoRequisicao *removido;
+    if (fila->inicio == NULL)
+        return 0;
+    removido = fila->inicio;
+    if (saida != NULL)
+        *saida = removido->requisicao;
+    fila->inicio = removido->proximo;
+    if (fila->inicio == NULL)
+        fila->fim = NULL;
+    free(removido);
+    fila->tamanho--;
+    return 1;
+}
+\end{lstlisting}
+\fonte
+
+\begin{lstlisting}[language=Java,caption={Enfileirar e desenfileirar requisições, em Java (\cod{FilaRequisicoes.java})},label=cod:fila-java]
+public void enfileirar(Requisicao requisicao) {
+    Objects.requireNonNull(requisicao, "requisicao nao pode ser nula");
+    NoRequisicao novo = new NoRequisicao(requisicao);
+    if (fim == null)
+        inicio = novo;
+    else
+        fim.proximo = novo;
+    fim = novo;
+    tamanho++;
+}
+
+public Requisicao desenfileirar() {
+    if (inicio == null)
+        return null;
+    NoRequisicao removido = inicio;
+    inicio = removido.proximo;
+    if (inicio == null)
+        fim = null;
+    removido.proximo = null;
+    tamanho--;
+    return removido.requisicao;
+}
+\end{lstlisting}
+\fonte
+
+As duas versões realizam enfileiramento e desenfileiramento sem percorrer a fila, em tempo constante, porque mantêm os ponteiros para as duas extremidades. O método \cod{enfileirar} reproduz a lógica de \cod{fila\_enfileirar}: com a fila vazia, o novo nó é ao mesmo tempo início e fim; caso contrário, é ligado após o último. O ponto que exige mais cuidado está no desenfileiramento, na instrução que volta \cod{fim} para nulo quando a fila se esvazia. Em C, sem essa instrução, \cod{fim} continuaria apontando para o nó que acabou de ser liberado por \cod{free(removido)}, e o próximo enfileiramento escreveria em memória inválida ao executar \cod{fila->fim->proximo = novo}. Em Java não ocorreria acesso inválido, mas o efeito seria igualmente incorreto: \cod{fim} ainda referenciaria o nó antigo, o novo nó seria ligado a ele, \cod{inicio} permaneceria nulo e a requisição seria perdida. Por isso a instrução foi mantida na tradução, e os testes das duas versões esvaziam a fila e voltam a enfileirar para conferir esse caminho.
+
+A fila vazia é sinalizada em C pelo retorno zero, com a requisição devolvida por um parâmetro de saída, e em Java pelo retorno \cod{null}, já que o método devolve diretamente a referência. As consultas por identificador e por posição na fila são percursos sequenciais idênticos nas duas linguagens e não alteram a ordem de atendimento.
+
+\section{Histórico: pilha encadeada}
+
+A pilha mantém apenas o ponteiro para o \cod{topo}, e cada nó aponta para o nó imediatamente abaixo. Cada elemento é uma operação do estoque, formada pelo tipo (entrada ou saída) e pela bolsa envolvida.
+
+\begin{lstlisting}[language=C,caption={Empilhar e desempilhar operações, em C (\cod{pilha\_historico.c})},label=cod:pilha-c]
+int pilha_empilhar(PilhaHistorico *pilha, OperacaoEstoque operacao) {
+    NoOperacao *novo = (NoOperacao *) malloc(sizeof(NoOperacao));
+    if (novo == NULL)
+        return 0;
+    novo->operacao = operacao;
+    novo->abaixo = pilha->topo;
+    pilha->topo = novo;
+    pilha->tamanho++;
+    return 1;
+}
+
+int pilha_desempilhar(PilhaHistorico *pilha, OperacaoEstoque *saida) {
+    NoOperacao *removido;
+    if (pilha->topo == NULL)
+        return 0;
+    removido = pilha->topo;
+    if (saida != NULL)
+        *saida = removido->operacao;
+    pilha->topo = removido->abaixo;
+    free(removido);
+    pilha->tamanho--;
+    return 1;
+}
+\end{lstlisting}
+\fonte
+
+\begin{lstlisting}[language=Java,caption={Empilhar e desempilhar operações, em Java (\cod{PilhaHistorico.java})},label=cod:pilha-java]
+public void empilhar(OperacaoEstoque operacao) {
+    Objects.requireNonNull(operacao, "operacao nao pode ser nula");
+    topo = new NoOperacao(operacao, topo);
+    tamanho++;
+}
+
+public OperacaoEstoque desempilhar() {
+    if (topo == null)
+        return null;
+    NoOperacao removido = topo;
+    topo = removido.abaixo;
+    tamanho--;
+    return removido.operacao;
+}
+\end{lstlisting}
+\fonte
+
+Em C, empilhar envolve três passos explícitos: alocar o nó, fazê-lo apontar para o topo atual e torná-lo o novo topo. Em Java, a instrução \cod{topo = new NoOperacao(operacao, topo)} realiza os mesmos três passos em uma linha. A expressão à direita é avaliada antes da atribuição, de modo que o construtor recebe o topo antigo e o guarda no campo \cod{abaixo}, e só depois a referência \cod{topo} passa a apontar para o novo nó. Como um nó nunca muda de vizinho depois de empilhado, o campo \cod{abaixo} pôde ser declarado \cod{final} em Java. O desempilhamento é simétrico: guarda-se o nó do topo, o topo desce para o nó de baixo e o nó retirado é liberado, com \cod{free} em C e pela perda da última referência em Java. A operação registrada é uma estrutura em C e um \cod{record} em Java. O \cod{record} é imutável, o que corresponde ao fato de que, em C, a operação é copiada para dentro do nó e não é mais alterada.
+
+\section{Gestão do estoque: lista e pilha integradas}
+
+As entradas e saídas de bolsas não são feitas diretamente na lista, mas por um módulo de gestão que aplica a operação na lista e a registra na pilha. Esse módulo também implementa a operação de desfazer.
+
+\begin{lstlisting}[language=C,caption={Registro de saída e desfazer, em C (\cod{gestao\_estoque.c})},label=cod:gestao-c]
+int estoque_registrar_saida(GestaoEstoque *g, long id, Bolsa *saiu) {
+    OperacaoEstoque op;
+    Bolsa removida;
+    if (!lista_remover(g->estoque, id, &removida))
+        return 0;
+    op.tipo = OP_SAIDA;
+    op.bolsa = removida;
+    if (!pilha_empilhar(g->historico, op)) {
+        lista_inserir(g->estoque, removida);   /* desfaz a remocao */
+        return 0;
+    }
+    if (saiu != NULL)
+        *saiu = removida;
+    return 1;
+}
+
+int estoque_desfazer(GestaoEstoque *g, OperacaoEstoque *desfeita) {
+    OperacaoEstoque op;
+    if (!pilha_desempilhar(g->historico, &op))
+        return 0;
+    if (op.tipo == OP_ENTRADA)
+        lista_remover(g->estoque, op.bolsa.id, NULL);
+    else
+        lista_inserir(g->estoque, op.bolsa);
+    if (desfeita != NULL)
+        *desfeita = op;
+    return 1;
+}
+\end{lstlisting}
+\fonte
+
+\begin{lstlisting}[language=Java,caption={Registro de saída e desfazer, em Java (\cod{GestaoEstoque.java})},label=cod:gestao-java]
+public Bolsa registrarSaida(long id) {
+    Bolsa removida = estoque.remover(id);
+    if (removida == null)
+        return null;
+    historico.empilhar(new OperacaoEstoque(TipoOperacao.SAIDA, removida));
+    return removida;
+}
+
+public OperacaoEstoque desfazer() {
+    OperacaoEstoque op = historico.desempilhar();
+    if (op == null)
+        return null;
+    if (op.tipo() == TipoOperacao.ENTRADA)
+        estoque.remover(op.bolsa().getId());
+    else
+        estoque.inserir(op.bolsa());
+    return op;
+}
+\end{lstlisting}
+\fonte
+
+As duas versões seguem a mesma regra: a operação é aplicada primeiro na lista e só é registrada na pilha se tiver ocorrido. Assim, uma entrada com identificador repetido ou uma saída de bolsa inexistente não geram histórico, o que os testes de ambas as linguagens verificam. Desfazer retira a operação mais recente da pilha e aplica a operação inversa: uma entrada é desfeita removendo a bolsa da lista, e uma saída é desfeita reinserindo a bolsa guardada no histórico.
+
+Para que uma saída possa ser desfeita, a bolsa precisa continuar existindo depois que seu nó deixa a lista. Em C, isso exige uma cópia: \cod{lista\_remover} preenche a variável \cod{removida} antes de liberar o nó, e essa cópia é guardada na operação empilhada. Em Java, basta guardar na operação a referência devolvida por \cod{remover}; enquanto a operação estiver na pilha, a bolsa continua alcançável e não é recolhida. A versão em C contém ainda um tratamento que não aparece em Java: se a alocação do nó da pilha falhar, a alteração já feita na lista é desfeita, para que lista e histórico não fiquem inconsistentes. Em Java, a falta de memória interrompe a execução com uma exceção, e não há um retorno nulo a tratar.
+
+\section{Catálogo: árvore binária de busca}
+
+A ABB organiza as bolsas pelo identificador: em cada nó, a subárvore esquerda contém identificadores menores e a direita, maiores. As operações foram escritas de forma recursiva, seguindo um padrão em que a função recebe a raiz de uma subárvore e devolve a nova raiz dessa mesma subárvore, cabendo à chamada anterior religar o ponteiro.
+
+\begin{lstlisting}[language=C,caption={Inserção e remoção recursivas na ABB, em C (\cod{arvore\_bolsas.c})},label=cod:abb-c]
+static NoArvore *inserir_rec(NoArvore *no, Bolsa bolsa, int *resultado) {
+    if (no == NULL) {
+        NoArvore *novo = (NoArvore *) malloc(sizeof(NoArvore));
+        if (novo == NULL) { *resultado = -1; return NULL; }
+        novo->bolsa = bolsa;
+        novo->esquerda = NULL;
+        novo->direita = NULL;
+        *resultado = 1;
+        return novo;
+    }
+    if (bolsa.id < no->bolsa.id)
+        no->esquerda = inserir_rec(no->esquerda, bolsa, resultado);
+    else if (bolsa.id > no->bolsa.id)
+        no->direita = inserir_rec(no->direita, bolsa, resultado);
+    else
+        *resultado = 0;
+    return no;
+}
+
+static NoArvore *remover_rec(NoArvore *no, long id, int *removeu) {
+    if (no == NULL)
+        return NULL;
+    if (id < no->bolsa.id)
+        no->esquerda = remover_rec(no->esquerda, id, removeu);
+    else if (id > no->bolsa.id)
+        no->direita = remover_rec(no->direita, id, removeu);
+    else {
+        NoArvore *filho;
+        if (no->esquerda == NULL || no->direita == NULL) {
+            filho = no->esquerda != NULL ? no->esquerda : no->direita;
+            free(no);
+            *removeu = 1;
+            return filho;
+        }
+        filho = menor_no(no->direita);
+        no->bolsa = filho->bolsa;
+        no->direita = remover_rec(no->direita, filho->bolsa.id, removeu);
+    }
+    return no;
+}
+\end{lstlisting}
+\fonte
+
+\begin{lstlisting}[language=Java,caption={Inserção e remoção recursivas na ABB, em Java (\cod{ArvoreBolsas.java})},label=cod:abb-java]
+private NoArvore inserirRec(NoArvore no, Bolsa bolsa) {
+    if (no == null) {
+        alterou = true;
+        return new NoArvore(bolsa);
+    }
+    long id = bolsa.getId();
+    long chave = no.bolsa.getId();
+    if (id < chave)
+        no.esquerda = inserirRec(no.esquerda, bolsa);
+    else if (id > chave)
+        no.direita = inserirRec(no.direita, bolsa);
+    return no;
+}
+
+private NoArvore removerRec(NoArvore no, long id) {
+    if (no == null)
+        return null;
+    long chave = no.bolsa.getId();
+    if (id < chave)
+        no.esquerda = removerRec(no.esquerda, id);
+    else if (id > chave)
+        no.direita = removerRec(no.direita, id);
+    else {
+        if (no.esquerda == null || no.direita == null) {
+            alterou = true;
+            return no.esquerda != null ? no.esquerda : no.direita;
+        }
+        NoArvore sucessor = menorNo(no.direita);
+        no.bolsa = sucessor.bolsa;
+        no.direita = removerRec(no.direita, sucessor.bolsa.getId());
+    }
+    return no;
+}
+\end{lstlisting}
+\fonte
+
+O padrão de devolver a nova raiz da subárvore foi escolhido já na versão em C justamente por se traduzir sem alterações para Java. A alternativa usual em C, que passa um ponteiro para ponteiro (\cod{NoArvore **}) e altera o ponteiro do pai por meio dele, não tem equivalente em Java, linguagem em que não existe ponteiro para variável. Com o padrão adotado, a chamada \cod{no->esquerda = inserir\_rec(no->esquerda, ...)} em C e a chamada \cod{no.esquerda = inserirRec(no.esquerda, ...)} em Java são a mesma instrução.
+
+A inserção tem o mesmo caso base nas duas versões: ao alcançar uma subárvore vazia, cria-se o nó e ele é devolvido para ser ligado ao pai. A remoção trata os três casos clássicos na mesma ordem (CORMEN \textit{et al.}, 2012). Um nó sem filhos ou com um único filho é substituído pelo filho (ou por nulo). Um nó com dois filhos recebe a bolsa de seu sucessor em ordem simétrica, que é o menor nó da subárvore direita, e o sucessor é então removido recursivamente dessa subárvore. Os testes das duas versões removem a raiz, que possui dois filhos, e verificam que o sucessor passou a ocupar a raiz.
+
+Duas diferenças decorrem apenas dos recursos de cada linguagem. A primeira é a forma de informar se a operação alterou a árvore: como o retorno da função recursiva já é usado para devolver o nó, a versão em C usa um parâmetro de saída do tipo \cod{int *}; em Java, que não permite ponteiro para inteiro, a mesma informação é registrada no campo privado \cod{alterou}, zerado antes de cada operação pública e consultado ao seu final. A segunda é a liberação dos nós. Em C, o nó removido é liberado com \cod{free} antes de o filho ser devolvido, e a destruição da árvore inteira precisa ocorrer em pós-ordem (filhos antes do pai), porque liberar o pai primeiro tornaria inacessíveis os ponteiros para os filhos. Em Java, basta que o nó deixe de ser referenciado, e a árvore inteira é recolhida quando a referência à raiz se perde.
+
+As demais operações recursivas (busca, percurso em ordem simétrica e cálculo da altura) têm os mesmos casos base e os mesmos passos nas duas linguagens. No percurso, a ação aplicada a cada bolsa é um ponteiro para função acompanhado de um contexto genérico (\cod{void *}) em C e um \cod{Consumer<Bolsa>} em Java.
+
+\section{Síntese das correspondências}
+
+A Tabela~\ref{tab:sintese} resume como os mecanismos da versão em C foram representados em Java.
+
+\begin{table}[H]
+\caption{Correspondência entre os mecanismos das duas implementações}
+\label{tab:sintese}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.2cm}XX@{}}
+\toprule
+\textbf{Aspecto} & \textbf{C} & \textbf{Java} \\
+\midrule
+Nó da estrutura & \cod{struct} com ponteiro para o próximo & classe interna privada com referência para o próximo \\
+Criação do nó & \cod{malloc} e teste de retorno nulo & \cod{new}; falta de memória gera \cod{OutOfMemoryError} \\
+Liberação do nó & \cod{free} explícito, após copiar o necessário & remoção das referências; coletor de lixo \\
+Dado guardado no nó & cópia por valor & referência à entidade JPA \\
+Ausência de resultado & retorno 0 ou \cod{NULL} e parâmetro de saída & retorno \cod{null} ou \cod{false} \\
+Indicador em recursão & parâmetro \cod{int *} & campo privado \cod{alterou} \\
+Ação no percurso & ponteiro para função e \cod{void *} & \cod{Consumer<Bolsa>} \\
+Destruição da estrutura & função que libera cada nó & desnecessária \\
+\bottomrule
+\end{tabularx}
+\fonte
+\end{table}
+
+% =====================================================================
+\chapter{Testes e resultados}
+% =====================================================================
+
+\section{Cenários de teste}
+
+Os testes foram escritos uma vez em C (\cod{testes.c}) e depois reproduzidos em JUnit 5, na classe \cod{EstruturasU1Test}, com as mesmas entradas e os mesmos resultados esperados. A Tabela~\ref{tab:testes} resume o que foi verificado em cada estrutura.
+
+\begin{table}[H]
+\caption{Cenários verificados nas duas versões}
+\label{tab:testes}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.2cm}X@{}}
+\toprule
+\textbf{Estrutura} & \textbf{Cenários} \\
+\midrule
+Lista (estoque) & operações na lista vazia; rejeição de identificador duplicado; manutenção da ordem de chegada; remoção no início, no meio e no fim, com atualização de \cod{fim}; alteração de situação pela referência devolvida na consulta; contagem recursiva \\
+Fila (requisições) & retirada da fila vazia; ordem FIFO; consulta da frente, por identificador e por posição; esvaziamento seguido de nova inserção \\
+Pilha (histórico) & retirada da pilha vazia; ordem LIFO; consulta do topo \\
+Gestão do estoque & entrada duplicada sem registro no histórico; saída de bolsa inexistente; desfazer saída e entrada; desfazer sem histórico \\
+Árvore (catálogo) & operações na árvore vazia; rejeição de duplicado; busca de chave existente e inexistente; percurso em ordem crescente; remoção de folha, de nó com um filho e da raiz com dois filhos; degeneração com chaves inseridas em ordem \\
+\bottomrule
+\end{tabularx}
+\fonte
+\end{table}
+
+\section{Resultados}
+
+Na versão em C, as 85 verificações foram aprovadas, tanto na compilação com AddressSanitizer quanto na execução sob o Valgrind. O relatório do Valgrind registrou 43 alocações e 43 liberações, sem nenhum bloco remanescente ao final da execução, o que confirma que todos os nós criados foram liberados. Na versão em Java, os 10 casos de teste da Unidade 1 foram aprovados, assim como a suíte completa da aplicação, com 96 testes. As saídas completas estão na pasta \cod{aed/u1/evidencias} do repositório.
+
+\section{Custo das operações}
+
+Como os algoritmos são os mesmos nas duas linguagens, o custo das operações também é o mesmo. A Tabela~\ref{tab:custo} apresenta esse custo em função de $n$, o número de elementos, e de $h$, a altura da árvore.
+
+\begin{table}[H]
+\caption{Custo assintótico das operações}
+\label{tab:custo}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3cm}p{2.6cm}p{2.6cm}X@{}}
+\toprule
+\textbf{Estrutura} & \textbf{Inserção} & \textbf{Remoção} & \textbf{Consulta} \\
+\midrule
+Lista & $O(n)$ & $O(n)$ & $O(n)$ por identificador \\
+Fila & $O(1)$ & $O(1)$ & $O(1)$ na frente; $O(n)$ por identificador \\
+Pilha & $O(1)$ & $O(1)$ & $O(1)$ no topo \\
+Árvore & $O(h)$ & $O(h)$ & $O(h)$; percurso completo em $O(n)$ \\
+\bottomrule
+\end{tabularx}
+\fonte
+\end{table}
+
+Na lista, o encadeamento no fim é feito em tempo constante graças ao ponteiro \cod{fim}; o custo linear da inserção vem da verificação de identificador duplicado, que percorre a lista. Na árvore, $h$ corresponde a $\log_2 n$ quando ela está equilibrada, mas pode chegar a $n$: um dos testes insere os identificadores de 1 a 10 em ordem crescente e obtém altura 10, pois cada novo nó é ligado sempre à direita do anterior. O balanceamento da árvore não faz parte do escopo desta unidade.
+
+% =====================================================================
+\chapter{Integração com a aplicação}
+% =====================================================================
+
+As classes Java não dependem do Spring, de anotações ou do banco de dados. Elas recebem e devolvem as entidades \cod{Bolsa} e \cod{Requisicao} já usadas pelos serviços da aplicação, e podem ser instanciadas diretamente por um serviço ou registradas como componentes do contexto. O Código~\ref{cod:uso} mostra um exemplo de serviço que carrega as bolsas persistidas e expõe o estoque, o desfazer e o catálogo ordenado.
+
+\begin{lstlisting}[language=Java,caption={Exemplo de uso das estruturas por um serviço da aplicação},label=cod:uso]
+@Service
+public class PainelEstoqueService {
+
+    private final GestaoEstoque gestao = new GestaoEstoque();
+    private final ArvoreBolsas catalogo = new ArvoreBolsas();
+
+    public PainelEstoqueService(BolsaRepository bolsas) {
+        bolsas.findAll().forEach(b -> {
+            gestao.registrarEntrada(b);
+            catalogo.inserir(b);
+        });
+    }
+
+    public List<Bolsa> estoqueAtual()     { return gestao.getEstoque().paraLista(); }
+    public OperacaoEstoque desfazer()     { return gestao.desfazer(); }
+    public List<Bolsa> catalogoOrdenado() { return catalogo.paraListaOrdenada(); }
+}
+\end{lstlisting}
+\fonte
+
+Os métodos \cod{paraLista} e \cod{paraListaOrdenada} existem apenas para entregar os dados à camada web, onde são convertidos em JSON, e devolvem uma cópia. Eles não são usados pelas estruturas internamente. As classes não são seguras para acesso concorrente; caso sejam compartilhadas entre requisições HTTP simultâneas, o serviço que as utiliza deve sincronizar o acesso.
+
+% =====================================================================
+\chapter{Considerações finais}
+% =====================================================================
+
+As estruturas da Unidade 1 foram implementadas em C, com alocação e liberação explícitas de memória, e reescritas em Java sem perder a correspondência com o código original. A comparação trecho a trecho mostrou que os algoritmos são os mesmos nas duas linguagens e que as diferenças se concentram no gerenciamento de memória e na forma de sinalizar resultados. Em C, a liberação explícita impõe cuidados que não aparecem em Java, como copiar o dado antes de liberar o nó, recolocar o ponteiro de fim em nulo ao esvaziar a fila e destruir a árvore em pós-ordem. Em Java, esses pontos são resolvidos pelo coletor de lixo, mas a lógica de religação das referências precisa ser a mesma, como mostrou o caso da fila.
+
+Do ponto de vista do projeto, as classes Java já estão prontas para serem usadas pelos serviços da aplicação. Na Unidade 2, as estruturas servirão de base para a priorização por validade, o índice por \textit{hash}, a compatibilidade ABO/Rh e a roteirização, que serão implementados com a mesma dinâmica de versão em C, versão em Java e tradução comentada.
+
+% =====================================================================
+\chapter*{REFERÊNCIAS}
+\addcontentsline{toc}{chapter}{REFERÊNCIAS}
+\begin{singlespace}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{12pt}
+\raggedright
+
+CORMEN, T. H. \textit{et al.} \textbf{Algoritmos}: teoria e prática. 3. ed. Rio de Janeiro: Elsevier, 2012.
+
+KERNIGHAN, B. W.; RITCHIE, D. M. \textbf{C}: a linguagem de programação padrão ANSI. Rio de Janeiro: Campus, 1989.
+
+ORACLE. \textbf{The Java Language Specification}: Java SE 17 Edition. [\textit{S. l.}]: Oracle, 2021. Disponível em: \url{https://docs.oracle.com/javase/specs/jls/se17/html/}. Acesso em: 1 out. 2026.
+
+TENENBAUM, A. M.; LANGSAM, Y.; AUGENSTEIN, M. J. \textbf{Estruturas de dados usando C}. São Paulo: Makron Books, 1995.
+
+ZIVIANI, N. \textbf{Projeto de algoritmos}: com implementações em Pascal e C. 3. ed. São Paulo: Cengage Learning, 2011.
+\end{singlespace}
+
+% =====================================================================
+\appendix
+\renewcommand{\thechapter}{\Alph{chapter}}
+\titleformat{\chapter}[hang]{\normalfont\bfseries}{APÊNDICE \thechapter\ --}{0.4em}{\MakeUppercase}
+\chapter{Organização dos arquivos e execução}
+
+O código desta entrega está distribuído no repositório conforme o Quadro~\ref{qd:arquivos}.
+
+\begin{table}[H]
+\renewcommand{\tablename}{Quadro}
+\caption{Arquivos da entrega}
+\label{qd:arquivos}
+\small
+\begin{tabularx}{\textwidth}{@{}p{7.2cm}X@{}}
+\toprule
+\textbf{Arquivo} & \textbf{Conteúdo} \\
+\midrule
+\cod{aed/u1/c/dominio.h}, \cod{dominio.c} & tipos do domínio \\
+\cod{aed/u1/c/lista\_estoque.h}, \cod{.c} & lista do estoque \\
+\cod{aed/u1/c/fila\_requisicoes.h}, \cod{.c} & fila de requisições \\
+\cod{aed/u1/c/pilha\_historico.h}, \cod{.c} & pilha do histórico \\
+\cod{aed/u1/c/gestao\_estoque.h}, \cod{.c} & lista e pilha integradas \\
+\cod{aed/u1/c/arvore\_bolsas.h}, \cod{.c} & árvore binária de busca \\
+\cod{aed/u1/c/testes.c}, \cod{demo.c}, \cod{Makefile} & testes, demonstração e compilação \\
+\cod{rotavital/src/main/java/}\newline\cod{com/hemorede/estruturas/} & \cod{ListaEstoque}, \cod{FilaRequisicoes}, \cod{PilhaHistorico}, \cod{OperacaoEstoque}, \cod{TipoOperacao}, \cod{GestaoEstoque}, \cod{ArvoreBolsas} \\
+\cod{rotavital/src/test/java/}\newline\cod{com/hemorede/estruturas/} & \cod{EstruturasU1Test} \\
+\cod{aed/u1/evidencias/} & saídas dos testes e do Valgrind \\
+\bottomrule
+\end{tabularx}
+\fonte
+\end{table}
+
+Para compilar e testar a versão em C, a partir da pasta \cod{aed/u1/c}, usam-se os comandos \cod{make test} (testes com AddressSanitizer), \cod{make valgrind} (testes e demonstração sob o Valgrind) e \cod{make run} (demonstração com dados sintéticos). No Windows, com o MinGW, os testes podem ser compilados com \cod{gcc -std=c99 -o testes.exe testes.c dominio.c lista\_estoque.c fila\_requisicoes.c pilha\_historico.c gestao\_estoque.c arvore\_bolsas.c}. Para a versão em Java, a partir da pasta \cod{rotavital}, usa-se \cod{mvn test -Dtest=EstruturasU1Test}.
+
+\end{document}
