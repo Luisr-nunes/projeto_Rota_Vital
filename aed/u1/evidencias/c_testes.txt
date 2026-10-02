@@ -1,0 +1,20 @@
+Lista (estoque)
+Fila (requisicoes)
+Pilha (historico)
+Gestao (lista + pilha, desfazer)
+Arvore binaria de busca (catalogo por id)
+
+85 verificacoes, 0 falha(s)
+
+Arvore binaria de busca (catalogo por id)
+
+85 verificacoes, 0 falha(s)
+==781== 
+==781== HEAP SUMMARY:
+==781==     in use at exit: 0 bytes in 0 blocks
+==781==   total heap usage: 43 allocs, 43 frees, 6,248 bytes allocated
+==781== 
+==781== All heap blocks were freed -- no leaks are possible
+==781== 
+==781== For lists of detected and suppressed errors, rerun with: -s
+==781== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

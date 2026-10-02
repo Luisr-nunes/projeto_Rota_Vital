@@ -1,0 +1,47 @@
+==783== Memcheck, a memory error detector
+==783== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==783== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==783== Command: ./demo
+==783== 
+== Entrada de doacoes ==
+Estoque (5 bolsas):
+  [1004] HEMACIAS        O-  validade 2026-11-01 DISPONIVEL
+  [1002] PLASMA          A+  validade 2027-09-21 DISPONIVEL
+  [1005] PLAQUETAS       B+  validade 2026-10-03 DISPONIVEL
+  [1001] HEMACIAS        A+  validade 2026-11-03 DISPONIVEL
+  [1003] HEMACIAS        O-  validade 2026-11-06 DISPONIVEL
+Hemacias O- disponiveis (contagem recursiva): 2
+
+== Saida registrada por engano e desfeita ==
+Historico (6 operacoes, topo primeiro):
+  SAIDA   bolsa 1002
+  ENTRADA bolsa 1003
+  ENTRADA bolsa 1001
+  ENTRADA bolsa 1005
+  ENTRADA bolsa 1002
+  ENTRADA bolsa 1004
+Desfeito: SAIDA da bolsa 1002 -> estoque com 5 bolsas
+
+== Requisicoes hospitalares (FIFO) ==
+Fila de requisicoes (3):
+  0) req 1 hospital 10 NORMAL 2x HEMACIAS A+
+  1) req 2 hospital 20 URGENTE 1x PLASMA AB+
+  2) req 3 hospital 10 NORMAL 1x PLAQUETAS B+
+Proxima atendida: req 1 (hospital 10). Restam 2.
+
+== Catalogo ABB por id (em-ordem) ==
+  [1001] HEMACIAS A+
+  [1002] PLASMA A+
+  [1003] HEMACIAS O-
+  [1004] HEMACIAS O-
+  [1005] PLAQUETAS B+
+Altura da arvore: 3 | busca 1003: encontrada
+==783== 
+==783== HEAP SUMMARY:
+==783==     in use at exit: 0 bytes in 0 blocks
+==783==   total heap usage: 26 allocs, 26 frees, 5,352 bytes allocated
+==783== 
+==783== All heap blocks were freed -- no leaks are possible
+==783== 
+==783== For lists of detected and suppressed errors, rerun with: -s
+==783== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
