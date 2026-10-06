@@ -1,5 +1,10 @@
 package com.hemorede.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.hemorede.algoritmos.FilaFEFO;
 import com.hemorede.algoritmos.IndiceEstoque;
 import com.hemorede.domain.enums.HemoComponente;
@@ -7,10 +12,6 @@ import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.repository.BolsaRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * Regra de negócio 7: estoque mínimo de segurança.
@@ -58,6 +59,26 @@ public class EstoqueService {
                         estoqueId, tipoSanguineo, hemoComponente, StatusBolsa.DISPONIVEL);
 
         return quantidadeDisponivel < limiteMinimoPadrao;
+    }
+
+    /**
+     * HU02 - Consultar estoque. Lista as bolsas realmente disponíveis (status
+     * {@code DISPONIVEL} e não vencidas) de um tipo sanguíneo/hemocomponente,
+     * em qualquer estoque, ordenadas da validade mais próxima para a mais
+     * distante.
+     * <p>
+     * Monta um {@link IndiceEstoque} (hash por tipo sanguíneo, {@code O(1)}
+     * amortizado) com as bolsas retornadas pelo repositório e delega a
+     * ordenação FEFO para {@link FilaFEFO#disponiveisOrdenadas()}.
+     * </p>
+     */
+    public List<Bolsa> consultarBolsasDisponiveis(TipoSanguineo tipoSanguineo, HemoComponente hemoComponente) {
+        IndiceEstoque indice = new IndiceEstoque();
+        bolsaRepository
+                .findByHemoComponenteAndTipoSanguineoAndStatusOrderByDataValidadeAsc(
+                        hemoComponente, tipoSanguineo, StatusBolsa.DISPONIVEL)
+                .forEach(indice::adicionarBolsa);
+        return indice.consultarEstoque(tipoSanguineo).disponiveisOrdenadas();
     }
 
     /**
