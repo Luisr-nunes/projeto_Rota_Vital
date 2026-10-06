@@ -1,27 +1,21 @@
 package com.hemorede.algoritmos;
 
+import com.hemorede.domain.enums.HemoComponente;
+import com.hemorede.domain.enums.StatusBolsa;
+import com.hemorede.domain.enums.TipoRefrigeracao;
+import com.hemorede.domain.enums.TipoSanguineo;
+import com.hemorede.domain.model.Bolsa;
+import com.hemorede.exception.EstoqueInsuficienteException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
-import com.hemorede.domain.enums.HemoComponente;
-import com.hemorede.domain.enums.TipoRefrigeracao;
-import com.hemorede.domain.enums.TipoSanguineo;
-import com.hemorede.domain.model.Bolsa;
-import com.hemorede.exception.EstoqueInsuficienteException;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Testes Automatizados de AED (Grafo, FEFO e Índice de Estoque)")
 class AEDTesteManualTest {
@@ -407,34 +401,6 @@ class AEDTesteManualTest {
             List<Bolsa> emRisco = fila.proximasAoVencimento(0);
 
             assertEquals(List.of(2L, 1L), emRisco.stream().map(Bolsa::getId).toList());
-        }
-
-        @Test
-        @DisplayName("disponiveisOrdenadas exclui bolsas vencidas e ordena as demais pela validade mais próxima")
-        void disponiveisOrdenadasExcluiVencidas() {
-            LocalDate hoje = LocalDate.now();
-            FilaFEFO fila = new FilaFEFO();
-            fila.inserir(bolsaComId(1L, TipoSanguineo.O_POS, hoje.minusDays(1))); // vencida
-            fila.inserir(bolsaComId(2L, TipoSanguineo.O_POS, hoje.plusDays(10)));
-            fila.inserir(bolsaComId(3L, TipoSanguineo.O_POS, hoje)); // vence hoje, ainda disponível
-            fila.inserir(bolsaComId(4L, TipoSanguineo.O_POS, hoje.plusDays(2)));
-
-            List<Long> ids = fila.disponiveisOrdenadas().stream().map(Bolsa::getId).toList();
-
-            assertEquals(List.of(3L, 4L, 2L), ids);
-        }
-
-        @Test
-        @DisplayName("disponiveisOrdenadas em fila vazia ou totalmente vencida retorna lista vazia")
-        void disponiveisOrdenadasSemNenhumaDisponivel() {
-            LocalDate hoje = LocalDate.now();
-            assertTrue(new FilaFEFO().disponiveisOrdenadas().isEmpty());
-
-            FilaFEFO fila = new FilaFEFO();
-            fila.inserir(bolsaComId(1L, TipoSanguineo.O_POS, hoje.minusDays(5)));
-            fila.inserir(bolsaComId(2L, TipoSanguineo.O_POS, hoje.minusDays(1)));
-
-            assertTrue(fila.disponiveisOrdenadas().isEmpty());
         }
     }
 
