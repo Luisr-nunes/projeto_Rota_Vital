@@ -3,6 +3,9 @@ package com.hemorede.service;
 import com.hemorede.domain.enums.StatusRequisicao;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
+import com.hemorede.exception.EstoqueCompativelInsuficienteException;
+import com.hemorede.exception.EstoqueInsuficienteException;
+import com.hemorede.exception.NenhumaBolsaCompativelException;
 import com.hemorede.repository.RequisicaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +37,13 @@ public class RequisicaoService {
         // relançar a exceção seria desfeito pelo próprio rollback, por isso
         // não é necessário.
         for (ItemRequisicao item : requisicao.getItens()) {
-            alocacaoService.alocar(item);
+            try {
+                alocacaoService.alocar(item);
+            } catch (NenhumaBolsaCompativelException | EstoqueCompativelInsuficienteException ex) {
+                // Mantem o contrato legado do endpoint /aprovar. O novo endpoint
+                // /alocacao preserva as respostas especificas 422 e 409 da HU08.
+                throw new EstoqueInsuficienteException(ex.getMessage());
+            }
         }
 
         requisicao.setStatus(StatusRequisicao.APROVADA);
