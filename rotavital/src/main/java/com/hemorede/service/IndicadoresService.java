@@ -6,6 +6,10 @@ import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.dto.IndicadoresResponse;
+import com.hemorede.dto.RiscoDesabastecimentoResponse;
+import com.hemorede.exception.DiasPrevisaoInvalidoException;
+import com.hemorede.exception.ModeloProbabilisticoIndisponivelException;
+import com.hemorede.indicadores.ModeloProbabilisticoDemanda;
 import com.hemorede.indicadores.DadosIndicadoresSinteticos.AtendimentoSintetico;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.RequisicaoRepository;
@@ -17,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,15 +36,24 @@ public class IndicadoresService {
 
     private final BolsaRepository bolsaRepository;
     private final RequisicaoRepository requisicaoRepository;
+    private final ModeloProbabilisticoDemanda modeloProbabilisticoDemanda;
 
     @Autowired
-    public IndicadoresService(BolsaRepository bolsaRepository, RequisicaoRepository requisicaoRepository) {
+    public IndicadoresService(
+            BolsaRepository bolsaRepository,
+            RequisicaoRepository requisicaoRepository,
+            ModeloProbabilisticoDemanda modeloProbabilisticoDemanda) {
         this.bolsaRepository = bolsaRepository;
         this.requisicaoRepository = requisicaoRepository;
+        this.modeloProbabilisticoDemanda = modeloProbabilisticoDemanda;
+    }
+
+    public IndicadoresService(BolsaRepository bolsaRepository, RequisicaoRepository requisicaoRepository) {
+        this(bolsaRepository, requisicaoRepository, null);
     }
 
     public IndicadoresService() {
-        this(null, null);
+        this(null, null, null);
     }
 
     /**
@@ -151,6 +165,102 @@ public class IndicadoresService {
                 vencimentoResumo,
                 requisicoesResumo
         );
+    }
+
+    /**
+     * Calcula o risco usando os lambdas configurados pelo modelo da PI2-147.
+     */
+    public RiscoDesabastecimentoResponse calcularRiscoDesabastecimento(int dias) {
+        if (bolsaRepository == null || modeloProbabilisticoDemanda == null) {
+            throw new ModeloProbabilisticoIndisponivelException(
+                    "Modelo probabilistico ou repositorio de estoque nao configurado");
+        }
+
+        return calcularRiscoDesabastecimento(
+                dias,
+                bolsaRepository.findAll(),
+                modeloProbabilisticoDemanda.obterLambdasValidados());
+    }
+
+    /**
+     * Nucleo reproduzivel do calculo: para cada tipo, X segue Poisson(lambda * dias)
+     * e o risco corresponde a P(X > estoque atual).
+     */
+    public RiscoDesabastecimentoResponse calcularRiscoDesabastecimento(
+            int dias,
+            List<Bolsa> bolsas,
+            Map<TipoSanguineo, Double> lambdasDiarios) {
+        if (dias <= 0) {
+            throw new DiasPrevisaoInvalidoException("O numero de dias deve ser maior que zero");
+        }
+        validarLambdas(lambdasDiarios);
+
+        LocalDate hoje = LocalDate.now();
+        Map<TipoSanguineo, Long> estoquePorTipo = iniciarContagemPorTipo();
+        List<Bolsa> listaBolsas = bolsas != null ? bolsas : List.of();
+
+        listaBolsas.stream()
+                .filter(bolsa -> bolsa.getStatus() == StatusBolsa.DISPONIVEL)
+                .filter(bolsa -> bolsa.getTipoSanguineo() != null)
+                .filter(bolsa -> bolsa.getDataValidade() != null)
+                .filter(bolsa -> !bolsa.getDataValidade().isBefore(hoje))
+                .forEach(bolsa -> estoquePorTipo.merge(
+                        bolsa.getTipoSanguineo(), 1L, Long::sum));
+
+        List<RiscoDesabastecimentoResponse.RiscoPorTipo> riscos = Arrays.stream(TipoSanguineo.values())
+                .map(tipo -> {
+                    long estoque = estoquePorTipo.get(tipo);
+                    double lambdaDiario = lambdasDiarios.get(tipo);
+                    double probabilidade = probabilidadePoissonMaiorQue(
+                            estoque, lambdaDiario * dias);
+                    return new RiscoDesabastecimentoResponse.RiscoPorTipo(
+                            tipo,
+                            estoque,
+                            lambdaDiario,
+                            arredondarProbabilidade(probabilidade));
+                })
+                .sorted(Comparator
+                        .comparingDouble(RiscoDesabastecimentoResponse.RiscoPorTipo
+                                ::probabilidadeDesabastecimento)
+                        .reversed()
+                        .thenComparing(risco -> risco.tipoSanguineo().name()))
+                .toList();
+
+        return new RiscoDesabastecimentoResponse(dias, LocalDateTime.now(), riscos);
+    }
+
+    private void validarLambdas(Map<TipoSanguineo, Double> lambdasDiarios) {
+        if (lambdasDiarios == null) {
+            throw new ModeloProbabilisticoIndisponivelException(
+                    "Modelo de demanda ainda nao foi configurado");
+        }
+
+        for (TipoSanguineo tipo : TipoSanguineo.values()) {
+            Double lambda = lambdasDiarios.get(tipo);
+            if (lambda == null || !Double.isFinite(lambda) || lambda < 0.0) {
+                throw new ModeloProbabilisticoIndisponivelException(
+                        "Lambda diario ausente ou invalido para " + tipo);
+            }
+        }
+    }
+
+    private double probabilidadePoissonMaiorQue(long estoque, double mediaPeriodo) {
+        if (mediaPeriodo == 0.0) {
+            return 0.0;
+        }
+
+        double termo = Math.exp(-mediaPeriodo);
+        double acumulada = termo;
+        for (int k = 1; k <= estoque; k++) {
+            termo *= mediaPeriodo / k;
+            acumulada += termo;
+        }
+
+        return Math.max(0.0, Math.min(1.0, 1.0 - acumulada));
+    }
+
+    private double arredondarProbabilidade(double valor) {
+        return Math.round(valor * 1_000_000.0) / 1_000_000.0;
     }
 
     /**
