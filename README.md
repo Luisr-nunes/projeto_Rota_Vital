@@ -222,7 +222,7 @@ O **Rota Vital** é uma aplicação web que:
 |------|------|
 | Screencast do sistema (U1) | ⏳ pendente — PI2-131 (depende do deploy no Render) |
 | Screencast do código | [Assistir no YouTube](https://youtu.be/SCN13gswS3U) |
-| URL de produção (Render) | ⏳ pendente — PI2-88 |
+| URL de produção (Render) | [rota-vital-jnmx.onrender.com](https://rota-vital-jnmx.onrender.com) ([health](https://rota-vital-jnmx.onrender.com/actuator/health)) |
 | Board Jira | [csprj-adsr-3p-e5.atlassian.net/browse/PI2](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
 | Histórias de usuário | [doc/historias_de_usuario.md](doc/historias_de_usuario.md) |
 | Protótipo Lo-Fi (Figma) | [Abrir no Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6) |
@@ -235,8 +235,8 @@ O **Rota Vital** é uma aplicação web que:
 | **POO** | Controllers REST em [`rotavital/src/main/java/com/hemorede/controller`](rotavital/src/main/java/com/hemorede/controller) e testes de integração em [`rotavital/src/test/java/com/hemorede`](rotavital/src/test/java/com/hemorede) (HU01 doação, HU03 requisição, HU05 rota, indicadores) |
 | **AED** | **Entrega U1:** estruturas em C com malloc/free em [`aed/u1/c`](aed/u1/c), reimplementação Java em [`com.hemorede.estruturas`](rotavital/src/main/java/com/hemorede/estruturas) e [tradução comentada C → Java](doc/aed-u1/Relatorio_AED_U1_Rota_Vital.pdf). Material de apoio: [complexidade Big-O](doc/aed-complexidade.md) e [escopo do grafo](doc/escopo-grafo.md) |
 | **EST** | [Relatório de análise descritiva](doc/relatorio-analise-descritiva-u1.md) e [indicadores estatísticos](doc/indicadores-estatisticos.md) |
-| **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md) e [pipeline CI/CD](.github/workflows/ci.yml) |
-| **RSD** | [Topologia de rede](doc/topologia.md) e [contratos de API](doc/contratos-api.md) (telemetria: `doc/telemetria.md`, em elaboração) |
+| **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md), [pipeline CI/CD](.github/workflows/ci.yml) e [documentação do pipeline e do deploy](doc/pipeline-deploy.md) |
+| **RSD** | [Topologia de rede](doc/topologia.md) (com URL de produção e canal de telemetria), [contratos de API](doc/contratos-api.md) e [canal de telemetria](doc/telemetria.md) — endpoint `GET /api/telemetria/temperatura` |
 
 ---
 

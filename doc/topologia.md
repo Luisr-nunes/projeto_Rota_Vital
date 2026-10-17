@@ -62,7 +62,7 @@ O diagrama abaixo mostra todos os componentes do sistema — clientes, borda, ap
 | Calcular rota de menor custo até o hospital respeitando a cadeia fria | HU05 | Processamento server-side (Dijkstra) sem dependência de rede externa hoje; necessidade futura de integração com serviço de mapas/geolocalização via HTTPS |
 | Confirmar entrega em campo, possivelmente com conectividade instável | HU06 | Acesso do app do motorista via HTTPS/443 tolerante a intermitência (retentativas); necessidade futura de estratégia offline-first |
 | Visualizar indicadores de estoque, requisições e entregas para gestão | HU07 | Consultas agregadas de leitura (possível *read pool* dedicado); tráfego HTTPS com maior volume de dados para dashboards |
-| Garantir integridade da cadeia fria (temperatura) das bolsas em trânsito | Não-funcional (SO/RSD) | Integração interna HTTP/JSON com o serviço de telemetria; caminho futuro para sensores IoT reais (ex.: MQTT) |
+| Garantir integridade da cadeia fria (temperatura) das bolsas em trânsito | Não-funcional (SO/RSD) | Consulta HTTP/JSON ao endpoint de telemetria (`GET /api/telemetria/temperatura`, HTTPS/443 na borda); caminho futuro para sensores IoT reais via MQTT/1883 (seção 5) |
 | Proteger dados sensíveis de pacientes/hospitais em trânsito e em repouso | Não-funcional (segurança) | TLS obrigatório ponta a ponta na borda; banco de dados isolado em rede privada (VPC), sem exposição direta à internet |
 | Garantir disponibilidade do sistema (rede de sangue é serviço crítico) | Não-funcional (disponibilidade) | Load Balancer/API Gateway com *health checks*; possibilidade de múltiplas instâncias da aplicação atrás do balanceador |
 | Rastrear e auditar as entregas realizadas | HU06, HU07 | Necessidade futura de centralização de logs e monitoramento de rede (próximo passo, fora do escopo desta entrega) |
@@ -71,11 +71,34 @@ O diagrama abaixo mostra todos os componentes do sistema — clientes, borda, ap
 
 ## 4. URL da Aplicação em Produção
 
-✅ **Plataforma definida: Render**, via imagem Docker (workspace QMS, conta do Luis). O `Dockerfile` (multi-stage: build com Maven/JDK 17 → runtime JRE 17) e o perfil `rotavital/src/main/resources/application-prod.yml` (datasource PostgreSQL via variáveis de ambiente) já estão versionados no repositório.
+✅ **Em produção no Render**, via imagem Docker (`rotavital/Dockerfile`, multi-stage: build com Maven/JDK 17 → runtime JRE 17) e perfil `application-prod.yml` (datasource PostgreSQL via variáveis de ambiente).
 
-🔲 **Pendente:** criação efetiva do Web Service + instância PostgreSQL no Render (feita após o push deste código para o GitHub, já que o Render builda a partir do repositório). Assim que o deploy for concluído, esta seção será atualizada com a URL pública real, por exemplo:
+| Item | Valor |
+|------|-------|
+| **URL de produção** | **https://rota-vital-jnmx.onrender.com** |
+| Health check | `GET https://rota-vital-jnmx.onrender.com/actuator/health` → `{"status":"UP"}` (verificado na PI2-91) |
+| Borda | `HTTPS/443` (TLS terminado no Render) → aplicação `HTTP/8080` dentro do container |
+| Banco de dados | PostgreSQL gerenciado (Supabase), conexão `JDBC/TCP 5432` com TLS, credenciais em variáveis de ambiente do Render |
+| Deploy | Push na `main` → GitHub Actions (build + testes) → auto-deploy do Render. Detalhes em [`doc/pipeline-deploy.md`](pipeline-deploy.md) |
+| Observação | Plano gratuito: após ~15 min sem tráfego o serviço hiberna e a 1ª requisição leva cerca de 1 min (*cold start*) |
 
-> `URL de Produção: https://rota-vital.onrender.com` *(exemplo — não confirmado até a criação do serviço)*
+---
+
+## 5. Canal de Telemetria de Temperatura
+
+Contrato completo em [`doc/telemetria.md`](telemetria.md) (PI2-120). Implementado na PI2-121.
+
+| Item | U1 (implementado) | U2 (evolução planejada) |
+|------|-------------------|-------------------------|
+| Origem → destino | Cliente (painel/navegador) → API Rota Vital | Sensor do veículo → broker MQTT → aplicação |
+| Protocolo / porta | `HTTPS/443` na borda; `HTTP/8080` interno | `MQTT/1883` (ou `MQTTS/8883` com TLS) |
+| Comunicação | Síncrona (requisição/resposta HTTP/JSON) | Assíncrona (publicação/assinatura) — linha **tracejada** no diagrama |
+| Endpoint | `GET /api/telemetria/temperatura?veiculoId={id}` → `200` / `404` / `400` | Tópico por veículo (ex.: `rotavital/veiculos/{id}/temperatura`) |
+| Fonte da leitura | Simulada pela aplicação (sem sensor físico) | Sensor IoT no baú refrigerado |
+| Regra de alerta | `status: ALERTA` quando a temperatura sai da faixa segura do tipo de refrigeração do veículo | Mesma regra, com notificação ativa |
+| Zona da topologia | Zona de aplicação (sub-rede privada); não há porta extra exposta | Broker na sub-rede privada de aplicação |
+
+Exemplo em produção: `https://rota-vital-jnmx.onrender.com/api/telemetria/temperatura?veiculoId=1`
 
 ---
 
@@ -85,3 +108,5 @@ O diagrama abaixo mostra todos os componentes do sistema — clientes, borda, ap
 - [`doc/historias_de_usuario.md`](../doc/historias_de_usuario.md) — histórias de usuário (HU01–HU07) usadas no mapeamento negócio → rede
 - [`doc/escopo-grafo.md`](../doc/escopo-grafo.md) — escopo do grafo de rotas (Dijkstra) referenciado na Zona 3
 - [`README.md`](../README.md) — status de deploy e ambientes do projeto
+- [`doc/telemetria.md`](telemetria.md) — contrato do canal de telemetria
+- [`doc/pipeline-deploy.md`](pipeline-deploy.md) — pipeline de CI/CD e deploy no Render
