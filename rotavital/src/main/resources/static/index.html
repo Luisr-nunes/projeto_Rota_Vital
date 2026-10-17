@@ -956,7 +956,7 @@
         const tipo = document.getElementById('form-tipo').value;
 
         const body = {
-            hospitalSolicitante: { id: parseInt(hospitalId) },
+            hospitalId: parseInt(hospitalId),
             prioridade: prioridade,
             itens: [{
                 hemoComponente: componente,
@@ -974,7 +974,7 @@
 
             if (!resp.ok) {
                 const errData = await resp.json().catch(() => ({}));
-                throw new Error(errData.message || `Erro HTTP ${resp.status}`);
+                throw new Error(errData.mensagem || errData.message || `Erro HTTP ${resp.status}`);
             }
 
             showToast('✅ Requisição cadastrada com sucesso! Pronto para alocar bolsas por FEFO.');
