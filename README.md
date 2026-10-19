@@ -288,8 +288,11 @@ O **Rota Vital** é uma aplicação web que:
 
 - [x] Mais **2 histórias implementadas** (**HU01** e **HU03**, lendo e gravando no banco)
 - [x] Commits frequentes de código (mínimo semanais) direto na `main`
-- [ ] Issue/Bug Tracker atualizado
-  - *Print do Bug Tracker:* <!-- inserir screenshot em doc/img e referenciar aqui -->
+- [x] **Issue/Bug Tracker atualizado (GitHub Issues)**
+  - *Print do Bug Tracker:*
+
+    ![GitHub Issues — Entrega 03](doc/img/github_issues_entrega03.png)
+
 - [x] **Screencast do sistema** — HU01 e HU03 rodando, com legenda embutida
   - [Assistir no YouTube](https://www.youtube.com/watch?v=YsbCOH_n_zY)
 - [x] **Screencast do código** — Explicação do código de HU01 e HU03, com legenda embutida
