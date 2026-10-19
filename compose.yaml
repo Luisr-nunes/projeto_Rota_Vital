@@ -1,0 +1,49 @@
+# Rota Vital — API Spring Boot + PostgreSQL
+# Subir do zero:  cp .env.example .env  &&  docker compose up -d --build
+name: rotavital
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rotavital}
+      POSTGRES_USER: ${POSTGRES_USER:-rotavital}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      # Volume nomeado: os dados sobrevivem a "docker compose down" (só somem com "down -v").
+      - pgdata:/var/lib/postgresql/data
+    # Sem "ports": o banco só é acessível pela rede interna do Compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: ./rotavital
+    restart: unless-stopped
+    depends_on:
+      db:
+        # A API só sobe quando o Postgres já aceita conexões.
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # "db" é o nome do serviço: o DNS da rede do Compose resolve para o container do banco.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rotavital}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rotavital}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+      HEMOREDE_SEED_ENABLED: ${HEMOREDE_SEED_ENABLED:-true}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  pgdata:

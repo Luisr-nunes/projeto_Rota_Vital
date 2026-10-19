@@ -31,3 +31,7 @@ target/
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+# Variáveis de ambiente locais (segredos)
+.env
+!.env.example
