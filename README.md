@@ -246,18 +246,54 @@ O **Rota Vital** é uma aplicação web que:
 
 #### Histórias Implementadas
 
-> *Adicionar aqui a descrição (formato POST-IT) das histórias implementadas nesta entrega.*
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 1 — HU01: Registrar doação e cadastrar bolsa no estoque          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Atendente do hemocentro                                            │
+│ 🎯 QUERO: Registrar uma doação e cadastrar a bolsa coletada                 │
+│ 💡 PARA QUE: A bolsa fique disponível no estoque para atender os hospitais  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • O doador informado deve existir e estar ativo (inativo → HTTP 422).      │
+│  • Intervalo mínimo de 60 dias entre doações do mesmo doador (HTTP 422).    │
+│  • Doação e bolsa são salvas na mesma transação (@Transactional).           │
+│  • A bolsa entra no estoque com status DISPONIVEL.                          │
+│  • Coleta não pode estar no futuro e a validade deve ser futura (HTTP 400). │
+│ 💻 Módulos: DoacaoController (POST /api/doacoes), DoacaoService,            │
+│             DoacaoRequest, Bolsa (Builder), DoadorController, index.html.   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 2 — HU03: Registrar requisição hospitalar                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Profissional de um hospital                                        │
+│ 🎯 QUERO: Solicitar hemocomponentes informando tipo, quantidade e prioridade│
+│ 💡 PARA QUE: O hemocentro possa atender à necessidade do hospital           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • A requisição deve estar vinculada a um hospital existente (HTTP 404).    │
+│  • A quantidade deve ser maior que zero (HTTP 400 com a mensagem do campo). │
+│  • A requisição é salva com status PENDENTE e recebe um identificador.      │
+│  • Status e data da solicitação são definidos pelo servidor.                │
+│ 💻 Módulos: RequisicaoController (POST /api/requisicoes),                   │
+│             RequisicaoService, RequisicaoRequest, ItemRequisicaoRequest,    │
+│             GlobalExceptionHandler, index.html.                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 #### Artefatos
 
-- [ ] Mais **2 histórias implementadas**
-- [ ] Commits frequentes (mínimo semanais)
+- [x] Mais **2 histórias implementadas** (**HU01** e **HU03**, lendo e gravando no banco)
+- [x] Commits frequentes de código (mínimo semanais) direto na `main`
 - [ ] Issue/Bug Tracker atualizado
-  - *Print do Bug Tracker:* <!-- inserir screenshot -->
-- [ ] **Screencast do sistema** — Novas histórias implementadas (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
-- [ ] **Screencast do código** — Explicação do código das novas histórias (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
+  - *Print do Bug Tracker:* <!-- inserir screenshot em doc/img e referenciar aqui -->
+- [x] **Screencast do sistema** — HU01 e HU03 rodando, com legenda embutida
+  - [Assistir no YouTube](https://www.youtube.com/watch?v=YsbCOH_n_zY)
+- [x] **Screencast do código** — Explicação do código de HU01 e HU03, com legenda embutida
+  - [Assistir no YouTube](https://www.youtube.com/watch?v=5QhViFcMsw4)
 
 ---
 
