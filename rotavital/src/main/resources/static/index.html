@@ -526,10 +526,12 @@
 <main>
     <div class="info-banner">
         <div class="info-banner-text">
-            <h3>Demonstração da Entrega 02 — Regras de Negócio e Algoritmos</h3>
-            <p>Integração completa: Alocação FEFO (Min-Heap) + Cálculo de Rota de Menor Custo (Dijkstra manual no Grafo de 6 nós).</p>
+            <h3>Demonstração das Entregas 02 e 03 — Regras de Negócio e Algoritmos</h3>
+            <p>Doação e cadastro de bolsas (HU01), requisições hospitalares (HU03), alocação FEFO (Min-Heap) e rota de menor custo (Dijkstra manual no grafo de 6 nós).</p>
         </div>
         <div class="badges-sprint">
+            <span class="badge-tag tag-green">HU01: Doação e Bolsa</span>
+            <span class="badge-tag tag-green">HU03: Requisição</span>
             <span class="badge-tag tag-red">HU04: FEFO por Validade</span>
             <span class="badge-tag tag-blue">HU05: Menor Rota Dijkstra</span>
             <span class="badge-tag tag-green">Spring Boot 3</span>
@@ -537,6 +539,58 @@
     </div>
 
     <div id="mensagem-toast"></div>
+
+    <!-- HU01 - REGISTRAR DOAÇÃO E CADASTRAR BOLSA NO ESTOQUE -->
+    <section class="painel" id="painel-hu01" style="margin-bottom: 1.5rem;">
+        <div class="painel-header">
+            <div>
+                <h2>🩸 Registrar Doação e Cadastrar Bolsa (HU01)</h2>
+                <p>A doação e a bolsa coletada são salvas juntas; a bolsa entra no estoque com status DISPONIVEL. Doador inativo é recusado.</p>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="doacao-doador">Doador sintético</label>
+                <select id="doacao-doador"></select>
+            </div>
+            <div>
+                <label for="doacao-tipo">Tipo Sanguíneo</label>
+                <select id="doacao-tipo">
+                    <option value="O_POS">O+</option>
+                    <option value="A_POS">A+</option>
+                    <option value="B_POS">B+</option>
+                    <option value="AB_POS">AB+</option>
+                    <option value="O_NEG">O-</option>
+                    <option value="A_NEG">A-</option>
+                    <option value="B_NEG">B-</option>
+                    <option value="AB_NEG">AB-</option>
+                </select>
+            </div>
+            <div>
+                <label for="doacao-componente">Hemocomponente</label>
+                <select id="doacao-componente">
+                    <option value="HEMACIAS">HEMÁCIAS</option>
+                    <option value="PLAQUETAS">PLAQUETAS</option>
+                    <option value="PLASMA">PLASMA</option>
+                    <option value="CRIOPRECIPITADO">CRIOPRECIPITADO</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="doacao-coleta">Data da coleta</label>
+                <input type="date" id="doacao-coleta">
+            </div>
+            <div>
+                <label for="doacao-validade">Validade da bolsa</label>
+                <input type="date" id="doacao-validade">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button id="btn-registrar-doacao" class="btn btn-primary btn-sm">Registrar Doação</button>
+            </div>
+        </div>
+        <div id="resultado-doacao" style="margin-top: .75rem;"></div>
+    </section>
 
     <div class="grid-duplo">
         <!-- COLUNA 1: HU04 - GESTÃO DE REQUISIÇÕES & ALOCAÇÃO FEFO -->
@@ -577,7 +631,7 @@
                     </div>
                     <div>
                         <label for="form-tipo">Tipo Sanguíneo</label>
-                        <select id="form-tipo">
+                        <select id="form-tipo" data-hu="03">
                             <option value="O_POS">O+</option>
                             <option value="A_POS">A+</option>
                             <option value="B_POS">B+</option>
@@ -589,11 +643,19 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div>
+                        <label for="form-quantidade">Quantidade de bolsas</label>
+                        <input type="number" id="form-quantidade" value="1" step="1">
+                    </div>
+                </div>
                 <div style="display: flex; gap: .5rem; margin-top: .5rem;">
                     <button id="btn-criar-requisicao" class="btn btn-primary btn-sm">Criar Requisição</button>
                     <button id="btn-cancelar-novo" class="btn btn-outline btn-sm">Cancelar</button>
                 </div>
             </div>
+
+            <div id="resultado-requisicao" style="margin-bottom: .75rem;"></div>
 
             <!-- LISTAGEM DE REQUISIÇÕES -->
             <div id="lista-requisicoes">
@@ -954,6 +1016,7 @@
         const prioridade = document.getElementById('form-prioridade').value;
         const componente = document.getElementById('form-componente').value;
         const tipo = document.getElementById('form-tipo').value;
+        const quantidade = parseInt(document.getElementById('form-quantidade').value, 10);
 
         const body = {
             hospitalId: parseInt(hospitalId),
@@ -961,7 +1024,7 @@
             itens: [{
                 hemoComponente: componente,
                 tipoSanguineo: tipo,
-                quantidade: 1
+                quantidade: quantidade
             }]
         };
 
@@ -974,19 +1037,87 @@
 
             if (!resp.ok) {
                 const errData = await resp.json().catch(() => ({}));
-                throw new Error(errData.mensagem || errData.message || `Erro HTTP ${resp.status}`);
+                throw new Error(descreverErro(errData, resp.status));
             }
 
-            showToast('✅ Requisição cadastrada com sucesso! Pronto para alocar bolsas por FEFO.');
+            const criada = await resp.json();
+            document.getElementById('resultado-requisicao').innerHTML =
+                `<div class="toast-success" style="display:block; position:static;">✅ Requisição <b>#${criada.id}</b> registrada com status <b>${criada.status}</b> — ${quantidade}x ${componente} (${tipo})</div>`;
+            showToast(`✅ Requisição #${criada.id} registrada com status ${criada.status}. Pronto para alocar bolsas por FEFO.`);
             document.getElementById('box-novo-pedido').style.display = 'none';
             await carregarRequisicoes();
         } catch (e) {
+            document.getElementById('resultado-requisicao').innerHTML =
+                `<div class="toast-error" style="display:block; position:static;">⛔ Requisição não salva — ${e.message}</div>`;
             showToast(`Falha ao cadastrar: ${e.message}`, 'error');
+        }
+    });
+
+    // Mensagem de erro legível a partir do corpo devolvido pelo GlobalExceptionHandler
+    function descreverErro(errData, status) {
+        if (errData.erros && typeof errData.erros === 'object') {
+            return Object.entries(errData.erros).map(([campo, msg]) => `${campo}: ${msg}`).join(' | ');
+        }
+        return errData.mensagem || errData.message || `Erro HTTP ${status}`;
+    }
+
+    // HU01 - doadores sintéticos e registro da doação
+    async function carregarDoadores() {
+        const resp = await fetch('/api/doadores');
+        const doadores = await resp.json();
+        const select = document.getElementById('doacao-doador');
+        select.innerHTML = doadores.map(d =>
+            `<option value="${d.id}" data-tipo="${d.tipoSanguineo}">#${d.id} — ${d.nome}${d.ativo ? '' : ' (inativo)'}</option>`
+        ).join('');
+        sincronizarTipoDoador();
+    }
+
+    function sincronizarTipoDoador() {
+        const opt = document.getElementById('doacao-doador').selectedOptions[0];
+        if (opt) document.getElementById('doacao-tipo').value = opt.dataset.tipo;
+    }
+
+    function iniciarDatasDoacao() {
+        const hoje = new Date();
+        const validade = new Date(hoje.getTime() + 35 * 24 * 60 * 60 * 1000);
+        document.getElementById('doacao-coleta').value = hoje.toISOString().slice(0, 10);
+        document.getElementById('doacao-validade').value = validade.toISOString().slice(0, 10);
+    }
+
+    document.getElementById('doacao-doador').addEventListener('change', sincronizarTipoDoador);
+
+    document.getElementById('btn-registrar-doacao').addEventListener('click', async () => {
+        const body = {
+            doadorId: parseInt(document.getElementById('doacao-doador').value, 10),
+            tipoSanguineo: document.getElementById('doacao-tipo').value,
+            hemocomponente: document.getElementById('doacao-componente').value,
+            dataColeta: document.getElementById('doacao-coleta').value,
+            validade: document.getElementById('doacao-validade').value
+        };
+        const box = document.getElementById('resultado-doacao');
+        try {
+            const resp = await fetch('/api/doacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                throw new Error(descreverErro(errData, resp.status));
+            }
+            const bolsa = await resp.json();
+            box.innerHTML = `<div class="toast-success" style="display:block; position:static;">✅ Bolsa <b>#${bolsa.id}</b> cadastrada no estoque — ${bolsa.tipoSanguineo} · ${bolsa.hemoComponente} · status <b>${bolsa.status}</b> · validade ${bolsa.dataValidade}</div>`;
+            showToast(`✅ Doação registrada e bolsa #${bolsa.id} disponível no estoque.`);
+        } catch (e) {
+            box.innerHTML = `<div class="toast-error" style="display:block; position:static;">⛔ ${e.message}</div>`;
+            showToast(`Doação não registrada: ${e.message}`, 'error');
         }
     });
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
+        carregarDoadores();
+        iniciarDatasDoacao();
         carregarHospitais();
         carregarRequisicoes();
     });
