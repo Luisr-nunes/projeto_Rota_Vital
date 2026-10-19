@@ -22,10 +22,20 @@ public class GlobalExceptionHandler {
             DoadorInativoException.class,
             DoacaoForaDoIntervaloException.class,
             VeiculoIncompativelException.class,
+            NenhumaBolsaCompativelException.class,
             RotaIndisponivelException.class
     })
     public ResponseEntity<Map<String, Object>> handleRegraNegocio(RuntimeException ex) {
         return corpoErro(HttpStatus.UNPROCESSABLE_ENTITY, ex);
+    }
+
+    @ExceptionHandler(EstoqueCompativelInsuficienteException.class)
+    public ResponseEntity<Map<String, Object>> handleEstoqueCompativelInsuficiente(
+            EstoqueCompativelInsuficienteException ex) {
+        Map<String, Object> body = new LinkedHashMap<>(corpoErro(HttpStatus.CONFLICT, ex).getBody());
+        body.put("quantidadeNecessaria", ex.getQuantidadeNecessaria());
+        body.put("quantidadeDisponivel", ex.getQuantidadeDisponivel());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     // IllegalArgumentException é usada nos controllers/services para "recurso não encontrado".

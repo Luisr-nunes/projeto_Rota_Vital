@@ -122,3 +122,26 @@ O ciclo de desenvolvimento do projeto está mapeado em dois ambientes principais
 |----------|----------------|-----------|
 | **Dev (Desenvolvimento)** | **H2 Database (Local)** | Banco de dados em memória. Utilizado pelos desenvolvedores localmente para execução rápida, testes e validações sem necessidade de infraestrutura externa. Os dados são voláteis e resetados ao reiniciar. |
 | **Prod (Produção)** | **PostgreSQL (Nuvem)** | Banco de dados relacional e robusto hospedado na nuvem. Mantém a persistência real dos dados das requisições e do estoque, suportando a concorrência e acessos simultâneos. |
+
+
+## HU08 — alocacao compativel (PI2-164)
+
+`POST /api/v1/requisicoes/{id}/alocacao` (alias legado: `/api/requisicoes/{id}/alocacao`).
+Sem corpo. Recebe o ID de uma requisicao PENDENTE com itens.
+
+- 200: `requisicaoId`, `status: ALOCADA`, `bolsas` (id, tipoSanguineo,
+  hemoComponente, dataValidade), `rota` (nos do grafo) e `custoTotal`.
+- 422: nenhuma bolsa valida compativel ou rota indisponivel.
+- 409: quantidade compativel insuficiente, com `quantidadeNecessaria` e
+  `quantidadeDisponivel` no corpo de erro.
+- 404: requisicao inexistente.
+- 400: requisicao fora de PENDENTE ou sem itens validos.
+
+Alocacao segue FEFO entre os tipos compativeis. Bolsas selecionadas ficam
+RESERVADA e associadas aos itens. Se algum item falhar, toda a operacao e
+revertida. A rota calculada e devolvida na resposta; esta entrega nao cria um
+registro logistico de Rota com motorista e veiculo.
+
+Compatibilidade ainda usa `TipoSanguineo` atraves de
+`CompatibilidadeSanguineaService`; integracao da matriz PI2-165 pendente.
+Ver [testes BDD](testes-bdd.md) para execucao e pendencia da HU06/PI2-181.

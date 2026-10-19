@@ -1,6 +1,9 @@
 package com.hemorede.service;
 
 import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.exception.EstoqueInsuficienteException;
+import com.hemorede.exception.EstoqueCompativelInsuficienteException;
+import com.hemorede.exception.NenhumaBolsaCompativelException;
 import com.hemorede.domain.model.Hospital;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
@@ -76,7 +79,12 @@ public class RequisicaoService {
         // relançar a exceção seria desfeito pelo próprio rollback, por isso
         // não é necessário.
         for (ItemRequisicao item : requisicao.getItens()) {
-            alocacaoService.alocar(item);
+            try {
+                alocacaoService.alocar(item);
+            } catch (NenhumaBolsaCompativelException | EstoqueCompativelInsuficienteException ex) {
+                // Preserva o contrato 422 do endpoint legado /aprovar.
+                throw new EstoqueInsuficienteException(ex.getMessage());
+            }
         }
 
         requisicao.setStatus(StatusRequisicao.APROVADA);

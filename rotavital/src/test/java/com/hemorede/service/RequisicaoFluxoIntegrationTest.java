@@ -14,6 +14,7 @@ import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.HospitalRepository;
 import com.hemorede.repository.RequisicaoRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Testes de integração do fluxo de aprovação de requisição (services +
  * repositories + H2), cobrindo FEFO e compatibilidade ABO/Rh.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:fluxo_alocacao;DB_CLOSE_DELAY=-1")
 class RequisicaoFluxoIntegrationTest {
 
     @Autowired
@@ -38,6 +39,13 @@ class RequisicaoFluxoIntegrationTest {
     private RequisicaoRepository requisicaoRepository;
     @Autowired
     private RequisicaoService requisicaoService;
+
+    @BeforeEach
+    void limparBanco() {
+        requisicaoRepository.deleteAll();
+        bolsaRepository.deleteAll();
+        hospitalRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("Aprova a requisição alocando a bolsa compatível com validade mais próxima (FEFO)")
