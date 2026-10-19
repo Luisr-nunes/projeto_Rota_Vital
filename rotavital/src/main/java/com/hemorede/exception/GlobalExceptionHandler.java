@@ -1,10 +1,13 @@
 package com.hemorede.exception;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -45,6 +48,21 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<Map<String, Object>> handleParametroInvalido(Exception ex) {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    // Corpo inválido (Bean Validation nos DTOs de entrada): 400 com a mensagem de cada campo.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
+        Map<String, String> erros = new LinkedHashMap<>();
+        for (FieldError campo : ex.getBindingResult().getFieldErrors()) {
+            erros.putIfAbsent(campo.getField(), campo.getDefaultMessage());
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("erro", "DadosInvalidos");
+        body.put("mensagem", "Dados de entrada inválidos");
+        body.put("erros", erros);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     private ResponseEntity<Map<String, Object>> corpoErro(HttpStatus status, Exception ex) {

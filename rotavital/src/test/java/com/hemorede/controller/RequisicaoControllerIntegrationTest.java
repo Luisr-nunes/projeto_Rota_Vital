@@ -69,7 +69,9 @@ class RequisicaoControllerIntegrationTest {
         mockMvc.perform(post("/api/requisicoes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erro").value("DadosInvalidos"))
+                .andExpect(jsonPath("$.erros['itens[0].quantidade']").value("a quantidade deve ser maior que zero"));
     }
 
     @Test

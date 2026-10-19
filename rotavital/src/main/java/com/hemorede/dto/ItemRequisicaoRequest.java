@@ -11,6 +11,6 @@ import jakarta.validation.constraints.Positive;
 public record ItemRequisicaoRequest(
         @NotNull HemoComponente hemoComponente,
         @NotNull TipoSanguineo tipoSanguineo,
-        @NotNull @Positive Integer quantidade
+        @NotNull(message = "informe a quantidade") @Positive(message = "a quantidade deve ser maior que zero") Integer quantidade
 ) {
 }
