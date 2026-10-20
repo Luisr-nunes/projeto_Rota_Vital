@@ -125,6 +125,76 @@ O **Rota Vital** é uma aplicação web que:
 
 ---
 
+## Desafio de Infra — Container, TDD e Deploy
+
+Entrega da disciplina de Infraestrutura de Software (Unidade 2). As seções abaixo seguem o enunciado do desafio.
+
+Subir do zero com Docker (API + PostgreSQL):
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose ps
+```
+
+A API responde em `http://localhost:8080` e o banco fica só na rede interna do Compose ([`compose.yaml`](compose.yaml)).
+
+### Testes
+
+```bash
+cd rotavital
+mvn clean test
+```
+
+| Nível | O que cobre | Onde |
+|---|---|---|
+| Unitário | Estruturas de AED (FEFO, índice de estoque, grafo/Dijkstra), intervalo entre doações, indicadores e telemetria | `src/test/java/.../algoritmos`, `estruturas`, `service` |
+| Integração (Spring Boot + banco H2) | Endpoints de doação, requisição, estoque, rotas, indicadores e o fluxo de alocação gravando no banco | `src/test/java/.../controller`, `RequisicaoFluxoIntegrationTest` |
+| Aceitação (BDD em Gherkin) | HU08 (alocação compatível + FEFO + rota, 6 cenários) e HU06 (confirmação de entrega, escrita antes do código) | `src/test/resources/features`, runner `AceitacaoBddTest` |
+
+- Story map, histórias da Release 1 quebradas em tarefas, regras testadas primeiro e o que ficou sem teste: [`doc/desafio-infra/story-map.md`](doc/desafio-infra/story-map.md).
+- Detalhes dos cenários BDD: [`doc/testes-bdd.md`](doc/testes-bdd.md).
+- Histórico red → green: commits `test:` antes do `feat:` correspondente (convenção adotada a partir da sprint 12e13).
+
+### Pipeline e deploy
+
+```text
+pull request ──> GitHub Actions: build + testes ──> vermelho bloqueia o merge
+merge na main ─> GitHub Actions: build + testes ──> verde ──> Render: docker build ──> health check ──> no ar
+```
+
+- **Ferramenta:** GitHub Actions (`.github/workflows/ci.yml`), rodando em `push` e `pull_request`.
+- **Gate:** a `main` é protegida; o merge só acontece com o check de testes verde.
+- **Deploy:** Render com Auto-Deploy "After CI Checks Pass", imagem do `rotavital/Dockerfile`, health check em `/actuator/health`.
+- **URL no ar:** https://rota-vital-jnmx.onrender.com
+- **Situação em 20/10:** o `ci.yml` ainda roda só em `push` na `main`; o gatilho em pull request e a proteção da `main` entram com a PI2-189 (Lucas). Atualizar esta linha quando o pipeline com gates estiver ativo.
+- **Evidências** (execução vermelha, execução verde, rollback): [`doc/evidencias/`](doc/evidencias/README.md).
+- **Rollback:** Render → Events → Rollback, ou `git revert <hash>` + push. Passo a passo em [`doc/pipeline-deploy.md`](doc/pipeline-deploy.md).
+
+### Decisões
+
+| Decisão | Escolha | Alternativas | Por quê |
+|---|---|---|---|
+| Imagem base | `maven:3.9-eclipse-temurin-17` no build e `eclipse-temurin:17-jre` no runtime | `openjdk:17`, `amazoncorretto:17` | Multi-stage: o primeiro estágio compila e roda os testes (`mvn verify`); a imagem final leva só a JRE e o `.jar`, roda com usuário sem privilégios e fica menor e com menos pacotes vulneráveis. |
+| Dados | PostgreSQL (Supabase em produção, container no Compose) com volume nomeado; H2 em memória nos testes | MySQL, MongoDB; bind mount | Modelo relacional (bolsa, doador, requisição, rota); o volume nomeado mantém os dados após `docker compose down`. |
+| Testes | Compatibilidade ABO/Rh e FEFO primeiro | Começar pelas telas ou pelo CRUD | Um erro de compatibilidade põe um paciente em risco; um erro de validade aumenta o descarte. |
+| Fluxo de branch | GitHub Flow: branch curta por tarefa, pull request e `main` protegida | Git Flow, GitLab Flow | Grupo pequeno, uma versão no ar e deploy a cada merge; Git Flow teria branches demais para o tamanho do projeto. |
+| CI/CD e deploy | GitHub Actions + Render | GitLab CI, Jenkins; Railway, Fly.io | O código já está no GitHub; o Render tem plano gratuito com deploy por Dockerfile e espera o CI passar. |
+| Segredos | Senha do banco nas variáveis de ambiente do Render e nos GitHub Secrets; `.env.example` no repositório e `.env` no `.gitignore` | Arquivo de configuração versionado | Nenhuma credencial no histórico do Git; quem clona sabe quais variáveis precisa. |
+
+### Uso de IA
+
+A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe revisa, testa e assina cada entrega.
+
+| Para quê | Prompt principal (resumo) | Como foi revisado |
+|---|---|---|
+| Planejamento das sprints e do Jira | "Faça o levantamento do que os professores pediram e distribua as tarefas de forma igual entre os 7 membros, com commits diários." | O Gerente de Projetos ajustou a distribuição e os prazos com o grupo. |
+| Screencasts da Entrega 03 | "Grave o screencast do sistema e do código das HU01 e HU03, com legenda." | Vídeos assistidos e aprovados antes de publicar no YouTube. |
+| Documentação do desafio | "Monte o story map da Release 1 e as seções Testes, Pipeline e deploy, Decisões e Uso de IA do README a partir do que existe no repositório." | Conferido com o código, os testes e o pipeline reais; itens pendentes marcados como pendentes. |
+| Testes e código | Pedidos pontuais de testes e correções (por exemplo, mensagens de validação por campo). | Todo código passou pela suíte (`mvn test`) antes do commit. |
+
+---
+
 ## Entregas
 
 ### Entrega 01
