@@ -17,9 +17,9 @@
   <a href="#problema">Problema</a> •
   <a href="#solução">Solução</a> •
   <a href="#tecnologias-utilizadas">Tecnologias</a> •
-  <a href="#como-rodar-o-projeto">Como Rodar</a> •
+  <a href="#como-rodar-localmente">Como rodar localmente</a> •
   <a href="#entregas">Entregas</a> •
-  <a href="#equipe">Equipe</a>
+  <a href="#integrantes">Integrantes</a>
 </p>
 
 ---
@@ -84,7 +84,7 @@ O **Rota Vital** é uma aplicação web que:
 
 ---
 
-## Como Rodar o Projeto
+## Como rodar localmente
 
 ### Pré-requisitos
 - **Java 17+** (JDK 17 ou superior)
@@ -135,6 +135,7 @@ cp .env.example .env          # 1. cria o arquivo de variáveis (o .env não vai
 docker compose up -d --build  # 2. constrói a imagem (roda os testes) e sobe os dois serviços
 docker compose ps             # 3. db e api devem ficar "healthy"
 curl http://localhost:8080/actuator/health   # {"status":"UP"}
+docker compose logs -f api   # acompanha os logs da aplicação
 ```
 
 Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para apagar também os dados: `docker compose down -v`.
@@ -153,6 +154,8 @@ Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para 
 - **Volume nomeado `pgdata`:** os dados sobrevivem a `docker compose down`.
 - **Banco sem `ports`:** o Postgres só é acessível pela rede interna do Compose; só a API é exposta.
 - **Segredos fora do código:** a senha vem do `.env` (ignorado pelo Git) e o `.env.example` mostra quais variáveis existem. Em produção elas ficam nas variáveis de ambiente do Render.
+- **Dois perfis de banco:** rodando localmente sem Docker a aplicação usa H2 em memória; no Docker e em produção usa o perfil `prod`, com PostgreSQL.
+- **Dados de demonstração fictícios:** a carga sintética não contém informações pessoais reais.
 
 ---
 
@@ -441,7 +444,7 @@ Resumo de até **8 minutos** abordando:
 
 ---
 
-## Equipe
+## Integrantes
 
 | Função | Matrícula | Responsável | E-mail |
 |---|---|---|---|
