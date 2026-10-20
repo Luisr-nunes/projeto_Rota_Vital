@@ -38,6 +38,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(DiasPrevisaoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleDiasPrevisao(DiasPrevisaoInvalidoException ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(ModeloProbabilisticoIndisponivelException.class)
+    public ResponseEntity<Map<String, Object>> handleModeloPendente(ModeloProbabilisticoIndisponivelException ex) {
+        return corpoErro(HttpStatus.SERVICE_UNAVAILABLE, ex);
+    }
+
     // IllegalArgumentException é usada nos controllers/services para "recurso não encontrado".
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleNaoEncontrado(IllegalArgumentException ex) {
