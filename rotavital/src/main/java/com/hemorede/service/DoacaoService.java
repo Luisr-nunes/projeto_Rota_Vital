@@ -88,7 +88,7 @@ public class DoacaoService {
             long diasDesdeUltima = java.time.temporal.ChronoUnit.DAYS
                     .between(doador.getDataUltimaDoacao(), dataDoacao);
 
-            if (diasDesdeUltima < intervaloMinimoDias) {
+            if (diasDesdeUltima <= intervaloMinimoDias) {
                 throw new DoacaoForaDoIntervaloException(
                         "Doador " + doador.getId() + " só pode doar novamente após "
                                 + intervaloMinimoDias + " dias da última doação. Faltam "
