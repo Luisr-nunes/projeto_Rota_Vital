@@ -20,6 +20,10 @@
     <properties>
         <java.version>17</java.version>
         <cucumber.version>7.18.1</cucumber.version>
+        <!-- O BOM do Spring Boot 3.3.2 traz o Testcontainers 1.19.x, que não conversa com o
+             Docker Engine mais novo (erro de versão mínima da API). A 1.21.4 corrige isso
+             e continua com os mesmos artefatos (org.testcontainers:postgresql). -->
+        <testcontainers.version>1.21.4</testcontainers.version>
     </properties>
 
     <dependencies>
@@ -76,6 +80,12 @@
             <artifactId>junit-platform-suite</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- PI2-191: PostgreSQL de verdade (container Docker) nos testes de integração *IT -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -83,6 +93,13 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- PI2-191: o Surefire (mvn test) roda os testes *Test com H2 em memória; o Failsafe
+                 (mvn verify) roda os testes *IT, que precisam de Docker para subir o PostgreSQL.
+                 O starter-parent já configura o Failsafe (goals integration-test e verify). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

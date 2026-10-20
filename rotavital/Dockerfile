@@ -9,7 +9,9 @@ COPY pom.xml .
 RUN mvn -B dependency:go-offline
 
 COPY src ./src
-RUN mvn -B verify
+# -DskipITs: os testes *IT (PostgreSQL real via Testcontainers, PI2-191) precisam de Docker, que não
+# existe dentro de um "docker build". Eles rodam no GitHub Actions (mvn verify) antes do deploy.
+RUN mvn -B verify -DskipITs
 
 # ---------- Estágio 2: runtime ----------
 # Só o JRE 17 e o .jar: sem Maven, sem JDK, sem código-fonte.

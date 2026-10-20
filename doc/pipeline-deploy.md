@@ -13,14 +13,14 @@ Este documento descreve o caminho do código desde o `git push` até a aplicaç�
  pull request para a main
       │
       ▼
- GitHub Actions — job build-and-test (Java 17, mvn package + mvn test)
+ GitHub Actions — job build-and-test (Java 17, mvn verify: testes com H2 + BDD + PostgreSQL via Testcontainers)
       │  vermelho: o PR fica marcado como falho (ex.: run #58)
       │  verde: pode ser mesclado (ex.: run #59)
       ▼
  merge / push na main
       ├──> GitHub Actions roda de novo (badge do README)
       └──> Render — auto-deploy a cada commit (Docker)
-             clona o repositório → docker build (rotavital/Dockerfile, roda mvn -B verify)
+             clona o repositório → docker build (rotavital/Dockerfile, roda mvn -B verify -DskipITs)
                │  teste falhou: build falha, a versão anterior continua no ar
                ▼  passou
              nova instância sobe → tráfego vai para a nova versão
@@ -39,8 +39,9 @@ Este documento descreve o caminho do código desde o `git push` até a aplicaç�
 |---|-------|-----------|
 | 1 | **Checkout do código** (`actions/checkout@v4`) | Baixa o repositório na versão do commit que disparou o workflow. |
 | 2 | **Configurar Java 17** (`actions/setup-java@v4`, distribuição `temurin`, `cache: maven`) | Instala o JDK 17 (mesma versão do `pom.xml` e do Dockerfile) e guarda em cache o repositório local do Maven (`~/.m2`), deixando os próximos builds mais rápidos. |
-| 3 | **Compilar e testar** (diretório `./rotavital`) | Compila o projeto e executa os testes unitários e de integração (JUnit 5 + Spring Boot Test, banco H2 em memória). Se algum teste falhar, o job falha e o commit fica marcado com ❌. |
-| 4 | **Badge de status** | O README exibe o badge do workflow (`ci.yml`, branch `main`). Ele fica verde quando o último run passou e vermelho quando falhou — é o "semáforo" que a equipe olha antes de considerar uma entrega pronta. |
+| 3 | **Build e testes** (`mvn -B verify`, diretório `./rotavital`) | Compila e executa, em um único comando: os testes unitários, de integração com H2 e BDD (Surefire) e os testes `*IT` com **PostgreSQL real via Testcontainers** (Failsafe, PI2-191). O runner `ubuntu-latest` já tem Docker, então o Testcontainers sobe um `postgres:16-alpine` sozinho. Se algum teste falhar, o job falha e o commit fica marcado com ❌. |
+| 4 | **Guardar relatórios** (`actions/upload-artifact@v4`, só em falha) | Anexa `surefire-reports` e `failsafe-reports` ao run, para investigar um teste vermelho sem rodar de novo. |
+| 5 | **Badge de status** | O README exibe o badge do workflow (`ci.yml`, branch `main`). Ele fica verde quando o último run passou e vermelho quando falhou — é o "semáforo" que a equipe olha antes de considerar uma entrega pronta. |
 
 Badge usado no README:
 
@@ -48,26 +49,20 @@ Badge usado no README:
 ![CI/CD](https://img.shields.io/github/actions/workflow/status/Luisr-nunes/projeto_Rota_Vital/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI%2FCD)
 ```
 
-### 2.1 Comando de build: `mvnw verify`
+### 2.1 Comando de build: `mvn verify`
 
-A etapa 3 deve rodar o **Maven Wrapper** com a fase `verify`:
+A etapa 3 roda a fase `verify` do Maven:
 
 ```bash
 cd rotavital
-./mvnw -B verify
+mvn -B verify
 ```
 
-- `./mvnw` garante que o CI usa a mesma versão do Maven que a equipe (3.9.16, definida em `rotavital/.mvn/wrapper/maven-wrapper.properties`), sem depender do Maven instalado no runner.
-- `verify` executa, em um único comando, compilação → testes → empacotamento do `.jar` → verificações finais. Um único passo verde significa "compila, passa nos testes e gera o artefato".
+- `verify` executa, em um único comando, compilação → testes do Surefire (`*Test`: unitários, H2 e BDD) → empacotamento do `.jar` → testes do Failsafe (`*IT`: PostgreSQL real via Testcontainers) → verificação final. Um único passo verde significa "compila, passa nos testes, inclusive com Postgres de verdade, e gera o artefato".
 - `-B` (batch mode) deixa o log limpo, sem barras de progresso.
+- Localmente, `mvn test` roda só os testes rápidos (sem Docker); `mvn verify` exige Docker rodando por causa dos `*IT`.
 
-> **Situação atual do `ci.yml`:** hoje o workflow ainda usa duas etapas com o Maven do runner — `mvn package -DskipTests` e depois `mvn test`. O resultado é equivalente, mas o alvo é trocar as duas pelo passo único abaixo. O `mvnw` precisa estar com permissão de execução no Git (`git update-index --chmod=+x rotavital/mvnw`).
->
-> ```yaml
->       - name: Build e testes (mvnw verify)
->         working-directory: ./rotavital
->         run: ./mvnw -B verify
-> ```
+> **Sobre o `mvnw`:** o workflow usa o `mvn` do runner (o mesmo que o `Dockerfile` usa). Trocar por `./mvnw -B verify` fixaria a versão do Maven em 3.9.16 (`rotavital/.mvn/wrapper/maven-wrapper.properties`), mas o `mvnw` está sem permissão de execução no Git; para isso seria preciso `git update-index --chmod=+x rotavital/mvnw`.
 
 ---
 
@@ -76,8 +71,8 @@ cd rotavital
 | Passo | Onde | O que acontece |
 |-------|------|----------------|
 | 1. **Push na `main`** | GitHub | Merge do PR (ou push direto) na `main`. Isso dispara o workflow e notifica o Render pelo webhook do repositório. |
-| 2. **CI** | GitHub Actions | O job `build-and-test` roda no PR e de novo no push na `main`. O resultado aparece no PR e no badge. Hoje ele **não** bloqueia o Render sozinho (ver a configuração abaixo). |
-| 3. **Auto-deploy no Render** | Render | O Auto-Deploy está em **"On Commit"**: todo commit na `main` inicia um deploy. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 roda `mvn -B verify`, que compila e executa os testes → imagem final só com JRE 17). Se um teste falhar, o build falha e a versão anterior continua no ar. |
+| 2. **CI** | GitHub Actions | O job `build-and-test` roda no PR e de novo no push na `main`. O resultado aparece no PR e no badge. Hoje ele **não** bloqueia o Render sozinho (ver a configuração abaixo). Como os testes `*IT` com PostgreSQL só rodam aqui, é o Auto-Deploy "After CI Checks Pass" que faz o Render esperar por eles. |
+| 3. **Auto-deploy no Render** | Render | O Auto-Deploy está em **"On Commit"**: todo commit na `main` inicia um deploy. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 roda `mvn -B verify -DskipITs`, que compila e executa os testes com H2 e BDD → imagem final só com JRE 17). Os testes `*IT` ficam de fora porque não há Docker dentro de um `docker build`; eles rodam só no GitHub Actions. Se um teste do build falhar, o build falha e a versão anterior continua no ar. |
 | 4. **Subida da nova versão** | Render | O container sobe com `SPRING_PROFILES_ACTIVE=prod` (definido no Dockerfile), lê as variáveis de ambiente do banco e escuta na porta 8080. |
 | 5. **Health check** | Render / equipe | O campo **Health Check Path** do serviço ainda está vazio, então o Render só confere se a porta abriu. A equipe confere `GET /actuator/health` → `{"status":"UP"}` depois de cada deploy. Com o campo preenchido, o Render passa a só trocar o tráfego quando essa resposta for 200. |
 
