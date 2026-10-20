@@ -197,7 +197,7 @@ merge na main ─> GitHub Actions: mvn verify ──> verde
 - **Gate no deploy:** o `rotavital/Dockerfile` roda `mvn -B verify -DskipITs` no build. Se um teste falhar, o Render não gera a imagem e a versão anterior continua no ar. Os `*IT` ficam de fora ali porque não há Docker dentro de um `docker build`; eles só barram o deploy se o Render esperar o CI (veja o próximo item).
 - **Deploy:** Render com Auto-Deploy a cada commit na `main` (run #60 → deploy `b14e58c` live em 20/10).
 - **URL no ar:** https://rota-vital-jnmx.onrender.com
-- **Falta ligar (dono do repositório e do Render):** proteção da `main` exigindo o check `build-and-test` (hoje o GitHub ainda permite o merge com o check vermelho), Auto-Deploy "After CI Checks Pass" e Health Check Path `/actuator/health` no Render. Sem o "After CI Checks Pass", um teste `*IT` vermelho no GitHub Actions não impede o Render de publicar.
+- **Gates ligados em 20/10:** a `main` é protegida (merge só por pull request, com o check `build-and-test` verde e a branch atualizada); o Render publica só depois do CI verde (Auto-Deploy "After CI Checks Pass"), o que inclui os testes `*IT` com PostgreSQL, e só troca o tráfego quando `/actuator/health` responde 200.
 - **Evidências** (execução vermelha, execução verde, rollback): [`doc/evidencias/`](doc/evidencias/README.md).
 - **Rollback:** Render → Events → Rollback, ou `git revert <hash>` + push. Passo a passo em [`doc/pipeline-deploy.md`](doc/pipeline-deploy.md).
 
