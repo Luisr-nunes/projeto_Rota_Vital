@@ -123,34 +123,61 @@ O **Rota Vital** é uma aplicação web que:
   * **Usuário:** `sa`
   * **Senha:** *(vazia)*
 
+### Como rodar com Docker
+
+Sobe a API e o PostgreSQL juntos, sem instalar Java, Maven nem banco na máquina.
+
+**Pré-requisito:** Docker com Compose v2 (`docker compose version`).
+
+```bash
+cp .env.example .env          # 1. cria o arquivo de variáveis (o .env não vai para o Git)
+# edite o .env e troque POSTGRES_PASSWORD
+docker compose up -d --build  # 2. constrói a imagem (roda os testes) e sobe os dois serviços
+docker compose ps             # 3. db e api devem ficar "healthy"
+curl http://localhost:8080/actuator/health   # {"status":"UP"}
+```
+
+Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para apagar também os dados: `docker compose down -v`.
+
+| Variável (`.env`) | Para quê | Padrão |
+|---|---|---|
+| `POSTGRES_PASSWORD` | Senha do banco. **Obrigatória**: sem ela o Compose se recusa a subir | — |
+| `POSTGRES_DB` / `POSTGRES_USER` | Nome do banco e do usuário | `rotavital` |
+| `API_PORT` | Porta da API no seu computador | `8080` |
+| `HEMOREDE_SEED_ENABLED` | Carga de dados sintéticos na primeira subida | `true` |
+
+**Decisões deste setup** (a tabela completa está em [Decisões](#decisões)):
+
+- **Dockerfile multi-stage:** o primeiro estágio (Maven + JDK 17) compila e roda os testes; a imagem final leva só a JRE e o `.jar`, e a aplicação roda sem ser root.
+- **`depends_on` com `condition: service_healthy`:** a API só inicia depois que o Postgres responde ao `pg_isready`, evitando erro de conexão na subida.
+- **Volume nomeado `pgdata`:** os dados sobrevivem a `docker compose down`.
+- **Banco sem `ports`:** o Postgres só é acessível pela rede interna do Compose; só a API é exposta.
+- **Segredos fora do código:** a senha vem do `.env` (ignorado pelo Git) e o `.env.example` mostra quais variáveis existem. Em produção elas ficam nas variáveis de ambiente do Render.
+
 ---
 
 ## Desafio de Infra — Container, TDD e Deploy
 
 Entrega da disciplina de Infraestrutura de Software (Unidade 2). As seções abaixo seguem o enunciado do desafio.
 
-Subir do zero com Docker (API + PostgreSQL):
-
-```bash
-cp .env.example .env
-docker compose up -d --build
-docker compose ps
-```
-
-A API responde em `http://localhost:8080` e o banco fica só na rede interna do Compose ([`compose.yaml`](compose.yaml)).
+Subir do zero com Docker (API + PostgreSQL): veja [Como rodar com Docker](#como-rodar-com-docker). O banco fica só na rede interna do Compose ([`compose.yaml`](compose.yaml)).
 
 ### Testes
 
 ```bash
 cd rotavital
-mvn clean test
+mvn clean test      # rápido: unitários, integração com H2 e BDD. Não precisa de Docker
+mvn clean verify    # tudo isso + testes *IT com PostgreSQL real (Testcontainers). Precisa de Docker rodando
 ```
 
 | Nível | O que cobre | Onde |
 |---|---|---|
 | Unitário | Estruturas de AED (FEFO, índice de estoque, grafo/Dijkstra), intervalo entre doações, indicadores e telemetria | `src/test/java/.../algoritmos`, `estruturas`, `service` |
 | Integração (Spring Boot + banco H2) | Endpoints de doação, requisição, estoque, rotas, indicadores e o fluxo de alocação gravando no banco | `src/test/java/.../controller`, `RequisicaoFluxoIntegrationTest` |
+| Integração com PostgreSQL real (Testcontainers) | Fluxo de requisição e alocação (ABO/Rh, FEFO, validade, rollback) conferido com SQL direto no Postgres, API de aprovação (200 e 422) e carga de dados sintéticos | `src/test/java/.../integration` (`*IT`, rodam com `mvn verify`) |
 | Aceitação (BDD em Gherkin) | HU08 (alocação compatível + FEFO + rota, 6 cenários) e HU06 (confirmação de entrega, escrita antes do código) | `src/test/resources/features`, runner `AceitacaoBddTest` |
+
+- Os testes `*IT` sobem um container `postgres:16-alpine` (a mesma imagem do `compose.yaml`) e o compartilham entre as classes. Rodam pelo Maven Failsafe, por isso só entram no `mvn verify`.
 
 - Story map, histórias da Release 1 quebradas em tarefas, regras testadas primeiro e o que ficou sem teste: [`doc/desafio-infra/story-map.md`](doc/desafio-infra/story-map.md).
 - Detalhes dos cenários BDD: [`doc/testes-bdd.md`](doc/testes-bdd.md).
@@ -159,18 +186,18 @@ mvn clean test
 ### Pipeline e deploy
 
 ```text
-pull request ──> GitHub Actions: build + testes ──> vermelho marca o PR como falho
-merge na main ─> GitHub Actions: build + testes ──> verde
-              └> Render: docker build (roda mvn verify) ──> teste falhou: deploy falha e a versão anterior fica no ar
-                                                       └> passou: nova versão no ar
+pull request ──> GitHub Actions: mvn verify (unitários + H2 + BDD + PostgreSQL/Testcontainers) ──> vermelho marca o PR como falho
+merge na main ─> GitHub Actions: mvn verify ──> verde
+              └> Render: docker build (roda mvn verify -DskipITs) ──> teste falhou: deploy falha e a versão anterior fica no ar
+                                                                  └> passou: nova versão no ar
 ```
 
 - **Ferramenta:** GitHub Actions (`.github/workflows/ci.yml`), rodando em `push` e `pull_request`.
-- **Gate no PR:** o check `build-and-test` roda em todo pull request para a `main`. Demonstrado no PR #36: run #58 vermelho (erro proposital no intervalo de doação), run #59 verde depois da correção.
-- **Gate no deploy:** o `rotavital/Dockerfile` roda `mvn -B verify` no build. Se um teste falhar, o Render não gera a imagem e a versão anterior continua no ar.
+- **Gate no PR:** o check `build-and-test` roda `mvn -B verify` em todo pull request para a `main`, incluindo os testes com PostgreSQL real (Testcontainers, PI2-191). Demonstrado no PR #36: run #58 vermelho (erro proposital no intervalo de doação), run #59 verde depois da correção.
+- **Gate no deploy:** o `rotavital/Dockerfile` roda `mvn -B verify -DskipITs` no build. Se um teste falhar, o Render não gera a imagem e a versão anterior continua no ar. Os `*IT` ficam de fora ali porque não há Docker dentro de um `docker build`; eles só barram o deploy se o Render esperar o CI (veja o próximo item).
 - **Deploy:** Render com Auto-Deploy a cada commit na `main` (run #60 → deploy `b14e58c` live em 20/10).
 - **URL no ar:** https://rota-vital-jnmx.onrender.com
-- **Falta ligar (dono do repositório e do Render):** proteção da `main` exigindo o check `build-and-test` (hoje o GitHub ainda permite o merge com o check vermelho), Auto-Deploy "After CI Checks Pass" e Health Check Path `/actuator/health` no Render.
+- **Falta ligar (dono do repositório e do Render):** proteção da `main` exigindo o check `build-and-test` (hoje o GitHub ainda permite o merge com o check vermelho), Auto-Deploy "After CI Checks Pass" e Health Check Path `/actuator/health` no Render. Sem o "After CI Checks Pass", um teste `*IT` vermelho no GitHub Actions não impede o Render de publicar.
 - **Evidências** (execução vermelha, execução verde, rollback): [`doc/evidencias/`](doc/evidencias/README.md).
 - **Rollback:** Render → Events → Rollback, ou `git revert <hash>` + push. Passo a passo em [`doc/pipeline-deploy.md`](doc/pipeline-deploy.md).
 
@@ -179,7 +206,8 @@ merge na main ─> GitHub Actions: build + testes ──> verde
 | Decisão | Escolha | Alternativas | Por quê |
 |---|---|---|---|
 | Imagem base | `maven:3.9-eclipse-temurin-17` no build e `eclipse-temurin:17-jre` no runtime | `openjdk:17`, `amazoncorretto:17` | Multi-stage: o primeiro estágio compila e roda os testes (`mvn verify`); a imagem final leva só a JRE e o `.jar`, roda com usuário sem privilégios e fica menor e com menos pacotes vulneráveis. |
-| Dados | PostgreSQL (Supabase em produção, container no Compose) com volume nomeado; H2 em memória nos testes | MySQL, MongoDB; bind mount | Modelo relacional (bolsa, doador, requisição, rota); o volume nomeado mantém os dados após `docker compose down`. |
+| Dados | PostgreSQL (Supabase em produção, container no Compose) com volume nomeado | MySQL, MongoDB; bind mount | Modelo relacional (bolsa, doador, requisição, rota); o volume nomeado mantém os dados após `docker compose down`. |
+| Banco nos testes | H2 em memória nos testes rápidos (`mvn test`) e PostgreSQL real via Testcontainers nos `*IT` (`mvn verify`) | Só H2; Postgres instalado na máquina ou no runner | O H2 dá feedback em segundos, mas não é o banco de produção: o Postgres de verdade pega diferença de schema, enum e transação. O Testcontainers sobe o mesmo `postgres:16-alpine` do Compose, sem instalar nada. O custo é precisar de Docker para o `verify`. |
 | Testes | Compatibilidade ABO/Rh e FEFO primeiro | Começar pelas telas ou pelo CRUD | Um erro de compatibilidade põe um paciente em risco; um erro de validade aumenta o descarte. |
 | Fluxo de branch | GitHub Flow: branch curta por tarefa, pull request e `main` protegida | Git Flow, GitLab Flow | Grupo pequeno, uma versão no ar e deploy a cada merge; Git Flow teria branches demais para o tamanho do projeto. |
 | CI/CD e deploy | GitHub Actions + Render | GitLab CI, Jenkins; Railway, Fly.io | O código já está no GitHub; o Render tem plano gratuito com deploy por Dockerfile, e o `mvn verify` no build impede publicar versão com teste falhando. |

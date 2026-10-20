@@ -68,6 +68,6 @@ quando a PI2-181 entrar na main.
 ## 4. O que ficou sem teste (e por quê)
 
 - **Telas HTML/JavaScript** (`index.html`, `indicadores.html`): validadas manualmente e nos screencasts; não há teste automatizado de interface.
-- **Integração com PostgreSQL real**: os testes usam H2 em memória; o teste com Postgres via Testcontainers está planejado na PI2-191.
+- **Integração com PostgreSQL real**: os testes rápidos (`mvn test`) usam H2 em memória; a PI2-191 adicionou os testes `*IT` com Postgres via Testcontainers (`mvn verify`), que cobrem o fluxo de requisição e alocação e a carga sintética. Ficam de fora da cobertura com Postgres os demais endpoints (doação, estoque, rotas, indicadores), que continuam só no H2.
 - **HU06**: endpoint ainda não implementado (cenários de aceitação já escritos).
 - **Deploy no Render**: verificado pelo health check `GET /actuator/health` após cada publicação, não por teste automatizado.
