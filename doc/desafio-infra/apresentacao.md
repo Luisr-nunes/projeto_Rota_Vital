@@ -11,14 +11,15 @@ Uma entrega por grupo, com os quatro itens pedidos no enunciado:
 | 1 | Link do repositório (público) | https://github.com/Luisr-nunes/projeto_Rota_Vital | Pronto |
 | 2 | URL pública do sistema no ar | https://rota-vital-jnmx.onrender.com (health check em `/actuator/health`) | Pronto |
 | 3 | README com as seções Integrantes · Como rodar · Testes · Pipeline e deploy · Decisões · Uso de IA | [`README.md`](../../README.md), seção "Desafio de Infra" | Testes, Pipeline e deploy, Decisões e Uso de IA: PI2-223 · Como rodar com Docker: PI2-172 |
-| 4 | Evidências do pipeline (execução vermelha, execução verde, URL e rollback) | [`doc/evidencias/`](../evidencias/README.md) | Depende do pipeline com gates (PI2-189) |
+| 4 | Evidências do pipeline (execução vermelha, execução verde, URL e rollback) | [`doc/evidencias/`](../evidencias/README.md) | Pronto: PR #36 (run #58 vermelho, #59 e #60 verdes, deploy `b14e58c`) |
 
 Antes de enviar, conferir:
 
 - [ ] `docker compose up -d --build` sobe API e Postgres do zero (PI2-171)
-- [ ] Pipeline roda em pull request e push, e o merge fica bloqueado com teste vermelho (PI2-189)
-- [ ] Prints das duas execuções (vermelha e verde) em `doc/evidencias/`
-- [ ] `curl https://rota-vital-jnmx.onrender.com/actuator/health` responde `{"status":"UP"}`
+- [x] Pipeline roda em pull request e push (PR #36)
+- [ ] Merge bloqueado com teste vermelho: falta a proteção da `main` (Luis)
+- [x] Prints das duas execuções (vermelha e verde) em `doc/evidencias/`
+- [x] `curl https://rota-vital-jnmx.onrender.com/actuator/health` responde `{"status":"UP"}` (20/10, 13:33)
 - [ ] Print da entrega confirmada no Classroom anexado na PI2-221
 
 ## 2. Roteiro da apresentação (cerca de 5 minutos)

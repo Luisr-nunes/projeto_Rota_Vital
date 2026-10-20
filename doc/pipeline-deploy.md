@@ -10,28 +10,30 @@ Este documento descreve o caminho do código desde o `git push` até a aplicaç�
 ## 1. Visão geral
 
 ```text
- git push (main)
+ pull request para a main
       │
       ▼
- GitHub Actions — workflow "CI/CD - Rota Vital"
-   checkout → Java 17 → build/testes Maven → status do commit (badge)
-      │  CI verde
+ GitHub Actions — job build-and-test (Java 17, mvn package + mvn test)
+      │  vermelho: o PR fica marcado como falho (ex.: run #58)
+      │  verde: pode ser mesclado (ex.: run #59)
       ▼
- Render — auto-deploy (Docker)
-   clona o repositório → docker build (rotavital/Dockerfile) → sobe nova instância
+ merge / push na main
+      ├──> GitHub Actions roda de novo (badge do README)
+      └──> Render — auto-deploy a cada commit (Docker)
+             clona o repositório → docker build (rotavital/Dockerfile, roda mvn -B verify)
+               │  teste falhou: build falha, a versão anterior continua no ar
+               ▼  passou
+             nova instância sobe → tráfego vai para a nova versão
       │
       ▼
- Health check  GET /actuator/health → {"status":"UP"}
-      │  passou
-      ▼
- Tráfego vai para a nova versão (a anterior é desligada)
+ Conferência: GET /actuator/health → {"status":"UP"}
 ```
 
 ---
 
 ## 2. Workflow do GitHub Actions
 
-**Arquivo:** `.github/workflows/ci.yml` · **Gatilho:** `push` na branch `main` · **Runner:** `ubuntu-latest` · **Job:** `build-and-test`
+**Arquivo:** `.github/workflows/ci.yml` · **Gatilhos:** `pull_request` para a `main` e `push` na `main` (desde o PR #36, 20/10/2026) · **Runner:** `ubuntu-latest` · **Job:** `build-and-test`
 
 | # | Etapa | O que faz |
 |---|-------|-----------|
@@ -74,21 +76,23 @@ cd rotavital
 | Passo | Onde | O que acontece |
 |-------|------|----------------|
 | 1. **Push na `main`** | GitHub | Merge do PR (ou push direto) na `main`. Isso dispara o workflow e notifica o Render pelo webhook do repositório. |
-| 2. **CI verde** | GitHub Actions | O job `build-and-test` precisa terminar com sucesso. Se falhar, nada é publicado. |
-| 3. **Auto-deploy no Render** | Render | Com o Auto-Deploy configurado como **"After CI Checks Pass"**, o Render só inicia o deploy depois que os checks do commit passam. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 para gerar o `.jar` → imagem final só com JRE 17). |
+| 2. **CI** | GitHub Actions | O job `build-and-test` roda no PR e de novo no push na `main`. O resultado aparece no PR e no badge. Hoje ele **não** bloqueia o Render sozinho (ver a configuração abaixo). |
+| 3. **Auto-deploy no Render** | Render | O Auto-Deploy está em **"On Commit"**: todo commit na `main` inicia um deploy. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 roda `mvn -B verify`, que compila e executa os testes → imagem final só com JRE 17). Se um teste falhar, o build falha e a versão anterior continua no ar. |
 | 4. **Subida da nova versão** | Render | O container sobe com `SPRING_PROFILES_ACTIVE=prod` (definido no Dockerfile), lê as variáveis de ambiente do banco e escuta na porta 8080. |
-| 5. **Health check** | Render | O Render chama `GET /actuator/health` (campo **Health Check Path** do serviço). Só quando a resposta é `200 {"status":"UP"}` o tráfego passa para a nova versão; a versão anterior é desligada depois disso (deploy sem downtime). Se o health check não passar, o deploy é marcado como falho e a versão anterior continua no ar. |
+| 5. **Health check** | Render / equipe | O campo **Health Check Path** do serviço ainda está vazio, então o Render só confere se a porta abriu. A equipe confere `GET /actuator/health` → `{"status":"UP"}` depois de cada deploy. Com o campo preenchido, o Render passa a só trocar o tráfego quando essa resposta for 200. |
 
 **Configuração do Web Service no Render**
 
-| Campo | Valor |
-|-------|-------|
-| Runtime | Docker |
-| Branch | `main` |
-| Root Directory | `rotavital` |
-| Dockerfile Path | `./Dockerfile` |
-| Auto-Deploy | After CI Checks Pass |
-| Health Check Path | `/actuator/health` |
+| Campo | Hoje (conferido na API do Render em 20/10/2026) | Alvo |
+|-------|-------|-------|
+| Runtime | Docker | Docker |
+| Branch | `main` | `main` |
+| Docker Context | `rotavital` | `rotavital` |
+| Dockerfile Path | `./rotavital/Dockerfile` | `./rotavital/Dockerfile` |
+| Auto-Deploy | On Commit | After CI Checks Pass |
+| Health Check Path | (vazio) | `/actuator/health` |
+
+Os dois ajustes da coluna **Alvo** e a proteção da `main` exigindo o check `build-and-test` só podem ser feitos por quem administra o repositório e o serviço no Render.
 
 Para conferir manualmente depois do deploy:
 

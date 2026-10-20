@@ -159,15 +159,18 @@ mvn clean test
 ### Pipeline e deploy
 
 ```text
-pull request ──> GitHub Actions: build + testes ──> vermelho bloqueia o merge
-merge na main ─> GitHub Actions: build + testes ──> verde ──> Render: docker build ──> health check ──> no ar
+pull request ──> GitHub Actions: build + testes ──> vermelho marca o PR como falho
+merge na main ─> GitHub Actions: build + testes ──> verde
+              └> Render: docker build (roda mvn verify) ──> teste falhou: deploy falha e a versão anterior fica no ar
+                                                       └> passou: nova versão no ar
 ```
 
 - **Ferramenta:** GitHub Actions (`.github/workflows/ci.yml`), rodando em `push` e `pull_request`.
-- **Gate:** a `main` é protegida; o merge só acontece com o check de testes verde.
-- **Deploy:** Render com Auto-Deploy "After CI Checks Pass", imagem do `rotavital/Dockerfile`, health check em `/actuator/health`.
+- **Gate no PR:** o check `build-and-test` roda em todo pull request para a `main`. Demonstrado no PR #36: run #58 vermelho (erro proposital no intervalo de doação), run #59 verde depois da correção.
+- **Gate no deploy:** o `rotavital/Dockerfile` roda `mvn -B verify` no build. Se um teste falhar, o Render não gera a imagem e a versão anterior continua no ar.
+- **Deploy:** Render com Auto-Deploy a cada commit na `main` (run #60 → deploy `b14e58c` live em 20/10).
 - **URL no ar:** https://rota-vital-jnmx.onrender.com
-- **Situação em 20/10:** o `ci.yml` ainda roda só em `push` na `main`; o gatilho em pull request e a proteção da `main` entram com a PI2-189 (Lucas). Atualizar esta linha quando o pipeline com gates estiver ativo.
+- **Falta ligar (dono do repositório e do Render):** proteção da `main` exigindo o check `build-and-test` (hoje o GitHub ainda permite o merge com o check vermelho), Auto-Deploy "After CI Checks Pass" e Health Check Path `/actuator/health` no Render.
 - **Evidências** (execução vermelha, execução verde, rollback): [`doc/evidencias/`](doc/evidencias/README.md).
 - **Rollback:** Render → Events → Rollback, ou `git revert <hash>` + push. Passo a passo em [`doc/pipeline-deploy.md`](doc/pipeline-deploy.md).
 
@@ -179,7 +182,7 @@ merge na main ─> GitHub Actions: build + testes ──> verde ──> Render: 
 | Dados | PostgreSQL (Supabase em produção, container no Compose) com volume nomeado; H2 em memória nos testes | MySQL, MongoDB; bind mount | Modelo relacional (bolsa, doador, requisição, rota); o volume nomeado mantém os dados após `docker compose down`. |
 | Testes | Compatibilidade ABO/Rh e FEFO primeiro | Começar pelas telas ou pelo CRUD | Um erro de compatibilidade põe um paciente em risco; um erro de validade aumenta o descarte. |
 | Fluxo de branch | GitHub Flow: branch curta por tarefa, pull request e `main` protegida | Git Flow, GitLab Flow | Grupo pequeno, uma versão no ar e deploy a cada merge; Git Flow teria branches demais para o tamanho do projeto. |
-| CI/CD e deploy | GitHub Actions + Render | GitLab CI, Jenkins; Railway, Fly.io | O código já está no GitHub; o Render tem plano gratuito com deploy por Dockerfile e espera o CI passar. |
+| CI/CD e deploy | GitHub Actions + Render | GitLab CI, Jenkins; Railway, Fly.io | O código já está no GitHub; o Render tem plano gratuito com deploy por Dockerfile, e o `mvn verify` no build impede publicar versão com teste falhando. |
 | Segredos | Senha do banco nas variáveis de ambiente do Render e nos GitHub Secrets; `.env.example` no repositório e `.env` no `.gitignore` | Arquivo de configuração versionado | Nenhuma credencial no histórico do Git; quem clona sabe quais variáveis precisa. |
 
 ### Uso de IA
