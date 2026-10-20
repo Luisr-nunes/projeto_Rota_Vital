@@ -1,0 +1,43 @@
+services:
+  app:
+    build:
+      context: ./rotavital
+      dockerfile: Dockerfile
+    container_name: rota-vital-app
+    env_file:
+      - .env
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rota-vital-net
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: rota-vital-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hemorede}
+      POSTGRES_USER: ${POSTGRES_USER:-hemorede}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rota-vital-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  rota-vital-net:
+    driver: bridge

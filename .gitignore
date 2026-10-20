@@ -31,3 +31,13 @@ target/
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Dados e arquivos locais
+*.db
+*.sqlite

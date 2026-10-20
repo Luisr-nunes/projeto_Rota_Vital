@@ -17,9 +17,9 @@
   <a href="#problema">Problema</a> •
   <a href="#solução">Solução</a> •
   <a href="#tecnologias-utilizadas">Tecnologias</a> •
-  <a href="#como-rodar-o-projeto">Como Rodar</a> •
+  <a href="#como-rodar-localmente">Como rodar localmente</a> •
   <a href="#entregas">Entregas</a> •
-  <a href="#equipe">Equipe</a>
+  <a href="#integrantes">Integrantes</a>
 </p>
 
 ---
@@ -84,7 +84,7 @@ O **Rota Vital** é uma aplicação web que:
 
 ---
 
-## Como Rodar o Projeto
+## Como rodar localmente
 
 ### Pré-requisitos
 - **Java 17+** (JDK 17 ou superior)
@@ -124,6 +124,70 @@ O **Rota Vital** é uma aplicação web que:
   * **Senha:** *(vazia)*
 
 ---
+
+## Como rodar com Docker
+
+### Pré-requisitos
+
+- Docker Engine instalado e em execução.
+- Docker Compose v2 (`docker compose`).
+
+### Configuração e inicialização
+
+Na raiz do repositório, crie o arquivo `.env` a partir do exemplo somente se ele ainda não existir:
+
+```bash
+cp .env.example .env
+```
+
+Edite `.env` e defina a mesma senha local em `POSTGRES_PASSWORD` e `SPRING_DATASOURCE_PASSWORD`. Não compartilhe nem versione esse arquivo.
+
+Inicie os serviços:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+Acompanhe os logs da aplicação:
+
+```bash
+docker compose logs -f app
+```
+
+Com os serviços em execução, acesse `http://localhost:8080`. Para verificar a saúde da aplicação:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Para parar os serviços sem apagar os dados persistidos:
+
+```bash
+docker compose down
+```
+
+**Atenção:** `docker compose down -v` também remove o volume do banco de dados e seus dados persistidos.
+
+### Imagens, multi-stage, volume e rede
+
+- **Imagem de construção:** `maven:3.9-eclipse-temurin-17`, usada para compilar a aplicação.
+- **Imagem final:** `eclipse-temurin:17-jre`, menor que a imagem de construção e utilizada para executar o JAR.
+- **Multi-stage build:** o `Dockerfile` separa compilação e execução, copiando somente o JAR para a imagem final.
+- **Banco de dados:** `postgres:16-alpine`.
+- **Volume:** `postgres_data`, montado em `/var/lib/postgresql/data`, mantém os dados do PostgreSQL entre reinicializações dos contêineres.
+- **Rede:** `rota-vital-net`, do tipo `bridge`, permite a comunicação entre os serviços. A aplicação acessa o banco pelo hostname `db`.
+- **Porta:** a aplicação usa a porta `8080` no contêiner. A porta publicada no host pode ser definida por `SERVER_PORT`, com valor padrão `8080`.
+
+## Decisões técnicas
+
+- As credenciais são configuradas por variáveis de ambiente, evitando colocar senhas diretamente no código.
+- O perfil local utiliza H2; o perfil `prod`, usado no Docker, utiliza PostgreSQL.
+- O Dockerfile usa compilação multi-stage para separar as ferramentas de build do ambiente de execução.
+- O PostgreSQL utiliza volume nomeado para persistência dos dados.
+- Os serviços se comunicam por uma rede Docker dedicada.
+- O arquivo `.env` fica fora do controle de versão; `.env.example` documenta as variáveis necessárias sem conter senhas reais.
+- Os dados de demonstração devem ser fictícios e não conter informações pessoais reais.
 
 ## Entregas
 
@@ -301,7 +365,7 @@ Resumo de até **8 minutos** abordando:
 
 ---
 
-## Equipe
+## Integrantes
 
 | Função | Matrícula | Responsável | E-mail |
 |---|---|---|---|
