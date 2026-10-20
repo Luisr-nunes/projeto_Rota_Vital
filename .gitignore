@@ -32,9 +32,11 @@ target/
 .DS_Store
 Thumbs.db
 
-
-# Variáveis de ambiente e segredos
+# Variáveis de ambiente locais (segredos)
 .env
+!.env.example
+
+# Variáveis de ambiente e segredos (além do .env)
 .env.*
 !.env.example
 

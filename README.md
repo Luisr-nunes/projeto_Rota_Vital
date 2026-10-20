@@ -123,71 +123,111 @@ O **Rota Vital** é uma aplicação web que:
   * **Usuário:** `sa`
   * **Senha:** *(vazia)*
 
+### Como rodar com Docker
+
+Sobe a API e o PostgreSQL juntos, sem instalar Java, Maven nem banco na máquina.
+
+**Pré-requisito:** Docker com Compose v2 (`docker compose version`).
+
+```bash
+cp .env.example .env          # 1. cria o arquivo de variáveis (o .env não vai para o Git)
+# edite o .env e troque POSTGRES_PASSWORD
+docker compose up -d --build  # 2. constrói a imagem (roda os testes) e sobe os dois serviços
+docker compose ps             # 3. db e api devem ficar "healthy"
+curl http://localhost:8080/actuator/health   # {"status":"UP"}
+docker compose logs -f api   # acompanha os logs da aplicação
+```
+
+Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para apagar também os dados: `docker compose down -v`.
+
+| Variável (`.env`) | Para quê | Padrão |
+|---|---|---|
+| `POSTGRES_PASSWORD` | Senha do banco. **Obrigatória**: sem ela o Compose se recusa a subir | — |
+| `POSTGRES_DB` / `POSTGRES_USER` | Nome do banco e do usuário | `rotavital` |
+| `API_PORT` | Porta da API no seu computador | `8080` |
+| `HEMOREDE_SEED_ENABLED` | Carga de dados sintéticos na primeira subida | `true` |
+
+**Decisões deste setup** (a tabela completa está em [Decisões](#decisões)):
+
+- **Dockerfile multi-stage:** o primeiro estágio (Maven + JDK 17) compila e roda os testes; a imagem final leva só a JRE e o `.jar`, e a aplicação roda sem ser root.
+- **`depends_on` com `condition: service_healthy`:** a API só inicia depois que o Postgres responde ao `pg_isready`, evitando erro de conexão na subida.
+- **Volume nomeado `pgdata`:** os dados sobrevivem a `docker compose down`.
+- **Banco sem `ports`:** o Postgres só é acessível pela rede interna do Compose; só a API é exposta.
+- **Segredos fora do código:** a senha vem do `.env` (ignorado pelo Git) e o `.env.example` mostra quais variáveis existem. Em produção elas ficam nas variáveis de ambiente do Render.
+- **Dois perfis de banco:** rodando localmente sem Docker a aplicação usa H2 em memória; no Docker e em produção usa o perfil `prod`, com PostgreSQL.
+- **Dados de demonstração fictícios:** a carga sintética não contém informações pessoais reais.
+
 ---
 
-## Como rodar com Docker
+## Desafio de Infra — Container, TDD e Deploy
 
-### Pré-requisitos
+Entrega da disciplina de Infraestrutura de Software (Unidade 2). As seções abaixo seguem o enunciado do desafio.
 
-- Docker Engine instalado e em execução.
-- Docker Compose v2 (`docker compose`).
+Subir do zero com Docker (API + PostgreSQL): veja [Como rodar com Docker](#como-rodar-com-docker). O banco fica só na rede interna do Compose ([`compose.yaml`](compose.yaml)).
 
-### Configuração e inicialização
-
-Na raiz do repositório, crie o arquivo `.env` a partir do exemplo somente se ele ainda não existir:
+### Testes
 
 ```bash
-cp .env.example .env
+cd rotavital
+mvn clean test      # rápido: unitários, integração com H2 e BDD. Não precisa de Docker
+mvn clean verify    # tudo isso + testes *IT com PostgreSQL real (Testcontainers). Precisa de Docker rodando
 ```
 
-Edite `.env` e defina a mesma senha local em `POSTGRES_PASSWORD` e `SPRING_DATASOURCE_PASSWORD`. Não compartilhe nem versione esse arquivo.
+| Nível | O que cobre | Onde |
+|---|---|---|
+| Unitário | Estruturas de AED (FEFO, índice de estoque, grafo/Dijkstra), intervalo entre doações, indicadores e telemetria | `src/test/java/.../algoritmos`, `estruturas`, `service` |
+| Integração (Spring Boot + banco H2) | Endpoints de doação, requisição, estoque, rotas, indicadores e o fluxo de alocação gravando no banco | `src/test/java/.../controller`, `RequisicaoFluxoIntegrationTest` |
+| Integração com PostgreSQL real (Testcontainers) | Fluxo de requisição e alocação (ABO/Rh, FEFO, validade, rollback) conferido com SQL direto no Postgres, API de aprovação (200 e 422) e carga de dados sintéticos | `src/test/java/.../integration` (`*IT`, rodam com `mvn verify`) |
+| Aceitação (BDD em Gherkin) | HU08 (alocação compatível + FEFO + rota, 6 cenários) e HU06 (confirmação de entrega, escrita antes do código) | `src/test/resources/features`, runner `AceitacaoBddTest` |
 
-Inicie os serviços:
+- Os testes `*IT` sobem um container `postgres:16-alpine` (a mesma imagem do `compose.yaml`) e o compartilham entre as classes. Rodam pelo Maven Failsafe, por isso só entram no `mvn verify`.
 
-```bash
-docker compose up --build -d
-docker compose ps
+- Story map, histórias da Release 1 quebradas em tarefas, regras testadas primeiro e o que ficou sem teste: [`doc/desafio-infra/story-map.md`](doc/desafio-infra/story-map.md).
+- Detalhes dos cenários BDD: [`doc/testes-bdd.md`](doc/testes-bdd.md).
+- Histórico red → green: commits `test:` antes do `feat:` correspondente (convenção adotada a partir da sprint 12e13).
+
+### Pipeline e deploy
+
+```text
+pull request ──> GitHub Actions: mvn verify (unitários + H2 + BDD + PostgreSQL/Testcontainers) ──> vermelho marca o PR como falho
+merge na main ─> GitHub Actions: mvn verify ──> verde
+              └> Render: docker build (roda mvn verify -DskipITs) ──> teste falhou: deploy falha e a versão anterior fica no ar
+                                                                  └> passou: nova versão no ar
 ```
 
-Acompanhe os logs da aplicação:
+- **Ferramenta:** GitHub Actions (`.github/workflows/ci.yml`), rodando em `push` e `pull_request`.
+- **Gate no PR:** o check `build-and-test` roda `mvn -B verify` em todo pull request para a `main`, incluindo os testes com PostgreSQL real (Testcontainers, PI2-191). Demonstrado no PR #36: run #58 vermelho (erro proposital no intervalo de doação), run #59 verde depois da correção.
+- **Gate no deploy:** o `rotavital/Dockerfile` roda `mvn -B verify -DskipITs` no build. Se um teste falhar, o Render não gera a imagem e a versão anterior continua no ar. Os `*IT` ficam de fora ali porque não há Docker dentro de um `docker build`; eles só barram o deploy se o Render esperar o CI (veja o próximo item).
+- **Deploy:** Render com Auto-Deploy a cada commit na `main` (run #60 → deploy `b14e58c` live em 20/10).
+- **URL no ar:** https://rota-vital-jnmx.onrender.com
+- **Gates ligados em 20/10:** a `main` é protegida (merge só por pull request, com o check `build-and-test` verde e a branch atualizada); o Render publica só depois do CI verde (Auto-Deploy "After CI Checks Pass"), o que inclui os testes `*IT` com PostgreSQL, e só troca o tráfego quando `/actuator/health` responde 200.
+- **Evidências** (execução vermelha, execução verde, rollback): [`doc/evidencias/`](doc/evidencias/README.md).
+- **Rollback:** Render → Events → Rollback, ou `git revert <hash>` + push. Passo a passo em [`doc/pipeline-deploy.md`](doc/pipeline-deploy.md).
 
-```bash
-docker compose logs -f app
-```
+### Decisões
 
-Com os serviços em execução, acesse `http://localhost:8080`. Para verificar a saúde da aplicação:
+| Decisão | Escolha | Alternativas | Por quê |
+|---|---|---|---|
+| Imagem base | `maven:3.9-eclipse-temurin-17` no build e `eclipse-temurin:17-jre` no runtime | `openjdk:17`, `amazoncorretto:17` | Multi-stage: o primeiro estágio compila e roda os testes (`mvn verify`); a imagem final leva só a JRE e o `.jar`, roda com usuário sem privilégios e fica menor e com menos pacotes vulneráveis. |
+| Dados | PostgreSQL (Supabase em produção, container no Compose) com volume nomeado | MySQL, MongoDB; bind mount | Modelo relacional (bolsa, doador, requisição, rota); o volume nomeado mantém os dados após `docker compose down`. |
+| Banco nos testes | H2 em memória nos testes rápidos (`mvn test`) e PostgreSQL real via Testcontainers nos `*IT` (`mvn verify`) | Só H2; Postgres instalado na máquina ou no runner | O H2 dá feedback em segundos, mas não é o banco de produção: o Postgres de verdade pega diferença de schema, enum e transação. O Testcontainers sobe o mesmo `postgres:16-alpine` do Compose, sem instalar nada. O custo é precisar de Docker para o `verify`. |
+| Testes | Compatibilidade ABO/Rh e FEFO primeiro | Começar pelas telas ou pelo CRUD | Um erro de compatibilidade põe um paciente em risco; um erro de validade aumenta o descarte. |
+| Fluxo de branch | GitHub Flow: branch curta por tarefa, pull request e `main` protegida | Git Flow, GitLab Flow | Grupo pequeno, uma versão no ar e deploy a cada merge; Git Flow teria branches demais para o tamanho do projeto. |
+| CI/CD e deploy | GitHub Actions + Render | GitLab CI, Jenkins; Railway, Fly.io | O código já está no GitHub; o Render tem plano gratuito com deploy por Dockerfile, e o `mvn verify` no build impede publicar versão com teste falhando. |
+| Segredos | Senha do banco nas variáveis de ambiente do Render e nos GitHub Secrets; `.env.example` no repositório e `.env` no `.gitignore` | Arquivo de configuração versionado | Nenhuma credencial no histórico do Git; quem clona sabe quais variáveis precisa. |
 
-```bash
-curl http://localhost:8080/actuator/health
-```
+### Uso de IA
 
-Para parar os serviços sem apagar os dados persistidos:
+A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe revisa, testa e assina cada entrega.
 
-```bash
-docker compose down
-```
+| Para quê | Prompt principal (resumo) | Como foi revisado |
+|---|---|---|
+| Planejamento das sprints e do Jira | "Faça o levantamento do que os professores pediram e distribua as tarefas de forma igual entre os 7 membros, com commits diários." | O Gerente de Projetos ajustou a distribuição e os prazos com o grupo. |
+| Screencasts da Entrega 03 | "Grave o screencast do sistema e do código das HU01 e HU03, com legenda." | Vídeos assistidos e aprovados antes de publicar no YouTube. |
+| Documentação do desafio | "Monte o story map da Release 1 e as seções Testes, Pipeline e deploy, Decisões e Uso de IA do README a partir do que existe no repositório." | Conferido com o código, os testes e o pipeline reais; itens pendentes marcados como pendentes. |
+| Testes e código | Pedidos pontuais de testes e correções (por exemplo, mensagens de validação por campo). | Todo código passou pela suíte (`mvn test`) antes do commit. |
 
-**Atenção:** `docker compose down -v` também remove o volume do banco de dados e seus dados persistidos.
-
-### Imagens, multi-stage, volume e rede
-
-- **Imagem de construção:** `maven:3.9-eclipse-temurin-17`, usada para compilar a aplicação.
-- **Imagem final:** `eclipse-temurin:17-jre`, menor que a imagem de construção e utilizada para executar o JAR.
-- **Multi-stage build:** o `Dockerfile` separa compilação e execução, copiando somente o JAR para a imagem final.
-- **Banco de dados:** `postgres:16-alpine`.
-- **Volume:** `postgres_data`, montado em `/var/lib/postgresql/data`, mantém os dados do PostgreSQL entre reinicializações dos contêineres.
-- **Rede:** `rota-vital-net`, do tipo `bridge`, permite a comunicação entre os serviços. A aplicação acessa o banco pelo hostname `db`.
-- **Porta:** a aplicação usa a porta `8080` no contêiner. A porta publicada no host pode ser definida por `SERVER_PORT`, com valor padrão `8080`.
-
-## Decisões técnicas
-
-- As credenciais são configuradas por variáveis de ambiente, evitando colocar senhas diretamente no código.
-- O perfil local utiliza H2; o perfil `prod`, usado no Docker, utiliza PostgreSQL.
-- O Dockerfile usa compilação multi-stage para separar as ferramentas de build do ambiente de execução.
-- O PostgreSQL utiliza volume nomeado para persistência dos dados.
-- Os serviços se comunicam por uma rede Docker dedicada.
-- O arquivo `.env` fica fora do controle de versão; `.env.example` documenta as variáveis necessárias sem conter senhas reais.
-- Os dados de demonstração devem ser fictícios e não conter informações pessoais reais.
+---
 
 ## Entregas
 
@@ -286,7 +326,7 @@ docker compose down
 |------|------|
 | Screencast do sistema (U1) | ⏳ pendente — PI2-131 (depende do deploy no Render) |
 | Screencast do código | [Assistir no YouTube](https://youtu.be/SCN13gswS3U) |
-| URL de produção (Render) | ⏳ pendente — PI2-88 |
+| URL de produção (Render) | [rota-vital-jnmx.onrender.com](https://rota-vital-jnmx.onrender.com) ([health](https://rota-vital-jnmx.onrender.com/actuator/health)) |
 | Board Jira | [csprj-adsr-3p-e5.atlassian.net/browse/PI2](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
 | Histórias de usuário | [doc/historias_de_usuario.md](doc/historias_de_usuario.md) |
 | Protótipo Lo-Fi (Figma) | [Abrir no Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6) |
@@ -299,8 +339,8 @@ docker compose down
 | **POO** | Controllers REST em [`rotavital/src/main/java/com/hemorede/controller`](rotavital/src/main/java/com/hemorede/controller) e testes de integração em [`rotavital/src/test/java/com/hemorede`](rotavital/src/test/java/com/hemorede) (HU01 doação, HU03 requisição, HU05 rota, indicadores) |
 | **AED** | **Entrega U1:** estruturas em C com malloc/free em [`aed/u1/c`](aed/u1/c), reimplementação Java em [`com.hemorede.estruturas`](rotavital/src/main/java/com/hemorede/estruturas) e [tradução comentada C → Java](doc/aed-u1/Relatorio_AED_U1_Rota_Vital.pdf). Material de apoio: [complexidade Big-O](doc/aed-complexidade.md) e [escopo do grafo](doc/escopo-grafo.md) |
 | **EST** | [Relatório de análise descritiva](doc/relatorio-analise-descritiva-u1.md) e [indicadores estatísticos](doc/indicadores-estatisticos.md) |
-| **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md) e [pipeline CI/CD](.github/workflows/ci.yml) |
-| **RSD** | [Topologia de rede](doc/topologia.md) e [contratos de API](doc/contratos-api.md) (telemetria: `doc/telemetria.md`, em elaboração) |
+| **SO** | [Relatório histórico com threads](rotavital/doc/entrega-so-concorrencia.md), [pipeline CI/CD](.github/workflows/ci.yml) e [documentação do pipeline e do deploy](doc/pipeline-deploy.md) |
+| **RSD** | [Topologia de rede](doc/topologia.md) (com URL de produção e canal de telemetria), [contratos de API](doc/contratos-api.md) e [canal de telemetria](doc/telemetria.md) — endpoint `GET /api/telemetria/temperatura` |
 
 ---
 
@@ -310,18 +350,57 @@ docker compose down
 
 #### Histórias Implementadas
 
-> *Adicionar aqui a descrição (formato POST-IT) das histórias implementadas nesta entrega.*
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 1 — HU01: Registrar doação e cadastrar bolsa no estoque          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Atendente do hemocentro                                            │
+│ 🎯 QUERO: Registrar uma doação e cadastrar a bolsa coletada                 │
+│ 💡 PARA QUE: A bolsa fique disponível no estoque para atender os hospitais  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • O doador informado deve existir e estar ativo (inativo → HTTP 422).      │
+│  • Intervalo mínimo de 60 dias entre doações do mesmo doador (HTTP 422).    │
+│  • Doação e bolsa são salvas na mesma transação (@Transactional).           │
+│  • A bolsa entra no estoque com status DISPONIVEL.                          │
+│  • Coleta não pode estar no futuro e a validade deve ser futura (HTTP 400). │
+│ 💻 Módulos: DoacaoController (POST /api/doacoes), DoacaoService,            │
+│             DoacaoRequest, Bolsa (Builder), DoadorController, index.html.   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📌 POST-IT 2 — HU03: Registrar requisição hospitalar                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 👤 COMO: Profissional de um hospital                                        │
+│ 🎯 QUERO: Solicitar hemocomponentes informando tipo, quantidade e prioridade│
+│ 💡 PARA QUE: O hemocentro possa atender à necessidade do hospital           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│  • A requisição deve estar vinculada a um hospital existente (HTTP 404).    │
+│  • A quantidade deve ser maior que zero (HTTP 400 com a mensagem do campo). │
+│  • A requisição é salva com status PENDENTE e recebe um identificador.      │
+│  • Status e data da solicitação são definidos pelo servidor.                │
+│ 💻 Módulos: RequisicaoController (POST /api/requisicoes),                   │
+│             RequisicaoService, RequisicaoRequest, ItemRequisicaoRequest,    │
+│             GlobalExceptionHandler, index.html.                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 #### Artefatos
 
-- [ ] Mais **2 histórias implementadas**
-- [ ] Commits frequentes (mínimo semanais)
-- [ ] Issue/Bug Tracker atualizado
-  - *Print do Bug Tracker:* <!-- inserir screenshot -->
-- [ ] **Screencast do sistema** — Novas histórias implementadas (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
-- [ ] **Screencast do código** — Explicação do código das novas histórias (com áudio ou legenda)
-  - [Assistir no YouTube](#) <!-- inserir link -->
+- [x] Mais **2 histórias implementadas** (**HU01** e **HU03**, lendo e gravando no banco)
+- [x] Commits frequentes de código (mínimo semanais) direto na `main`
+- [x] **Issue/Bug Tracker atualizado (GitHub Issues)**
+  - *Print do Bug Tracker:*
+
+    ![GitHub Issues — Entrega 03](doc/img/github_issues_entrega03.png)
+
+- [x] **Screencast do sistema** — HU01 e HU03 rodando, com legenda embutida
+  - [Assistir no YouTube](https://www.youtube.com/watch?v=YsbCOH_n_zY)
+- [x] **Screencast do código** — Explicação do código de HU01 e HU03, com legenda embutida
+  - [Assistir no YouTube](https://www.youtube.com/watch?v=5QhViFcMsw4)
 
 ---
 

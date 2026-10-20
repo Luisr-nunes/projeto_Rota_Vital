@@ -1,103 +1,167 @@
 package com.hemorede.service;
 
 import com.hemorede.algoritmos.FilaFEFO;
+import com.hemorede.algoritmos.GrafoRotas;
 import com.hemorede.algoritmos.IndiceEstoque;
-import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.StatusBolsa;
+import com.hemorede.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.ItemRequisicao;
-import com.hemorede.exception.EstoqueInsuficienteException;
-import com.hemorede.exception.IncompatibilidadeSanguineaException;
+import com.hemorede.domain.model.Requisicao;
+import com.hemorede.dto.AlocacaoResponse;
+import com.hemorede.exception.EstoqueCompativelInsuficienteException;
+import com.hemorede.exception.NenhumaBolsaCompativelException;
 import com.hemorede.repository.BolsaRepository;
+import com.hemorede.repository.RequisicaoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Responsável pela alocação de bolsas a itens de requisição.
- *
- * Regra de negócio 1 (compatibilidade sanguínea) e
- * Regra de negócio 2 (FEFO - First Expired, First Out) são aplicadas aqui.
- */
+/** Integra compatibilidade ABO/Rh, FEFO e Dijkstra na alocacao da HU08. */
 @Service
 public class AlocacaoService {
 
     private final BolsaRepository bolsaRepository;
+    private final RequisicaoRepository requisicaoRepository;
+    private final RoteirizacaoService roteirizacaoService;
+    private final CompatibilidadeSanguineaService compatibilidadeSanguineaService;
 
-    public AlocacaoService(BolsaRepository bolsaRepository) {
+    @Autowired
+    public AlocacaoService(
+            BolsaRepository bolsaRepository,
+            RequisicaoRepository requisicaoRepository,
+            RoteirizacaoService roteirizacaoService,
+            CompatibilidadeSanguineaService compatibilidadeSanguineaService) {
         this.bolsaRepository = bolsaRepository;
+        this.requisicaoRepository = requisicaoRepository;
+        this.roteirizacaoService = roteirizacaoService;
+        this.compatibilidadeSanguineaService = compatibilidadeSanguineaService;
+    }
+
+    /** Mantem compatibilidade com o uso legado que aloca apenas um item. */
+    public AlocacaoService(BolsaRepository bolsaRepository) {
+        this(bolsaRepository, null, null, new CompatibilidadeSanguineaService());
+    }
+
+    @Transactional
+    public AlocacaoResponse alocarRequisicao(Long requisicaoId) {
+        if (requisicaoRepository == null || roteirizacaoService == null) {
+            throw new IllegalStateException("Alocacao de requisicao exige os servicos integrados");
+        }
+
+        Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Requisicao nao encontrada: " + requisicaoId));
+
+        if (requisicao.getStatus() != StatusRequisicao.PENDENTE) {
+            throw new IllegalStateException(
+                    "A requisicao deve estar PENDENTE para ser alocada: " + requisicaoId);
+        }
+        if (requisicao.getItens() == null || requisicao.getItens().isEmpty()) {
+            throw new IllegalStateException("A requisicao nao possui itens para alocar: " + requisicaoId);
+        }
+
+        // Calcula antes de reservar. Se nao houver rota, nenhuma bolsa e alterada.
+        GrafoRotas.ResultadoRota rota = roteirizacaoService.calcularRotaMinima(requisicao);
+
+        for (ItemRequisicao item : requisicao.getItens()) {
+            alocar(item);
+        }
+
+        requisicao.setStatus(StatusRequisicao.ALOCADA);
+        requisicaoRepository.save(requisicao);
+
+        List<AlocacaoResponse.BolsaAlocada> bolsas = requisicao.getItens().stream()
+                .flatMap(item -> item.getBolsasAlocadas().stream())
+                .map(bolsa -> new AlocacaoResponse.BolsaAlocada(
+                        bolsa.getId(),
+                        bolsa.getTipoSanguineo(),
+                        bolsa.getHemoComponente(),
+                        bolsa.getDataValidade()))
+                .toList();
+
+        return new AlocacaoResponse(
+                requisicao.getId(),
+                requisicao.getStatus(),
+                bolsas,
+                rota.caminho(),
+                rota.custoTotal());
     }
 
     @Transactional
     public void alocar(ItemRequisicao item) {
-        // Busca bolsas do mesmo hemocomponente/tipo sanguíneo, disponíveis,
-        // já ordenadas por validade ascendente (FEFO) diretamente na query.
-        List<Bolsa> candidatas = bolsaRepository
-                .findByHemoComponenteAndTipoSanguineoAndStatusOrderByDataValidadeAsc(
-                        item.getHemoComponente(), item.getTipoSanguineo(), StatusBolsa.DISPONIVEL);
+        validarItem(item);
 
-        int necessario = item.getQuantidade() - item.getBolsasAlocadas().size();
-        int alocadas = 0;
-
-        for (Bolsa bolsa : candidatas) {
-            if (alocadas >= necessario) {
-                break;
-            }
-
-            // Regra 1: garante compatibilidade (redundante com a query, mas explícita
-            // caso a lista venha de outra origem, ex: bolsas de tipo compatível O-).
-            if (!com.hemorede.domain.enums.TipoSanguineo
-                    .compativel(bolsa.getTipoSanguineo(), item.getTipoSanguineo())) {
-                throw new IncompatibilidadeSanguineaException(
-                        "Bolsa " + bolsa.getId() + " incompatível com item de requisição " + item.getId());
-            }
-
-            // Regra 3: nunca alocar bolsa vencida.
-            if (bolsa.isVencida()) {
-                bolsa.setStatus(StatusBolsa.DESCARTADA);
-                bolsaRepository.save(bolsa);
-                continue;
-            }
-
-            bolsa.setStatus(StatusBolsa.RESERVADA);
-            bolsaRepository.save(bolsa);
-            item.getBolsasAlocadas().add(bolsa);
-            alocadas++;
+        if (item.getBolsasAlocadas() == null) {
+            item.setBolsasAlocadas(new ArrayList<>());
         }
 
-        if (alocadas < necessario) {
-            throw new EstoqueInsuficienteException(
-                    "Estoque insuficiente para o item de requisição " + item.getId()
-                            + ". Necessário: " + necessario + ", alocado: " + alocadas);
+        int necessario = item.getQuantidade() - item.getBolsasAlocadas().size();
+        if (necessario <= 0) {
+            return;
+        }
+
+        List<Bolsa> candidatasCompativeis = buscarCandidatasValidas(item);
+        if (candidatasCompativeis.isEmpty()) {
+            throw new NenhumaBolsaCompativelException("Nenhuma bolsa compatível disponível");
+        }
+        if (candidatasCompativeis.size() < necessario) {
+            throw new EstoqueCompativelInsuficienteException(
+                    necessario, candidatasCompativeis.size());
+        }
+
+        IndiceEstoque indice = construirIndiceEstoque(candidatasCompativeis);
+        List<TipoSanguineo> tiposCompativeis = compatibilidadeSanguineaService
+                .doadoresCompativeis(item.getTipoSanguineo());
+
+        List<Bolsa> selecionadas = new ArrayList<>();
+        for (int i = 0; i < necessario; i++) {
+            Bolsa bolsa = alocarProximaCompativel(indice, tiposCompativeis);
+            if (bolsa == null) {
+                throw new EstoqueCompativelInsuficienteException(necessario, selecionadas.size());
+            }
+            bolsa.setStatus(StatusBolsa.RESERVADA);
+            selecionadas.add(bolsa);
+        }
+
+        bolsaRepository.saveAll(selecionadas);
+        item.getBolsasAlocadas().addAll(selecionadas);
+    }
+
+    private void validarItem(ItemRequisicao item) {
+        if (item == null || item.getHemoComponente() == null
+                || item.getTipoSanguineo() == null || item.getQuantidade() == null
+                || item.getQuantidade() <= 0) {
+            throw new IllegalStateException("Item de requisicao invalido para alocacao");
         }
     }
 
-     /**
-     * Monta o {@link IndiceEstoque} em memória com todas as bolsas
-     * disponíveis de um hemocomponente (qualquer tipo sanguíneo), prontas
-     * para consulta O(1) por tipo e alocação FEFO O(log n) dentro de cada tipo.
-     */
-    private IndiceEstoque construirIndiceEstoque(HemoComponente hemoComponente) {
+    private List<Bolsa> buscarCandidatasValidas(ItemRequisicao item) {
+        LocalDate hoje = LocalDate.now();
+        return bolsaRepository
+                .findByHemoComponenteAndStatus(item.getHemoComponente(), StatusBolsa.DISPONIVEL)
+                .stream()
+                .filter(bolsa -> bolsa.getDataValidade() != null)
+                .filter(bolsa -> !bolsa.getDataValidade().isBefore(hoje))
+                .filter(bolsa -> compatibilidadeSanguineaService.compativel(
+                        bolsa.getTipoSanguineo(), item.getTipoSanguineo()))
+                .toList();
+    }
+
+    private IndiceEstoque construirIndiceEstoque(List<Bolsa> bolsas) {
         IndiceEstoque indice = new IndiceEstoque();
-        bolsaRepository.findByHemoComponenteAndStatus(hemoComponente, StatusBolsa.DISPONIVEL)
-                .forEach(indice::adicionarBolsa);
+        bolsas.forEach(indice::adicionarBolsa);
         return indice;
     }
 
-    /**
-     * Entre todos os tipos sanguíneos doadores compatíveis, encontra e aloca
-     * a bolsa com a validade mais próxima do vencimento (FEFO cruzado).
-     * <p>
-     * Usa {@link FilaFEFO#peek()} para comparar o topo de cada fila
-     * compatível sem removê-lo, e só efetiva a remoção ({@link IndiceEstoque#alocarBolsa})
-     * na fila vencedora.
-     * </p>
-     *
-     * @return A bolsa alocada, ou {@code null} se nenhum tipo compatível tiver estoque.
-     */
-    private Bolsa alocarProximaCompativel(IndiceEstoque indice, List<TipoSanguineo> tiposCompativeis) {
+    private Bolsa alocarProximaCompativel(
+            IndiceEstoque indice,
+            List<TipoSanguineo> tiposCompativeis) {
         TipoSanguineo melhorTipo = null;
         Bolsa melhorBolsa = null;
 

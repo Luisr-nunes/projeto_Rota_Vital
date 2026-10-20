@@ -101,6 +101,12 @@ public class DataInitializer implements CommandLineRunner {
         // 3. Doador Sintético Padrão
         Doador doador = doadorRepository.save(new Doador(null, "Doador Sintético Central", "000.111.222-33", TipoSanguineo.O_POS, LocalDate.now().minusMonths(4), new ArrayList<>()));
 
+        // 3.1 Doadores extras para demonstrar a HU01 (doador sem doação anterior e doador inativo)
+        doadorRepository.save(new Doador(null, "Doador Sintético A+", "000.111.222-44", TipoSanguineo.A_POS, null, new ArrayList<>()));
+        Doador doadorInativo = new Doador(null, "Doador Sintético Inativo", "000.111.222-55", TipoSanguineo.B_NEG, null, new ArrayList<>());
+        doadorInativo.setAtivo(false);
+        doadorRepository.save(doadorInativo);
+
         // 4. Bolsas Sintéticas (com validades variadas para testar e demonstrar FEFO)
         List<Bolsa> bolsasExemplo = DadosSinteticos.criarBolsasExemplo();
         for (Bolsa b : bolsasExemplo) {

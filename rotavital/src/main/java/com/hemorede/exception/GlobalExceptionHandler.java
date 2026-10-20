@@ -1,12 +1,17 @@
 package com.hemorede.exception;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.time.LocalDateTime;
-import java.util.Map;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -17,10 +22,30 @@ public class GlobalExceptionHandler {
             DoadorInativoException.class,
             DoacaoForaDoIntervaloException.class,
             VeiculoIncompativelException.class,
+            NenhumaBolsaCompativelException.class,
             RotaIndisponivelException.class
     })
     public ResponseEntity<Map<String, Object>> handleRegraNegocio(RuntimeException ex) {
         return corpoErro(HttpStatus.UNPROCESSABLE_ENTITY, ex);
+    }
+
+    @ExceptionHandler(EstoqueCompativelInsuficienteException.class)
+    public ResponseEntity<Map<String, Object>> handleEstoqueCompativelInsuficiente(
+            EstoqueCompativelInsuficienteException ex) {
+        Map<String, Object> body = new LinkedHashMap<>(corpoErro(HttpStatus.CONFLICT, ex).getBody());
+        body.put("quantidadeNecessaria", ex.getQuantidadeNecessaria());
+        body.put("quantidadeDisponivel", ex.getQuantidadeDisponivel());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(DiasPrevisaoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleDiasPrevisao(DiasPrevisaoInvalidoException ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(ModeloProbabilisticoIndisponivelException.class)
+    public ResponseEntity<Map<String, Object>> handleModeloPendente(ModeloProbabilisticoIndisponivelException ex) {
+        return corpoErro(HttpStatus.SERVICE_UNAVAILABLE, ex);
     }
 
     // IllegalArgumentException é usada nos controllers/services para "recurso não encontrado".
@@ -35,7 +60,32 @@ public class GlobalExceptionHandler {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
     }
 
-    private ResponseEntity<Map<String, Object>> corpoErro(HttpStatus status, RuntimeException ex) {
+    // Parâmetro de query/path com valor que não corresponde ao tipo esperado
+    // (ex.: ?tipo=INVALIDO para um enum) ou parâmetro obrigatório ausente.
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleParametroInvalido(Exception ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    // Corpo inválido (Bean Validation nos DTOs de entrada): 400 com a mensagem de cada campo.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
+        Map<String, String> erros = new LinkedHashMap<>();
+        for (FieldError campo : ex.getBindingResult().getFieldErrors()) {
+            erros.putIfAbsent(campo.getField(), campo.getDefaultMessage());
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now().toString());
+        body.put("erro", "DadosInvalidos");
+        body.put("mensagem", "Dados de entrada inválidos");
+        body.put("erros", erros);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> corpoErro(HttpStatus status, Exception ex) {
         Map<String, Object> body = Map.of(
                 "timestamp", LocalDateTime.now().toString(),
                 "erro", ex.getClass().getSimpleName(),

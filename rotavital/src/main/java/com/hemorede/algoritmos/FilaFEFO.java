@@ -94,6 +94,27 @@ public class FilaFEFO {
                 .toList();
     }
 
+    /**
+     * Retorna todas as bolsas da fila que ainda não venceram, ordenadas da validade
+     * mais próxima para a mais distante, sem removê-las da fila de prioridade.
+     * <p>
+     * Diferente de {@link #proximasAoVencimento(int)}, que propositalmente inclui
+     * bolsas já vencidas (para fins de alerta), este método exclui qualquer bolsa
+     * com {@code dataValidade} anterior a hoje — usado pela consulta de estoque
+     * disponível (HU02), que não deve listar bolsas vencidas mesmo que a rotina
+     * de expurgo ({@code ValidadeService}) ainda não tenha rodado.
+     * </p>
+     *
+     * @return Lista ordenada das bolsas não vencidas.
+     */
+    public List<Bolsa> disponiveisOrdenadas() {
+        LocalDate hoje = LocalDate.now();
+        return fila.stream()
+                .filter(b -> b.getDataValidade() != null && !b.getDataValidade().isBefore(hoje))
+                .sorted(Comparator.comparing(Bolsa::getDataValidade, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
      /**
      * Consulta a bolsa com a data de validade mais próxima do vencimento
      * (topo do min-heap), sem removê-la da fila.

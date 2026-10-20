@@ -15,7 +15,7 @@ public record DoacaoRequest(
         @NotNull Long doadorId,
         @NotNull TipoSanguineo tipoSanguineo,
         @NotNull HemoComponente hemocomponente,
-        @NotNull @PastOrPresent LocalDate dataColeta,
-        @NotNull @Future LocalDate validade
+        @NotNull @PastOrPresent(message = "a data da coleta não pode estar no futuro") LocalDate dataColeta,
+        @NotNull @Future(message = "a validade deve ser uma data futura") LocalDate validade
 ) {
 }

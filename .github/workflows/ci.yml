@@ -1,13 +1,28 @@
 name: CI/CD - Rota Vital
 
+# Gate do pipeline (PI2-223 / PI2-189 / PI2-191):
+# - pull_request para a main: roda build + testes; teste vermelho deixa o PR vermelho
+#   e, com a proteção da main exigindo o check "build-and-test", o merge fica bloqueado.
+# - push na main (merge aprovado): roda de novo e o Render publica a versão.
+# - "mvn verify" roda os testes unitários, de integração com H2 e BDD (Surefire) e também os
+#   testes *IT com PostgreSQL real via Testcontainers (Failsafe). O runner ubuntu-latest já traz Docker.
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Se o Docker travar ao baixar a imagem do Postgres, o job não fica preso por horas.
+    timeout-minutes: 15
 
     steps:
       - name: Checkout do código
@@ -20,10 +35,16 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Compilar projeto
+      - name: Build e testes (unitários, H2, BDD e PostgreSQL via Testcontainers)
         working-directory: ./rotavital
-        run: mvn package -DskipTests
+        run: mvn -B verify
 
-      - name: Executar testes
-        working-directory: ./rotavital
-        run: mvn test
+      - name: Guardar relatórios de teste (só se falhar)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-de-teste
+          path: |
+            rotavital/target/surefire-reports
+            rotavital/target/failsafe-reports
+          if-no-files-found: ignore

@@ -4,7 +4,7 @@
 **Responsável:** Micaella Cabral
 **Disciplina:** Redes e Sistemas Distribuídos (RSD)
 **Sprint:** 08e09
-**Implementação do endpoint:** PI2-121 (Lucas) — este documento é o contrato que ele deve seguir.
+**Implementação do endpoint:** PI2-121 — implementado em `TelemetriaController` / `TelemetriaService` (testes: `TelemetriaControllerIntegrationTest`, `TelemetriaServiceTest`).
 
 Hemocomponentes têm faixa de temperatura de transporte obrigatória (`TipoRefrigeracao`: hemácias refrigeradas a 2–6 °C, plasma congelado a −20 °C, plaquetas a 20–24 °C). A telemetria simula sensores nos veículos e permite detectar quebra da cadeia fria durante a entrega (HU05/HU06).
 
@@ -28,13 +28,20 @@ Hemocomponentes têm faixa de temperatura de transporte obrigatória (`TipoRefri
 
 ## 2. Faixa segura e regra de alerta
 
-- Faixa segura para hemácias refrigeradas: **2 °C a 6 °C** (inclusive).
+- A faixa segura depende do `TipoRefrigeracao` do veículo (limites inclusos):
+
+| `TipoRefrigeracao` | Hemocomponente | Faixa segura |
+|--------------------|----------------|--------------|
+| `REFRIGERADO_2_6` | Hemácias | **2 °C a 6 °C** |
+| `CONGELADO_MENOS_20` | Plasma | **−30 °C a −20 °C** |
+| `AMBIENTE_CONTROLADO_20_24` | Plaquetas | **20 °C a 24 °C** |
+
 - Leitura fora da faixa → `status: "ALERTA"`. A leitura continua sendo entregue normalmente; o consumidor (painel/aplicação) decide como reagir.
 
 ## 3. Frequência de envio
 
 - Um sensor simulado emite **uma leitura a cada 30 segundos** por veículo em trânsito.
-- Na U1 a leitura é gerada pela própria aplicação (simulação); não há sensor físico.
+- Na U1 a leitura é gerada pela própria aplicação (simulação); não há sensor físico. A temperatura simulada segue uma distribuição normal centrada no meio da faixa segura do veículo (desvio de 1,2 °C), então a maioria das leituras sai `OK` e algumas saem `ALERTA`.
 
 ## 4. Protocolo e porta
 

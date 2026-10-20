@@ -10,12 +10,13 @@ Endpoints implementados no código (`rotavital/src/main/java/com/hemorede/contro
 |--------|---------|-----------|------------------|--------|
 | `POST` | `/api/doacoes` | Registra a doação e a bolsa coletada, na mesma transação (HU01). | `Bolsa` criada (id, tipo, hemocomponente, datas, status `DISPONIVEL`); cabeçalho `Location: /api/doacoes/{id}` | `201`, `400`, `404`, `422` |
 | `GET` | `/api/estoques` | Lista os estoques dos hemocentros. | `List<Estoque>` | `200` |
+| `GET` | `/api/estoques/bolsas?tipo=&componente=` | Bolsas `DISPONIVEL` e não vencidas do tipo/hemocomponente, ordenadas por validade (FEFO) — HU02. | `{bolsas:[...], mensagem}` | `200`, `400` |
 | `GET` | `/api/estoques/{id}/alerta?tipoSanguineo=&hemoComponente=` | Informa se o estoque está abaixo do mínimo para o tipo/hemocomponente. | `{"abaixoDoMinimo": true\|false}` | `200`, `404` |
 | `GET` | `/api/hospitais` | Lista os hospitais. | `List<Hospital>` | `200` |
 | `GET` | `/api/hospitais/{id}` | Detalha um hospital. | `Hospital` | `200`, `404` |
 | `POST` | `/api/hospitais` | Cadastra um hospital. | `Hospital` criado | `200` |
 | `GET` | `/api/requisicoes` | Lista as requisições hospitalares. | `List<Requisicao>` | `200` |
-| `POST` | `/api/requisicoes` | Registra uma requisição hospitalar com seus itens (HU03). | `Requisicao` criada | `200` hoje; `201` após PI2-130 |
+| `POST` | `/api/requisicoes` | Registra uma requisição hospitalar com seus itens (HU03). Corpo: `RequisicaoRequest` `{hospitalId, prioridade, itens:[{hemoComponente, tipoSanguineo, quantidade}]}`. | `Requisicao` criada (status `PENDENTE`) + `Location` | `201`, `400`, `404` |
 | `POST` | `/api/requisicoes/{id}/aprovar` | Aprova a requisição e aloca as bolsas por FEFO (HU04). | `Requisicao` atualizada | `200`, `404`, `422` |
 | `POST` | `/api/rotas/calcular` | Calcula a rota de menor custo (Dijkstra) do hemocentro ao hospital da requisição (HU05). | `{requisicaoId, caminho[], distanciaTotalKm, tempoEstimadoMinutos}` | `200`, `404`, `422` |
 | `GET` | `/api/rotas/proximas-requisicoes` | Lista as requisições prontas para roteirizar, por prioridade. | `List<Requisicao>` | `200` |
@@ -23,7 +24,7 @@ Endpoints implementados no código (`rotavital/src/main/java/com/hemorede/contro
 | `GET` | `/api/indicadores?diasProximoVencimento=5` | Indicadores estatísticos de estoque, vencimento e requisições (HU07). | `IndicadoresResponse` | `200` |
 | `GET` | `/api/v1/relatorios/historico?tamanho=&modo=&threads=` | Relatório histórico processado de forma sequencial ou paralela (entrega de SO). | `RelatorioHistoricoResponse` | `200`, `404` |
 | `GET` | `/actuator/health` | Verificação de saúde para o monitoramento do deploy. | `{"status":"UP"}` | `200`, `503` |
-| `GET` | `/api/telemetria/temperatura?veiculoId=` | Última leitura de temperatura do veículo. **Especificado em `doc/telemetria.md`; implementação em PI2-121.** | Leitura de temperatura | `200`, `404` |
+| `GET` | `/api/telemetria/temperatura?veiculoId=` | Última leitura (simulada) de temperatura do veículo, com `status` `OK`/`ALERTA`. Contrato em `doc/telemetria.md`. | `{veiculoId, temperaturaC, timestamp, status}` | `200`, `400`, `404` |
 
 ### 1.1 Exemplos
 
@@ -64,7 +65,7 @@ Os erros de regra de negócio seguem o corpo abaixo (`GlobalExceptionHandler`):
 
 | Status | Quando ocorre | Exceção |
 |--------|---------------|---------|
-| `201 Created` | Doação registrada (`Location` informado). Em requisições passará a valer após PI2-130; hoje `POST /api/requisicoes` e `POST /api/hospitais` respondem `200` | — |
+| `201 Created` | Doação ou requisição registrada (`Location` informado). `POST /api/hospitais` ainda responde `200` | — |
 | `400 Bad Request` | Campo obrigatório ausente/inválido; requisição em estado que não permite a operação | `MethodArgumentNotValidException`, `IllegalStateException` |
 | `404 Not Found` | Recurso inexistente (doador, requisição, hospital) | `IllegalArgumentException` |
 | `422 Unprocessable Entity` | Regra de negócio violada: doador inativo, doação fora do intervalo mínimo (60 dias homens / 90 dias mulheres), estoque insuficiente, incompatibilidade sanguínea, veículo incompatível, rota indisponível | `DoadorInativoException`, `DoacaoForaDoIntervaloException`, `EstoqueInsuficienteException`, `IncompatibilidadeSanguineaException`, `VeiculoIncompativelException`, `RotaIndisponivelException` |
@@ -121,3 +122,26 @@ O ciclo de desenvolvimento do projeto está mapeado em dois ambientes principais
 |----------|----------------|-----------|
 | **Dev (Desenvolvimento)** | **H2 Database (Local)** | Banco de dados em memória. Utilizado pelos desenvolvedores localmente para execução rápida, testes e validações sem necessidade de infraestrutura externa. Os dados são voláteis e resetados ao reiniciar. |
 | **Prod (Produção)** | **PostgreSQL (Nuvem)** | Banco de dados relacional e robusto hospedado na nuvem. Mantém a persistência real dos dados das requisições e do estoque, suportando a concorrência e acessos simultâneos. |
+
+
+## HU08 — alocacao compativel (PI2-164)
+
+`POST /api/v1/requisicoes/{id}/alocacao` (alias legado: `/api/requisicoes/{id}/alocacao`).
+Sem corpo. Recebe o ID de uma requisicao PENDENTE com itens.
+
+- 200: `requisicaoId`, `status: ALOCADA`, `bolsas` (id, tipoSanguineo,
+  hemoComponente, dataValidade), `rota` (nos do grafo) e `custoTotal`.
+- 422: nenhuma bolsa valida compativel ou rota indisponivel.
+- 409: quantidade compativel insuficiente, com `quantidadeNecessaria` e
+  `quantidadeDisponivel` no corpo de erro.
+- 404: requisicao inexistente.
+- 400: requisicao fora de PENDENTE ou sem itens validos.
+
+Alocacao segue FEFO entre os tipos compativeis. Bolsas selecionadas ficam
+RESERVADA e associadas aos itens. Se algum item falhar, toda a operacao e
+revertida. A rota calculada e devolvida na resposta; esta entrega nao cria um
+registro logistico de Rota com motorista e veiculo.
+
+Compatibilidade ainda usa `TipoSanguineo` atraves de
+`CompatibilidadeSanguineaService`; integracao da matriz PI2-165 pendente.
+Ver [testes BDD](testes-bdd.md) para execucao e pendencia da HU06/PI2-181.
