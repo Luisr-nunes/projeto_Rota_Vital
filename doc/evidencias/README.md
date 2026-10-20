@@ -25,10 +25,10 @@ O teste unitário escrito antes pegou um erro de "um a mais" que deixaria um doa
 1. **No pull request:** o check `build-and-test` fica vermelho e o PR mostra a falha para quem for revisar.
 2. **No Render:** o `rotavital/Dockerfile` roda `mvn -B verify` no estágio de build. Se um teste falhar, a imagem não é gerada, o deploy falha e a versão anterior continua no ar.
 
-**Ainda falta ligar (só o dono do repositório e do Render pode fazer):**
+**Gates ligados depois das evidências (20/10, 19:07, PI2-189):**
 
-- Proteção da `main` exigindo o check `build-and-test`. Sem ela, o GitHub mostra "merging is still available" mesmo com o check vermelho (ver o print 1).
-- No Render, Auto-Deploy em "After CI Checks Pass" (hoje está "On Commit") e Health Check Path em `/actuator/health` (hoje está vazio).
+- Proteção da `main` exigindo o check `build-and-test`. No momento do print 1 ela ainda não existia, por isso o GitHub mostrava "merging is still available"; agora um PR vermelho não pode ser mesclado.
+- No Render, Auto-Deploy em "After CI Checks Pass" (antes "On Commit") e Health Check Path em `/actuator/health` (antes vazio).
 
 ## Como fazer o rollback
 

@@ -17,7 +17,7 @@ Antes de enviar, conferir:
 
 - [ ] `docker compose up -d --build` sobe API e Postgres do zero (PI2-171)
 - [x] Pipeline roda em pull request e push (PR #36)
-- [ ] Merge bloqueado com teste vermelho: falta a proteção da `main` (Luis)
+- [x] Merge bloqueado com teste vermelho: `main` protegida e Render em "After CI Checks Pass" (20/10, PI2-189)
 - [x] Prints das duas execuções (vermelha e verde) em `doc/evidencias/`
 - [x] `curl https://rota-vital-jnmx.onrender.com/actuator/health` responde `{"status":"UP"}` (20/10, 13:33)
 - [ ] Print da entrega confirmada no Classroom anexado na PI2-221

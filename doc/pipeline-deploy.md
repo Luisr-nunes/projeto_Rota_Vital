@@ -71,10 +71,10 @@ mvn -B verify
 | Passo | Onde | O que acontece |
 |-------|------|----------------|
 | 1. **Push na `main`** | GitHub | Merge do PR (ou push direto) na `main`. Isso dispara o workflow e notifica o Render pelo webhook do repositório. |
-| 2. **CI** | GitHub Actions | O job `build-and-test` roda no PR e de novo no push na `main`. O resultado aparece no PR e no badge. Hoje ele **não** bloqueia o Render sozinho (ver a configuração abaixo). Como os testes `*IT` com PostgreSQL só rodam aqui, é o Auto-Deploy "After CI Checks Pass" que faz o Render esperar por eles. |
-| 3. **Auto-deploy no Render** | Render | O Auto-Deploy está em **"On Commit"**: todo commit na `main` inicia um deploy. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 roda `mvn -B verify -DskipITs`, que compila e executa os testes com H2 e BDD → imagem final só com JRE 17). Os testes `*IT` ficam de fora porque não há Docker dentro de um `docker build`; eles rodam só no GitHub Actions. Se um teste do build falhar, o build falha e a versão anterior continua no ar. |
+| 2. **CI** | GitHub Actions | O job `build-and-test` roda no PR e de novo no push na `main`. O resultado aparece no PR e no badge. A `main` é protegida: o merge só acontece com esse check verde. Como os testes `*IT` com PostgreSQL só rodam aqui, é o Auto-Deploy "After CI Checks Pass" que faz o Render esperar por eles. |
+| 3. **Auto-deploy no Render** | Render | O Auto-Deploy está em **"After CI Checks Pass"**: o Render só inicia o deploy de um commit da `main` depois que o check `build-and-test` desse commit fica verde. Ele clona o repositório e faz o `docker build` do `rotavital/Dockerfile` (multi-stage: Maven + JDK 17 roda `mvn -B verify -DskipITs`, que compila e executa os testes com H2 e BDD → imagem final só com JRE 17). Os testes `*IT` ficam de fora porque não há Docker dentro de um `docker build`; eles rodam só no GitHub Actions. Se um teste do build falhar, o build falha e a versão anterior continua no ar. |
 | 4. **Subida da nova versão** | Render | O container sobe com `SPRING_PROFILES_ACTIVE=prod` (definido no Dockerfile), lê as variáveis de ambiente do banco e escuta na porta 8080. |
-| 5. **Health check** | Render / equipe | O campo **Health Check Path** do serviço ainda está vazio, então o Render só confere se a porta abriu. A equipe confere `GET /actuator/health` → `{"status":"UP"}` depois de cada deploy. Com o campo preenchido, o Render passa a só trocar o tráfego quando essa resposta for 200. |
+| 5. **Health check** | Render | O Render chama `GET /actuator/health` (campo **Health Check Path**). Só quando a resposta é `200 {"status":"UP"}` o tráfego passa para a nova versão; se não passar, o deploy falha e a versão anterior continua no ar. |
 
 **Configuração do Web Service no Render**
 
@@ -84,10 +84,10 @@ mvn -B verify
 | Branch | `main` | `main` |
 | Docker Context | `rotavital` | `rotavital` |
 | Dockerfile Path | `./rotavital/Dockerfile` | `./rotavital/Dockerfile` |
-| Auto-Deploy | On Commit | After CI Checks Pass |
-| Health Check Path | (vazio) | `/actuator/health` |
+| Auto-Deploy | After CI Checks Pass (era On Commit até 20/10) | After CI Checks Pass |
+| Health Check Path | `/actuator/health` (era vazio até 20/10) | `/actuator/health` |
 
-Os dois ajustes da coluna **Alvo** e a proteção da `main` exigindo o check `build-and-test` só podem ser feitos por quem administra o repositório e o serviço no Render.
+Os ajustes foram aplicados em 20/10/2026 (PI2-189), junto com a proteção da `main` no GitHub: merge só por pull request, com o check `build-and-test` verde e a branch atualizada. O administrador do repositório ainda pode contornar a regra em emergência.
 
 Para conferir manualmente depois do deploy:
 
