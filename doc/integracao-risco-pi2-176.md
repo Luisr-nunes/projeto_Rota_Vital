@@ -27,13 +27,11 @@ Antes de concluir a tarefa, alinhar e integrar:
 
 Os valores usados nos testes são fixtures matemáticas, não estimativas da rede. A integração técnica pode ser revisada, mas PI2-176 e PI2-32 não devem ser consideradas integralmente concluídas antes da integração com a metodologia e da validação do resultado com histórico.
 
-## PI2-178 — Descarte: pendência de definição
+## PI2-178 — Taxa de descarte
 
-O endpoint de descarte ainda não foi implementado. A PI2-177 deve definir numerador, denominador, período e tratamento do banco vazio. Escolher qualquer fórmula agora seria decidir uma parte atribuída a Luis Felipe.
+Foi implementado `GET /api/v1/indicadores/descarte?dias=7`, agrupado por tipo sanguíneo e hemocomponente. A definição operacional usa a proporção entre bolsas com `status=DESCARTADA` e todas as bolsas cuja validade caiu no intervalo. A janela inclui hoje e os seis dias anteriores; sem dados no grupo, ele não é exibido e uma base vazia retorna `taxas: []`.
 
-A entidade Bolsa contém data de coleta, validade e status, mas não registra a data e o motivo efetivo do descarte. Uma bolsa utilizada que hoje está além da validade não pode ser automaticamente contada como descartada por vencimento. É necessário definir se o indicador mede descarte registrado ou bolsas vencidas ainda no estoque e verificar se os dados existentes sustentam esse cálculo.
-
-Após a definição: implementar agrupamento por tipo e hemocomponente, testes e `GET /api/v1/indicadores/descarte`. Não foi criado endpoint com números provisórios.
+A entidade Bolsa não registra data efetiva nem motivo do descarte. Portanto, `dataValidade` é a referência temporal e o cálculo pressupõe que `DESCARTADA` corresponda ao vencimento; essa limitação está documentada em `doc/indicador-descarte-pi2-178.md` e deve ser confirmada na revisão da metodologia da PI2-177.
 
 ## Limites de responsabilidade
 

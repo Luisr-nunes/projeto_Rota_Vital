@@ -7,6 +7,8 @@ import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.dto.IndicadoresResponse;
 import com.hemorede.dto.RiscoDesabastecimentoResponse;
+import com.hemorede.dto.TaxaDescarteResponse;
+import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.exception.DiasPrevisaoInvalidoException;
 import com.hemorede.exception.ModeloProbabilisticoIndisponivelException;
 import com.hemorede.indicadores.ModeloProbabilisticoDemanda;
@@ -25,6 +27,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Calcula os indicadores estatísticos e operacionais do Rota Vital (HU07).
@@ -165,6 +168,52 @@ public class IndicadoresService {
                 vencimentoResumo,
                 requisicoesResumo
         );
+    }
+
+    /**
+     * Calcula, por tipo sanguíneo e componente, a proporção das bolsas cuja
+     * validade ocorreu nos últimos N dias e que foram marcadas DESCARTADA.
+     * A data de validade é usada como referência temporal, pois a entidade
+     * Bolsa não armazena a data em que o descarte foi efetivado.
+     */
+    public TaxaDescarteResponse calcularTaxaDescarte(int dias) {
+        if (dias <= 0) {
+            throw new DiasPrevisaoInvalidoException("O numero de dias deve ser maior que zero");
+        }
+        if (bolsaRepository == null) {
+            throw new IllegalStateException("Repositorio de bolsas nao configurado");
+        }
+
+        LocalDate fim = LocalDate.now();
+        LocalDate inicio = fim.minusDays(dias - 1L);
+        Map<String, List<Bolsa>> grupos = bolsaRepository.findAll().stream()
+                .filter(bolsa -> bolsa.getDataValidade() != null)
+                .filter(bolsa -> !bolsa.getDataValidade().isBefore(inicio)
+                        && !bolsa.getDataValidade().isAfter(fim))
+                .filter(bolsa -> bolsa.getTipoSanguineo() != null && bolsa.getHemoComponente() != null)
+                .collect(Collectors.groupingBy(
+                        bolsa -> bolsa.getTipoSanguineo().name() + "|" + bolsa.getHemoComponente().name(),
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+
+        List<TaxaDescarteResponse.TaxaPorTipoEComponente> taxas = grupos.values().stream()
+                .map(bolsasNoGrupo -> {
+                    Bolsa referencia = bolsasNoGrupo.get(0);
+                    long descartadas = bolsasNoGrupo.stream()
+                            .filter(bolsa -> bolsa.getStatus() == StatusBolsa.DESCARTADA)
+                            .count();
+                    long total = bolsasNoGrupo.size();
+                    double percentual = Math.round(descartadas * 10000.0 / total) / 100.0;
+                    return new TaxaDescarteResponse.TaxaPorTipoEComponente(
+                            referencia.getTipoSanguineo(), referencia.getHemoComponente(),
+                            total, descartadas, percentual);
+                })
+                .sorted(Comparator
+                        .comparing((TaxaDescarteResponse.TaxaPorTipoEComponente taxa) -> taxa.tipoSanguineo().name())
+                        .thenComparing(taxa -> taxa.hemoComponente().name()))
+                .toList();
+
+        return new TaxaDescarteResponse(dias, inicio, fim, LocalDateTime.now(), taxas);
     }
 
     /**

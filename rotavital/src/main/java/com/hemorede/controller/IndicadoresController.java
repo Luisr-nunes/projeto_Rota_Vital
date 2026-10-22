@@ -2,6 +2,7 @@ package com.hemorede.controller;
 
 import com.hemorede.dto.IndicadoresResponse;
 import com.hemorede.dto.RiscoDesabastecimentoResponse;
+import com.hemorede.dto.TaxaDescarteResponse;
 import com.hemorede.service.IndicadoresService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,12 @@ public class IndicadoresController {
     public IndicadoresResponse consultar(
             @RequestParam(defaultValue = "5") int diasProximoVencimento) {
         return indicadoresService.calcular(diasProximoVencimento);
+    }
+
+    @GetMapping("/descarte")
+    public TaxaDescarteResponse consultarTaxaDescarte(
+            @RequestParam(defaultValue = "7") int dias) {
+        return indicadoresService.calcularTaxaDescarte(dias);
     }
 
     @GetMapping("/risco-desabastecimento")
