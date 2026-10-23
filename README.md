@@ -5,6 +5,10 @@
 </p>
 
 <p align="center">
+  <a href="README.en.md">Read in English</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/github/actions/workflow/status/Luisr-nunes/projeto_Rota_Vital/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI%2FCD" alt="CI/CD"/>
   <img src="https://img.shields.io/badge/Java-Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/>
   <img src="https://img.shields.io/badge/HTML-CSS-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML/CSS"/>
@@ -73,8 +77,9 @@ O **Rota Vital** é uma aplicação web que:
 |---|---|
 | **Java** | Linguagem principal |
 | **Spring Boot** | Framework web (Controllers, Services, Repositories) |
-| **HTML / CSS** | Interface web (Thymeleaf ou API REST + Frontend) |
-| **Banco de Dados** | Persistência de dados (a definir pela equipe) |
+| **HTML / CSS / JavaScript** | Interface web estática (`index.html` e `indicadores.html`) consumindo a API REST |
+| **PostgreSQL / H2** | PostgreSQL no Docker e em produção (Supabase); H2 em memória no desenvolvimento local e nos testes rápidos |
+| **Cucumber + Testcontainers** | Testes de aceitação em Gherkin e integração com PostgreSQL real |
 | [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
 | **GitHub** | Versionamento de código e Issue/Bug Tracker |
 | **Figma** | Prototipação Lo-Fi |
@@ -237,11 +242,11 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 #### Artefatos
 
-- [✅] **Histórias de Usuário** — Mínimo de 7 histórias bem definidas (formato BDD, arquivo `.md` no GitHub)
+- [x] **Histórias de Usuário** — Mínimo de 7 histórias bem definidas (formato BDD, arquivo `.md` no GitHub)
   - [Link para as Histórias](doc/historias_de_usuario.md)
-- [✅] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
+- [x] **Protótipo Lo-Fi (Figma)** — Mínimo de 5 histórias prototipadas
   - [Link para o Figma](https://www.figma.com/site/snA4pKexELM7gW9JGih8iu/rota-vital-lofi?t=bL7QBDZxJXV2m1Pe-6)
-- [✅] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
+- [x] **Screencast do Protótipo** — Vídeo no YouTube explicando o protótipo Figma (com áudio ou legenda)
   - [Assistir no YouTube](https://www.youtube.com/watch?v=-Tl4rPthJ5Q) <!-- inserir link do YouTube -->
 
 ---
@@ -254,44 +259,44 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📌 POST-IT 1 — HU04: Alocar bolsas compatíveis por FEFO                     │
+│ POST-IT 1 — HU04: Alocar bolsas compatíveis por FEFO                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 👤 COMO: Profissional do hemocentro                                         │
-│ 🎯 QUERO: Alocar bolsas de sangue compatíveis a uma requisição hospitalar,  │
+│ COMO: Profissional do hemocentro                                            │
+│ QUERO: Alocar bolsas de sangue compatíveis a uma requisição hospitalar,     │
 │           priorizando estritamente as de validade mais próxima              │
-│ 💡 PARA QUE: Seja possível atender aos hospitais com segurança e reduzir o  │
+│ PARA QUE: Seja possível atender aos hospitais com segurança e reduzir o     │
 │              descarte de hemocomponentes por vencimento                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
 │  • Apenas bolsas compatíveis (matriz ABO/Rh) e dentro da validade são       │
 │    alocadas.                                                                │
 │  • Ordenação FEFO (First Expired, First Out) via Min-Heap (FilaFEFO).       │
 │  • A bolsa alocada passa para o status RESERVADA.                           │
 │  • Caso o estoque não supra a quantidade total solicitada, a transação      │
 │    é revertida (rollback) e a requisição permanece com status PENDENTE.     │
-│ 💻 Módulos: RequisicaoController, RequisicaoService, AlocacaoService,        │
+│ Módulos: RequisicaoController, RequisicaoService, AlocacaoService,          │
 │             FilaFEFO, IndiceEstoque, BolsaRepository.                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📌 POST-IT 2 — HU05: Planejar rota de entrega de menor custo                │
+│ POST-IT 2 — HU05: Planejar rota de entrega de menor custo                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 👤 COMO: Operador de logística da Hemorrede                                 │
-│ 🎯 QUERO: Calcular a rota de menor custo (tempo/distância) do Hemocentro    │
+│ COMO: Operador de logística da Hemorrede                                    │
+│ QUERO: Calcular a rota de menor custo (tempo/distância) do Hemocentro       │
 │           até o hospital solicitante                                        │
-│ 💡 PARA QUE: A entrega de hemocomponentes seja rápida, eficiente e          │
+│ PARA QUE: A entrega de hemocomponentes seja rápida, eficiente e             │
 │              respeite a cadeia de temperatura de transporte                 │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
 │  • Roteirização parte obrigatoriamente do Hemocentro (N0) para o hospital.  │
 │  • Menor caminho computado pelo algoritmo de Dijkstra manual sobre a        │
 │    malha viária sintética de 6 nós (N0 a N5).                               │
 │  • Retorno com nós visitados, distância total (km) e tempo estimado (min).  │
 │  • Se o hospital não possuir nó alcançável no grafo, retorna HTTP 422       │
 │    (RotaIndisponivelException).                                             │
-│ 💻 Módulos: RotaController (POST /api/rotas/calcular), RoteirizacaoService,  │
+│ Módulos: RotaController (POST /api/rotas/calcular), RoteirizacaoService,    │
 │             GrafoRotas, DadosSinteticos.                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -324,7 +329,7 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 | Item | Link |
 |------|------|
-| Screencast do sistema (U1) | ⏳ pendente — PI2-131 (depende do deploy no Render) |
+| Screencast do sistema (U1) | Pendente — PI2-131 (depende do deploy no Render) |
 | Screencast do código | [Assistir no YouTube](https://youtu.be/SCN13gswS3U) |
 | URL de produção (Render) | [rota-vital-jnmx.onrender.com](https://rota-vital-jnmx.onrender.com) ([health](https://rota-vital-jnmx.onrender.com/actuator/health)) |
 | Board Jira | [csprj-adsr-3p-e5.atlassian.net/browse/PI2](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
@@ -352,37 +357,37 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📌 POST-IT 1 — HU01: Registrar doação e cadastrar bolsa no estoque          │
+│ POST-IT 1 — HU01: Registrar doação e cadastrar bolsa no estoque             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 👤 COMO: Atendente do hemocentro                                            │
-│ 🎯 QUERO: Registrar uma doação e cadastrar a bolsa coletada                 │
-│ 💡 PARA QUE: A bolsa fique disponível no estoque para atender os hospitais  │
+│ COMO: Atendente do hemocentro                                               │
+│ QUERO: Registrar uma doação e cadastrar a bolsa coletada                    │
+│ PARA QUE: A bolsa fique disponível no estoque para atender os hospitais     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
 │  • O doador informado deve existir e estar ativo (inativo → HTTP 422).      │
 │  • Intervalo mínimo de 60 dias entre doações do mesmo doador (HTTP 422).    │
 │  • Doação e bolsa são salvas na mesma transação (@Transactional).           │
 │  • A bolsa entra no estoque com status DISPONIVEL.                          │
 │  • Coleta não pode estar no futuro e a validade deve ser futura (HTTP 400). │
-│ 💻 Módulos: DoacaoController (POST /api/doacoes), DoacaoService,            │
+│ Módulos: DoacaoController (POST /api/doacoes), DoacaoService,               │
 │             DoacaoRequest, Bolsa (Builder), DoadorController, index.html.   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 📌 POST-IT 2 — HU03: Registrar requisição hospitalar                        │
+│ POST-IT 2 — HU03: Registrar requisição hospitalar                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 👤 COMO: Profissional de um hospital                                        │
-│ 🎯 QUERO: Solicitar hemocomponentes informando tipo, quantidade e prioridade│
-│ 💡 PARA QUE: O hemocentro possa atender à necessidade do hospital           │
+│ COMO: Profissional de um hospital                                           │
+│ QUERO: Solicitar hemocomponentes informando tipo, quantidade e prioridade   │
+│ PARA QUE: O hemocentro possa atender à necessidade do hospital              │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 📋 CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                 │
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
 │  • A requisição deve estar vinculada a um hospital existente (HTTP 404).    │
 │  • A quantidade deve ser maior que zero (HTTP 400 com a mensagem do campo). │
 │  • A requisição é salva com status PENDENTE e recebe um identificador.      │
 │  • Status e data da solicitação são definidos pelo servidor.                │
-│ 💻 Módulos: RequisicaoController (POST /api/requisicoes),                   │
+│ Módulos: RequisicaoController (POST /api/requisicoes),                      │
 │             RequisicaoService, RequisicaoRequest, ItemRequisicaoRequest,    │
 │             GlobalExceptionHandler, index.html.                             │
 └─────────────────────────────────────────────────────────────────────────────┘
