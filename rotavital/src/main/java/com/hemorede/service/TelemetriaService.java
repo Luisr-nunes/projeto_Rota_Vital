@@ -15,15 +15,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
 /**
- * Canal de telemetria de temperatura da cadeia fria (PI2-121), conforme o
+ * Canal de telemetria de temperatura da cadeia fria (PI2-121 / PI2-169), conforme o
  * contrato de {@code doc/telemetria.md}.
  * <p>
  * Na U1 não há sensor físico: a leitura é simulada pela própria aplicação,
  * com temperatura gerada em torno do centro da faixa segura do tipo de
  * refrigeração do veículo (distribuição normal, desvio de 1,2 °C). Assim,
  * a maior parte das leituras sai {@code OK} e algumas saem {@code ALERTA},
- * o que permite demonstrar a regra no painel. Na U2 a leitura passará a vir
- * do broker MQTT (porta 1883/8883).
+ * o que permite demonstrar a regra no painel. Na U2 as leituras também são
+ * contabilizadas de forma sincronizada por veículo em {@link AgregadorTelemetria}.
  * </p>
  */
 @Service
@@ -34,17 +34,31 @@ public class TelemetriaService {
     private static final double DESVIO_PADRAO_C = 1.2;
 
     private final VeiculoRepository veiculoRepository;
+    private final AgregadorTelemetria agregadorTelemetria;
     private final Random random;
     private final Clock clock;
 
     @Autowired
+    public TelemetriaService(VeiculoRepository veiculoRepository, AgregadorTelemetria agregadorTelemetria) {
+        this(veiculoRepository, agregadorTelemetria, new Random(), Clock.system(ZoneId.of("America/Recife")));
+    }
+
     public TelemetriaService(VeiculoRepository veiculoRepository) {
-        this(veiculoRepository, new Random(), Clock.system(ZoneId.of("America/Recife")));
+        this(veiculoRepository, new AgregadorTelemetria(), new Random(), Clock.system(ZoneId.of("America/Recife")));
     }
 
     /** Construtor para testes: permite fixar a semente e o relógio. */
     TelemetriaService(VeiculoRepository veiculoRepository, Random random, Clock clock) {
+        this(veiculoRepository, new AgregadorTelemetria(), random, clock);
+    }
+
+    TelemetriaService(
+            VeiculoRepository veiculoRepository,
+            AgregadorTelemetria agregadorTelemetria,
+            Random random,
+            Clock clock) {
         this.veiculoRepository = veiculoRepository;
+        this.agregadorTelemetria = agregadorTelemetria;
         this.random = random;
         this.clock = clock;
     }
@@ -64,7 +78,14 @@ public class TelemetriaService {
         String timestamp = OffsetDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-        return new LeituraTemperaturaResponse(veiculo.getId(), temperatura, timestamp, classificar(tipo, temperatura));
+        LeituraTemperaturaResponse resposta = new LeituraTemperaturaResponse(
+                veiculo.getId(), temperatura, timestamp, classificar(tipo, temperatura));
+        agregadorTelemetria.registrarLeitura(resposta);
+        return resposta;
+    }
+
+    public AgregadorTelemetria getAgregadorTelemetria() {
+        return agregadorTelemetria;
     }
 
     /** {@code OK} se a temperatura está na faixa segura do tipo (limites inclusos); senão {@code ALERTA}. */
