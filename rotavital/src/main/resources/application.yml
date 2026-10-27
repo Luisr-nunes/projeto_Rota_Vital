@@ -28,3 +28,15 @@ hemorede:
     limite-minimo-padrao: 5
   rota:
     velocidade-media-kmh: 60
+  indicadores:
+    risco:
+      # Lambdas diarios (bolsas/dia) do cenario sintetico - doc/est-u2-probabilidade.md, secao 3.2 (PI2-177)
+      lambda-diario:
+        O_POS: 1.44
+        A_POS: 1.36
+        O_NEG: 0.36
+        A_NEG: 0.32
+        B_POS: 0.32
+        AB_POS: 0.10
+        B_NEG: 0.08
+        AB_NEG: 0.02
