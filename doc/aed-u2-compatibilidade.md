@@ -80,3 +80,70 @@ Na implementação de [`TipoSanguineo.java`](../rotavital/src/main/java/com/hemo
 2. **Legislação Hemoterápica Brasileira:** Portaria de Consolidação MS nº 5/2017, Anexo IV (origem: Portaria MS nº 158/2016) e RDC ANVISA nº 34/2014 (*Boas Práticas no Ciclo do Sangue*).
 3. **Referência Clássica de Imuno-hematologia:** Harmening, D. M. *Modern Blood Banking & Transfusion Practices*, 7th Edition, F.A. Davis Company — Tabelas de compatibilidade eritrocitária ABO e sistema Rh.
 4. **Referência de Estruturas de Dados e Algoritmos:** Cormen, T. H.; Leiserson, C. E.; Rivest, R. L.; Stein, C. *Algoritmos: Teoria e Prática* (3ª ed.), Campus/Elsevier — Filas de Prioridade baseadas em Min-Heap (Cap. 6), Tabelas de Dispersão (Cap. 11) e Caminho Mínimo de Fonte Única / Algoritmo de Dijkstra (Cap. 24).
+
+---
+
+## 3. Complexidade da Matriz e do Matching (Big-O)
+
+### 3.1 Variáveis de Dimensão do Problema
+
+Para a análise assintótica formal do processo de alocação na HU08, definem-se:
+- $k = |\text{TipoSanguineo}| = 8$: cardinalidade fixa e finita do domínio de tipos sanguíneos (`A+`, `A-`, `B+`, `B-`, `AB+`, `AB-`, `O+`, `O-`);
+- $N$: número total de bolsas disponíveis (`StatusBolsa.DISPONIVEL`) do hemocomponente solicitado no estoque;
+- $n \le N$: número de bolsas candidatas válidas (não vencidas e biologicamente compatíveis com o receptor);
+- $n_t$: número de bolsas no bucket do tipo sanguíneo $t \in C(R)$ dentro do `IndiceEstoque`, tal que $\sum_{t \in C(R)} n_t = n$;
+- $q$: quantidade de bolsas solicitadas no `ItemRequisicao` ($q \le n$ quando há estoque suficiente);
+- $I$: quantidade de itens (`ItemRequisicao`) na `Requisicao`;
+- $V, E$: número de vértices (hospitais/hemocentro) e arestas (trechos viários) do `GrafoRotas`.
+
+### 3.2 Complexidade da Matriz de Compatibilidade ABO/Rh ($8 \times 8$)
+
+Seja na representação matricial bidimensional `boolean[8][8]` indexada por `doador.ordinal()` e `receptor.ordinal()`, seja no mapa imutável `Map<TipoSanguineo, List<TipoSanguineo>>` em [`TipoSanguineo.java`](../rotavital/src/main/java/com/hemorede/domain/enums/TipoSanguineo.java):
+
+| Operação | Método | Complexidade Temporal (Caso Médio e Pior Caso) | Complexidade Espacial | Justificativa |
+| :--- | :--- | :---: | :---: | :--- |
+| **Verificação de par $(D, R)$** | `compativel(doador, receptor)` | **$O(1)$** | $O(1)$ | Acesso direto à célula `M[doador.ordinal()][receptor.ordinal()]` ou busca em lista estática de tamanho máximo $k = 8 \implies O(1)$. |
+| **Listagem de doadores de $R$** | `doadoresCompativeis(receptor)` | **$O(1)$** | $O(1)$ | Retorna referência imutável para os tipos compatíveis de $R$ ($|C(R)| \le 8$). |
+| **Armazenamento da Matriz** | Inicialização estática | $O(k^2) = O(1)$ | **$O(k^2) = O(1)$** | Matriz fixa de $8 \times 8 = 64$ posições booleanas em memória constante. |
+
+### 3.3 Complexidade do Algoritmo de Matching (Compatibilidade + FEFO)
+
+O algoritmo de *matching* implementado em [`AlocacaoService.alocar(ItemRequisicao)`](../rotavital/src/main/java/com/hemorede/service/AlocacaoService.java#L97-L179) executa quatro etapas bem definidas para cada item da requisição:
+
+#### Etapa 1 — Triagem de Candidatas Válidas e Compatíveis (`buscarCandidatasValidas`)
+Percorre as $N$ bolsas disponíveis do hemocomponente, descartando bolsas vencidas (`dataValidade < hoje`) e bolsas incompatíveis segundo `compatibilidadeSanguineaService.compativel(bolsa.tipo, item.tipo)`:
+- Como cada teste de validade e de compatibilidade ABO/Rh custa $O(1)$, a filtragem linear custa:
+  $$T_{\text{filtro}}(N) = O(N)$$
+
+#### Etapa 2 — Construção do Índice Particionado FEFO (`construirIndiceEstoque`)
+Insere cada uma das $n$ bolsas compatíveis no [`IndiceEstoque`](../rotavital/src/main/java/com/hemorede/algoritmos/IndiceEstoque.java), que localiza o bucket do `TipoSanguineo` em $O(1)$ e insere a bolsa na respectiva [`FilaFEFO`](../rotavital/src/main/java/com/hemorede/algoritmos/FilaFEFO.java) (Min-Heap binário por `dataValidade`) em $O(\log n_t)$:
+- Custo acumulado de indexação das $n$ bolsas:
+  $$T_{\text{index}}(n) = \sum_{t \in C(R)} O(n_t \log n_t) \le O(n \log n)$$
+
+#### Etapa 3 — Seleção Gulosa FEFO Entre Tipos Compatíveis (`alocarProximaCompativel`)
+Para escolher **1 bolsa** dentre todos os tipos doadores compatíveis $C(R)$ garantindo que saia a bolsa de **menor data de validade global**:
+1. Inspeciona o topo (`fila.peek()`, custo $O(1)$) de cada uma das $|C(R)| \le k = 8$ filas compatíveis: custo $O(k) = O(1)$.
+2. Identifica o tipo `melhorTipo` cuja bolsa no topo possui a menor `dataValidade` (política FEFO estrita, exemplificada no cenário BDD em que uma bolsa `O_NEG` vencendo em 2 dias tem prioridade sobre uma `A_POS` vencendo em 10 dias para um receptor `A_POS`).
+3. Extrai a raiz do Min-Heap vencedor via `indice.alocarBolsa(melhorTipo)` (`poll()`), recompondo o heap em $O(\log n_{\text{melhorTipo}}) \le O(\log n)$.
+
+Para alocar as $q$ bolsas solicitadas no item:
+$$T_{\text{seleção}}(q, n) = q \cdot \left(O(k) + O(\log n)\right) = O(q \log n) \quad (\text{visto que } k = 8 \text{ é constante})$$
+
+#### Etapa 4 — Cálculo da Rota Mínima via Dijkstra (`calcularRotaMinima`)
+Antes de reservar qualquer bolsa no banco, [`AlocacaoService.alocarRequisicao`](../rotavital/src/main/java/com/hemorede/service/AlocacaoService.java#L70) aciona [`RoteirizacaoService.calcularRotaMinima`](../rotavital/src/main/java/com/hemorede/service/RoteirizacaoService.java#L79-L97), executando o algoritmo de Dijkstra com Min-Heap sobre o `GrafoRotas`:
+$$T_{\text{rota}}(V, E) = O((V + E) \log V)$$
+
+### 3.4 Tabela Consolidada de Complexidade Temporal e Espacial (HU08)
+
+| Etapa / Componente | Estrutura de Dados | Complexidade de Tempo | Complexidade de Espaço |
+| :--- | :--- | :---: | :---: |
+| **1. Consulta de Compatibilidade ABO/Rh** | Matriz / Mapa estático $8 \times 8$ | $O(1)$ | $O(1)$ ($k^2 = 64$) |
+| **2. Triagem de Bolsas Válidas e Compatíveis** | Stream sobre estoque disponível | $O(N)$ | $O(n)$ |
+| **3. Indexação em Filas FEFO por Tipo** | `IndiceEstoque` ($8 \times$ `FilaFEFO` Min-Heap) | $O(n \log n)$ | $O(n)$ |
+| **4. Extração de 1 Bolsa Compatível (FEFO)** | `peek()` em $\le 8$ heaps + `poll()` no menor | $O(\log n)$ | $O(1)$ |
+| **5. Alocação das $q$ Bolsas de um Item** | Loop de $q$ extrações sobre `IndiceEstoque` | $O(N + n \log n + q \log n) = O(N + n \log n)$ | $O(n)$ |
+| **6. Cálculo de Rota Mínima (Dijkstra)** | `GrafoRotas` (Lista de Adjacência + Min-Heap) | $O((V + E) \log V)$ | $O(V + E)$ |
+| **Fluxo Completo (`alocarRequisicao`)** | **Dijkstra + Matching ABO/Rh + FEFO** | **$O\big((V + E) \log V + I \cdot (N + n \log n)\big)$** | **$O(V + E + n)$** |
+
+> [!TIP]
+> **Eficiência na Prática:** Como $q \le n \le N$, o termo dominante por item é $O(N + n \log n)$, evitando reordenações completas a cada bolsa retirada. Além disso, caso o estoque já seja mantido pré-indexado em memória no `IndiceEstoque`, a alocação de $q$ bolsas compatíveis cai diretamente para **$O(q \log n)$**, sem necessidade de varrer bolsas de tipos incompatíveis.
