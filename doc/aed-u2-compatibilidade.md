@@ -147,3 +147,103 @@ $$T_{\text{rota}}(V, E) = O((V + E) \log V)$$
 
 > [!TIP]
 > **Eficiência na Prática:** Como $q \le n \le N$, o termo dominante por item é $O(N + n \log n)$, evitando reordenações completas a cada bolsa retirada. Além disso, caso o estoque já seja mantido pré-indexado em memória no `IndiceEstoque`, a alocação de $q$ bolsas compatíveis cai diretamente para **$O(q \log n)$**, sem necessidade de varrer bolsas de tipos incompatíveis.
+
+---
+
+## 4. Diagrama do Fluxo: Alocação = Compatibilidade + FEFO + Rota
+
+O endpoint `POST /api/v1/requisicoes/{id}/alocacao` ([`AlocacaoController.java`](../rotavital/src/main/java/com/hemorede/controller/AlocacaoController.java)) orquestra em uma única transação atômica (`@Transactional`) a validação da rota hospitalar via Dijkstra, a filtragem de compatibilidade ABO/Rh e a reserva FEFO das bolsas no estoque.
+
+### 4.1 Fluxograma de Decisão e Execução (`AlocacaoService.alocarRequisicao`)
+
+```mermaid
+flowchart TD
+    Start(["POST /api/v1/requisicoes/{id}/alocacao"]) --> LoadReq["Buscar Requisicao por ID"]
+    LoadReq --> CheckStatus{"Status == PENDENTE e<br/>possui itens?"}
+    CheckStatus -- "Não" --> Err400["Erro 400 / 422<br/>Requisição inválida para alocação"]
+    CheckStatus -- "Sim" --> CalcRota["1. ROTA (Dijkstra)<br/>roteirizacaoService.calcularRotaMinima(requisicao)<br/>Origem: N0 (Hemocentro) -> Destino: hospital.codigoNo"]
+
+    CalcRota --> CheckRota{"Rota alcançável<br/>no GrafoRotas?"}
+    CheckRota -- "Não" --> ErrRota["RotaIndisponivelException (HTTP 422)<br/>Nenhuma bolsa é alterada (Fail-Fast)"]
+
+    CheckRota -- "Sim (caminho + custoTotal)" --> LoopItens["Para cada ItemRequisicao (tipo R, hemocomponente, qtd q)"]
+    LoopItens --> FilterBolsas["2. COMPATIBILIDADE ABO/Rh + VALIDADE<br/>Buscar bolsas DISPONIVEIS do hemocomponente<br/>Filtrar: dataValidade >= hoje<br/>Filtrar: compatibilidadeSanguineaService.compativel(doador, R)"]
+
+    FilterBolsas --> CheckEmpty{"Candidatas<br/>compatíveis == 0?"}
+    CheckEmpty -- "Sim" --> Err422["NenhumaBolsaCompativelException (HTTP 422)<br/>Rollback transacional"]
+
+    CheckEmpty -- "Não" --> CheckQty{"Candidatas < q<br/>necessárias?"}
+    CheckQty -- "Sim" --> Err409["EstoqueCompativelInsuficienteException (HTTP 409)<br/>Informa necessárias vs disponíveis + Rollback"]
+
+    CheckQty -- "Não (n >= q)" --> BuildIndex["3. INDEXAÇÃO FEFO<br/>Inserir n candidatas no IndiceEstoque<br/>(8 buckets -> FilaFEFO Min-Heap por dataValidade)"]
+
+    BuildIndex --> SelectLoop["4. MATCHING FEFO ENTRE TIPOS COMPATÍVEIS (repetir q vezes)<br/>Inspecionar fila.peek() de cada tipo em doadoresCompativeis(R)<br/>Escolher o tipo com menor dataValidade no topo<br/>Extrair via indice.alocarBolsa(melhorTipo) e marcar RESERVADA"]
+
+    SelectLoop --> NextItem{"Há mais itens<br/>na requisição?"}
+    NextItem -- "Sim" --> LoopItens
+    NextItem -- "Não" --> Commit["Atualizar Requisicao para ALOCADA<br/>Persistir bolsas RESERVADAS"]
+    Commit --> Response(["Retornar HTTP 200 (AlocacaoResponse)<br/>requisicaoId + status ALOCADA + bolsasAlocadas + rota + custoTotalKm"])
+```
+
+### 4.2 Diagrama de Sequência entre Componentes
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cliente as Hospital / Operador
+    participant Ctrl as AlocacaoController
+    participant Svc as AlocacaoService
+    participant Rot as RoteirizacaoService
+    participant Grafo as GrafoRotas (Dijkstra)
+    participant Comp as CompatibilidadeSanguineaService
+    participant Repo as BolsaRepository
+    participant Ind as IndiceEstoque + FilaFEFO
+
+    Cliente->>Ctrl: POST /api/v1/requisicoes/{id}/alocacao
+    Ctrl->>Svc: alocarRequisicao(id)
+    Svc->>Rot: calcularRotaMinima(requisicao)
+    Rot->>Grafo: calcularMenorRota("N0", hospital.codigoNo)
+    Grafo-->>Rot: ResultadoRota(caminho, custoTotal)
+    Rot-->>Svc: ResultadoRota
+
+    loop Para cada ItemRequisicao (receptor R, quantidade q)
+        Svc->>Repo: findByHemoComponenteAndStatus(componente, DISPONIVEL)
+        Repo-->>Svc: Lista de bolsas disponíveis (N)
+        Svc->>Comp: compativel(bolsa.tipo, R) [filtro de validade + ABO/Rh]
+        Comp-->>Svc: n bolsas candidatas válidas e compatíveis
+        Svc->>Ind: construirIndiceEstoque(candidatas)
+        Svc->>Comp: doadoresCompativeis(R)
+        Comp-->>Svc: Lista C(R) de tipos doadores compatíveis
+        loop q vezes
+            Svc->>Ind: consultarEstoque(doador).peek() para cada doador em C(R)
+            Svc->>Ind: alocarBolsa(melhorTipo) [poll() da menor validade]
+            Ind-->>Svc: Bolsa selecionada (status -> RESERVADA)
+        end
+        Svc->>Repo: saveAll(selecionadas)
+    end
+
+    Svc-->>Ctrl: AlocacaoResponse(id, ALOCADA, bolsas, rota, custoTotal)
+    Ctrl-->>Cliente: HTTP 200 OK (JSON)
+```
+
+---
+
+## 5. Garantias de Invariantes, Cenários BDD e Rastreabilidade
+
+### 5.1 Garantias Algorítmicas e Transacionais (HU08)
+
+| Regra / Invariante | Como é garantida no código | Cenário BDD correspondente (`alocar_bolsa.feature`) |
+| :--- | :--- | :--- |
+| **FEFO prevalece entre todos os tipos compatíveis** | `alocarProximaCompativel` compara o `peek()` de todos os tipos em `doadoresCompativeis(receptor)` e retira a bolsa que vence mais cedo (ex.: bolsa `O_NEG` vencendo em 2 dias é alocada antes de bolsa `A_POS` vencendo em 10 dias para receptor `A_POS`). | `Reservar a bolsa compativel que vence primeiro` (HTTP 200) |
+| **Bloqueio estrito de tipos incompatíveis** | `compatibilidadeSanguineaService.compativel(doador, receptor)` filtra antes da indexação; se $n = 0$, lança `NenhumaBolsaCompativelException`. | `Rejeitar estoque incompativel` (HTTP 422) |
+| **Sem reserva parcial quando falta quantidade** | Verifica `candidatasCompativeis.size() < necessario` antes de alterar status e lança `EstoqueCompativelInsuficienteException`. | `Rejeitar quantidade insuficiente sem reservar parcialmente` (HTTP 409) |
+| **Descarte de bolsas vencidas** | Filtro `!bolsa.getDataValidade().isBefore(hoje)` ignora bolsas com validade expirada, mesmo que o tipo sanguíneo seja compatível. | `Ignorar bolsa vencida mesmo que seja compativel` (HTTP 200) |
+| **Validação prévia de rota (Fail-Fast)** | `roteirizacaoService.calcularRotaMinima(requisicao)` é executado na linha 70 de `AlocacaoService`, antes do loop de itens. Se não houver rota até o hospital, lança `RotaIndisponivelException` sem tocar no estoque. | `Nao reservar bolsas quando o hospital nao possui rota` (HTTP 422) |
+| **Atomicidade entre múltiplos itens (`@Transactional`)** | Se o 1º item da requisição for alocado, mas o 2º item falhar por falta de bolsa compatível, o Spring realiza *rollback* completo da transação. | `Reverter o primeiro item quando faltar estoque para o segundo` (HTTP 422) |
+
+### 5.2 Rastreabilidade com o Código-Fonte e Testes
+
+- **Regras ABO/Rh e Matriz de Compatibilidade:** [`TipoSanguineo.java`](../rotavital/src/main/java/com/hemorede/domain/enums/TipoSanguineo.java) e [`CompatibilidadeSanguineaService.java`](../rotavital/src/main/java/com/hemorede/service/CompatibilidadeSanguineaService.java)
+- **Estruturas AED (Fila FEFO, Índice Hash e Grafo Dijkstra):** [`FilaFEFO.java`](../rotavital/src/main/java/com/hemorede/algoritmos/FilaFEFO.java), [`IndiceEstoque.java`](../rotavital/src/main/java/com/hemorede/algoritmos/IndiceEstoque.java) e [`GrafoRotas.java`](../rotavital/src/main/java/com/hemorede/algoritmos/GrafoRotas.java)
+- **Orquestração Alocação = Compatibilidade + FEFO + Rota:** [`AlocacaoService.java`](../rotavital/src/main/java/com/hemorede/service/AlocacaoService.java), [`RoteirizacaoService.java`](../rotavital/src/main/java/com/hemorede/service/RoteirizacaoService.java), [`AlocacaoController.java`](../rotavital/src/main/java/com/hemorede/controller/AlocacaoController.java) e [`AlocacaoResponse.java`](../rotavital/src/main/java/com/hemorede/dto/AlocacaoResponse.java)
+- **Especificação Executável (BDD Cucumber — HU08):** [`alocar_bolsa.feature`](../rotavital/src/test/resources/features/alocar_bolsa.feature) e [`RequisicaoSteps.java`](../rotavital/src/test/java/com/hemorede/bdd/RequisicaoSteps.java)
