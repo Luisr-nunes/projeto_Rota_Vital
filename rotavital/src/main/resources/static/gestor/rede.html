@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de rede · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <link rel="stylesheet" href="../css/gestor.css">
+</head>
+<body class="bg-app">
+  <!-- Figma 5.7 · RSD · Painel de rede (PI2-175) -->
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Painel de rede</h1>
+        <p class="page-sub" id="sub">Métricas HTTP da API coletadas pelo Actuator</p>
+      </div>
+      <div class="page-actions">
+        <span class="badge b-ok live" id="status">Ao vivo</span>
+        <button type="button" class="btn btn-secondary" id="atualizar">Atualizar</button>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="Métricas de rede"></section>
+    <div id="erro"></div>
+
+    <div class="row stack-md">
+      <section class="card grow gap-14" aria-labelledby="t-lat">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-lat">Latência ao longo do tempo</h2><p class="card-sub">Últimos 10 minutos · uma leitura a cada 10 s, guardada por esta tela · percentis acumulados desde a subida da API</p></div>
+          <div class="legend"><span><i class="line" style="--c:#48726A"></i>p50</span><span><i class="line" style="--c:#E53935"></i>p95</span></div>
+        </div>
+        <div id="grafico"></div>
+      </section>
+
+      <div class="col col-380">
+        <section class="card gap-14" aria-labelledby="t-cls">
+          <div><h2 class="card-title" id="t-cls">Respostas por classe</h2><p class="card-sub" id="clsSub">&nbsp;</p></div>
+          <div id="classes"></div>
+        </section>
+        <section class="card gap-12" aria-labelledby="t-cam">
+          <div><h2 class="card-title" id="t-cam">Caminho da requisição</h2><p class="card-sub">Protocolos e portas de cada trecho</p></div>
+          <div class="hop"><span class="ic" data-ic="globe"></span><span class="name">Navegador → borda do Render</span><span class="proto">HTTPS/443</span></div>
+          <div class="hop"><span class="ic" data-ic="server"></span><span class="name">Borda → API Spring Boot</span><span class="proto">HTTP/8080</span></div>
+          <div class="hop"><span class="ic" data-ic="db"></span><span class="name">API → PostgreSQL</span><span class="proto">JDBC/5432</span></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (function () {
+      const { ui } = RV;
+      if (!ui.shell('gestor', 'Rede')) return;
+      document.getElementById('atualizar').insertAdjacentHTML('afterbegin', ui.icon('refresh', 18, '#1F2D2A', 2));
+      document.querySelectorAll('.hop [data-ic]').forEach((el) => { el.innerHTML = ui.icon(el.dataset.ic, 16, '#48726A', 2); });
+
+      const $ = (id) => document.getElementById(id);
+      const INTERVALO = 10000;            // 10 s entre leituras
+      const JANELA = 60;                  // 60 leituras = 10 min
+      const historico = [];               // {t, p50, p95}
+      let timer = null, proxima = 0, ultima = null;
+
+      const ms = (v) => (v === null || v === undefined) ? '—' : `${RV.num(v, v < 10 ? 1 : 0)} ms`;
+
+      async function ler() {
+        clearTimeout(timer);
+        $('atualizar').disabled = true;
+        try {
+          const m = await RV.api('/api/v1/metricas/rede');
+          ultima = m;
+          historico.push({ t: Date.now(), p50: m.latenciaP50Ms, p95: m.latenciaP95Ms });
+          while (historico.length > JANELA) historico.shift();
+          $('erro').innerHTML = '';
+          $('status').className = 'badge b-ok live'; $('status').textContent = 'Ao vivo';
+          render(m);
+        } catch (e) {
+          $('status').className = 'badge b-alerta'; $('status').textContent = 'Sem conexão';
+          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível ler as métricas', `${ui.erroMsg(e)} Nova tentativa em 10 s.`);
+          if (!ultima) { $('kpis').innerHTML = kpis(null); $('grafico').innerHTML = ui.empty('Sem leituras ainda', 'As métricas aparecem assim que a API responder.'); $('classes').innerHTML = ''; }
+        } finally {
+          $('atualizar').disabled = false;
+          proxima = Date.now() + INTERVALO;
+          timer = setTimeout(ler, INTERVALO);
+        }
+      }
+
+      function kpis(m) {
+        return [
+          ui.kpi('Requisições atendidas', m ? RV.num(m.totalRequisicoes) : null, 'net', '#2F5E55', '#E6F2EF', m ? 'desde a última subida' : ''),
+          ui.kpi('Vazão', m ? `${RV.num(m.requisicoesPorSegundo, 1)} req/s` : null, 'zap', '#0089A8', '#E3F7FC', m ? 'média desde a subida' : ''),
+          ui.kpi('Latência p50', m ? (m.latenciaP50Ms == null ? null : ms(m.latenciaP50Ms)) : null, 'clock', '#1E7A3A', '#E3F7E8', m && m.latenciaP50Ms != null ? 'metade responde abaixo disso' : '', 't-green'),
+          ui.kpi('Latência p95', m ? (m.latenciaP95Ms == null ? null : ms(m.latenciaP95Ms)) : null, 'clock', '#B7791F', '#FFF6DB', m && m.latenciaP95Ms != null ? '95% abaixo disso' : '')
+        ].join('');
+      }
+
+      function render(m) {
+        $('sub').textContent = `Métricas HTTP da API coletadas pelo Actuator · atualizado às ${new Date(historico[historico.length - 1].t).toLocaleTimeString('pt-BR')}`;
+        $('kpis').innerHTML = kpis(m);
+        renderGrafico();
+        // Classes de resposta
+        const tot = m.totalRequisicoes || 0;
+        const e4 = m.erros4xx || 0, e5 = m.erros5xx || 0, ok = Math.max(0, tot - e4 - e5);
+        const p = (n) => tot ? n * 100 / tot : 0;
+        $('clsSub').textContent = `${RV.num(tot)} ${tot === 1 ? 'requisição' : 'requisições'} desde a subida`;
+        $('classes').innerHTML = tot ? `<div class="stacked" role="img" aria-label="Distribuição das respostas">
+            <span style="width:${p(ok)}%;background:#34C759"></span><span style="width:${p(e4)}%;background:#E0A100;min-width:${e4 ? 4 : 0}px"></span><span style="width:${p(e5)}%;background:#E53935;min-width:${e5 ? 4 : 0}px"></span></div>
+          <div class="stack" style="gap:10px;margin-top:4px">
+            ${[['Sucesso (2xx/3xx)', ok, '#34C759'], ['Erros do cliente (4xx)', e4, '#E0A100'], ['Erros do servidor (5xx)', e5, '#E53935']].map(([l, n, c]) =>
+              `<div class="cls-row"><i style="--c:${c}"></i><span class="name">${l}</span><b>${RV.num(n)}</b><span class="sub">${RV.num(p(n), p(n) && p(n) < 1 ? 1 : 0)}%</span></div>`).join('')}
+          </div>` : ui.alertBox('info', 'Nenhuma requisição registrada', 'A distribuição aparece depois das primeiras chamadas à API.');
+      }
+
+      function renderGrafico() {
+        const pts = historico.filter((h) => h.p50 != null || h.p95 != null);
+        if (pts.length < 2) {
+          $('grafico').innerHTML = ui.empty('Coletando leituras', pts.length ? 'A primeira leitura chegou. A curva aparece a partir da segunda, em 10 s.' : 'Ainda não há latência registrada. Ela aparece depois das primeiras requisições à API.');
+          return;
+        }
+        const W = 812, H = 330, X0 = 56, TOP = 12, BOT = 300;
+        const maxV = Math.max(...pts.map((h) => Math.max(h.p95 || 0, h.p50 || 0)));
+        const passo = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000].find((s) => s * 3 >= maxV * 1.1) || 10000;
+        const topo = passo * 3;
+        const t0 = pts[0].t, t1 = pts[pts.length - 1].t, span = Math.max(1, t1 - t0);
+        const x = (t) => X0 + (t - t0) / span * (W - X0 - 8);
+        const y = (v) => BOT - v / topo * (BOT - TOP);
+        const path = (k) => pts.filter((h) => h[k] != null).map((h, i) => `${i ? 'L' : 'M'}${x(h.t).toFixed(1)} ${y(h[k]).toFixed(1)}`).join(' ');
+        const last = pts[pts.length - 1];
+        const grade = [0, 1, 2, 3].map((i) => `<line x1="${X0}" y1="${y(passo * i)}" x2="${W - 4}" y2="${y(passo * i)}" stroke="#E2E8E6"/><text x="0" y="${y(passo * i) + 4}" font-size="11" font-weight="500" fill="#8A9794">${RV.num(passo * i)} ms</text>`).join('');
+        const dur = Math.round(span / 60000);
+        const p95 = path('p95');
+        $('grafico').innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H + 18}" role="img" aria-label="Latência p50 e p95 ao longo do tempo">
+          <defs><linearGradient id="area" x1="0" y1="${TOP}" x2="0" y2="${BOT}" gradientUnits="userSpaceOnUse"><stop stop-color="#F54B4B" stop-opacity=".22"/><stop offset="1" stop-color="#F54B4B" stop-opacity="0"/></linearGradient></defs>
+          ${grade}
+          ${p95 ? `<path d="${p95} L${x(last.t).toFixed(1)} ${BOT} L${x(t0)} ${BOT} Z" fill="url(#area)"/><path d="${p95}" fill="none" stroke="#E53935" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
+          <path d="${path('p50')}" fill="none" stroke="#48726A" stroke-width="2.5" stroke-linejoin="round"/>
+          ${last.p95 != null ? `<circle cx="${x(last.t)}" cy="${y(last.p95)}" r="5" fill="#fff" stroke="#E53935" stroke-width="3"/>` : ''}
+          ${last.p50 != null ? `<circle cx="${x(last.t)}" cy="${y(last.p50)}" r="5" fill="#fff" stroke="#48726A" stroke-width="3"/>` : ''}
+          <text x="${X0}" y="${H + 14}" font-size="11" font-weight="500" fill="#8A9794">${dur ? `−${dur} min` : 'início'}</text>
+          <text x="${W - 4}" y="${H + 14}" font-size="11" font-weight="500" fill="#8A9794" text-anchor="end">agora</text>
+        </svg>`;
+      }
+
+      // Contador da próxima leitura no subtítulo
+      setInterval(() => {
+        if (!ultima || !historico.length) return;
+        const s = Math.max(0, Math.round((proxima - Date.now()) / 1000));
+        $('sub').textContent = `Métricas HTTP da API coletadas pelo Actuator · atualizado às ${new Date(historico[historico.length - 1].t).toLocaleTimeString('pt-BR')} · próxima leitura em ${s} s`;
+      }, 1000);
+
+      $('atualizar').addEventListener('click', ler);
+      $('kpis').innerHTML = ui.skeletonRows(4, 104);
+      $('grafico').innerHTML = ui.skeletonRows(1, 330);
+      ler();
+    })();
+  </script>
+</body>
+</html>
