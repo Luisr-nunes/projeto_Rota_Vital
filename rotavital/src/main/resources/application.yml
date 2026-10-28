@@ -18,6 +18,17 @@ spring:
       enabled: true
       path: /h2-console
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    distribution:
+      # histograma necessário para o p50/p95 agregado de /api/v1/metricas/rede (PI2-173)
+      percentiles-histogram:
+        http.server.requests: true
+
 hemorede:
   seed:
     enabled: true

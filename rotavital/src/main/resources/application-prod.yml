@@ -11,3 +11,10 @@ spring:
   h2:
     console:
       enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # /actuator/prometheus não é exposto na borda pública (HTTPS/443); só em dev, HTTP/8080 local
+        include: health
