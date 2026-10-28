@@ -1,0 +1,60 @@
+/* Rota Vital — telas do gestor (Figma 5.6 e 5.7). Usa os tokens de rota-vital.css. */
+
+.legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 12px; font-weight: 500; color: var(--muted-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.legend i.line { width: 22px; height: 3px; border-radius: 2px; }
+
+/* ---------- 5.6 · Risco de desabastecimento ---------- */
+.risk-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.risk {
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px;
+  background: #fff; border: 1px solid var(--line-2);
+}
+.risk.mid { background: #FFFBF0; border-color: rgba(224, 161, 0, .55); }
+.risk.high { background: #FFF5F5; border: 1.5px solid rgba(229, 57, 53, .55); }
+.risk-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.risk-pct { display: flex; flex-direction: column; }
+.risk-pct b { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); line-height: 1.15; }
+.risk.mid .risk-pct b { color: #B7791F; } .risk.high .risk-pct b { color: var(--red-dark); }
+.risk-pct span { font-size: 11px; font-weight: 500; color: var(--muted); }
+.risk .bar { height: 6px; border-radius: 3px; background: var(--line-3); overflow: hidden; }
+.risk .bar span { display: block; height: 100%; border-radius: 3px; background: var(--green); min-width: 4px; }
+.risk.mid .bar span { background: var(--amber); } .risk.high .bar span { background: var(--red); }
+
+/* ---------- 5.6 · Gráfico de descarte (efeito sangue) ---------- */
+.plot { position: relative; height: 250px; margin-left: 44px; }
+.plot .grid { position: absolute; left: 0; right: 0; border-top: 1px dashed #DDE3E1; }
+.plot .grid.zero { border-top-style: solid; }
+.plot .grid em { position: absolute; left: -44px; top: -8px; width: 34px; text-align: right; font-style: normal; font-size: 12px; font-weight: 500; color: #7A8885; }
+.plot .cols { position: absolute; inset: 26px 0 44px 0; display: grid; grid-template-columns: repeat(8, 1fr); }
+.plot .col { position: relative; display: flex; justify-content: center; }
+.plot .col .val { position: absolute; font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.plot .col .val.hi { color: var(--red-dark); }
+.plot .col .bar-s {
+  position: absolute; bottom: 0; width: 44px; border-radius: 14px 14px 0 0; overflow: hidden;
+  background: var(--grad-blood-bar); box-shadow: 0 8px 16px rgba(198, 40, 40, .18);
+}
+.plot .col .bar-s::after { content: ""; position: absolute; inset: 0; background: var(--grad-glass-tint); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35); }
+.plot .col .bar-s.zero { height: 3px !important; background: var(--line); box-shadow: none; }
+.plot .col .bar-s.zero::after { display: none; }
+.plot .col .lbl { position: absolute; bottom: -44px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.plot .col .lbl b { font-size: 14px; color: var(--ink); }
+.plot .col .lbl span { font-size: 11px; color: var(--muted); }
+
+/* ---------- 5.7 · Painel de rede ---------- */
+.chart-svg { width: 100%; height: auto; display: block; }
+.stacked { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line-3); }
+.stacked span { display: block; height: 100%; }
+.cls-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.cls-row i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.cls-row .name { flex: 1; font-weight: 500; color: var(--text-3); }
+.cls-row b { color: var(--ink); }
+.hop { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 13px; font-weight: 500; }
+.hop .ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: #fff; }
+.hop .name { flex: 1; }
+.proto { height: 24px; padding: 0 8px; border-radius: 8px; display: inline-flex; align-items: center; background: var(--teal-tint); color: var(--teal-link); font-size: 12px; font-weight: 700; }
+.live::before { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+
+@media (max-width: 1280px) { .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
