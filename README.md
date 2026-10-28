@@ -77,7 +77,7 @@ O **Rota Vital** é uma aplicação web que:
 |---|---|
 | **Java** | Linguagem principal |
 | **Spring Boot** | Framework web (Controllers, Services, Repositories) |
-| **HTML / CSS / JavaScript** | Interface web estática (`index.html` e `indicadores.html`) consumindo a API REST |
+| **HTML / CSS / JavaScript** | Interface web estática (`index.html`, `login.html`, `hemocentro/*.html`, `operacao.html` e `indicadores.html`) consumindo a API REST |
 | **PostgreSQL / H2** | PostgreSQL no Docker e em produção (Supabase); H2 em memória no desenvolvimento local e nos testes rápidos |
 | **Cucumber + Testcontainers** | Testes de aceitação em Gherkin e integração com PostgreSQL real |
 | [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
@@ -120,9 +120,10 @@ O **Rota Vital** é uma aplicação web que:
      ```
 
 ### Acessos e Endpoints Principais
-* **Nova interface (telas do Figma):** `http://localhost:8080/login.html`
+* **Home (nova interface):** `http://localhost:8080`
+* **Login:** `http://localhost:8080/login.html`
 * **Painel do hemocentro:** `http://localhost:8080/hemocentro/painel.html`
-* **Página operacional anterior:** `http://localhost:8080`
+* **Página operacional anterior (HU04 e HU05):** `http://localhost:8080/operacao.html`
 * **Painel Web de Indicadores:** `http://localhost:8080/indicadores.html`
 * **Health Check (Spring Boot Actuator):** `http://localhost:8080/actuator/health`
 * **Console H2 (Banco em Memória):** `http://localhost:8080/h2-console`
@@ -147,7 +148,7 @@ docker compose logs -f api   # acompanha os logs da aplicação
 
 Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para apagar também os dados: `docker compose down -v`.
 
-Com a API no ar, abra `http://localhost:8080/login.html`. Veja [Como acessar a interface](#como-acessar-a-interface).
+Com a API no ar, abra `http://localhost:8080`. Veja [Como acessar a interface](#como-acessar-a-interface).
 
 **Se algo der errado:**
 
@@ -168,6 +169,7 @@ As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resou
 
 | Tela | Endereço |
 |---|---|
+| Home pública (Quem somos · Contato) | `/` |
 | Login · Criar conta · Recuperar senha | `/login.html` · `/criar-conta.html` · `/recuperar-senha.html` |
 | Painel do hemocentro | `/hemocentro/painel.html` |
 | Consulta de estoque (HU02) | `/hemocentro/estoque.html` |
