@@ -116,7 +116,7 @@
     HEMOCENTRO: { label: 'Profissional do hemocentro', home: 'hemocentro/painel.html', unidade: 'Hemocentro Central' },
     HOSPITAL: { label: 'Profissional do hospital', home: null, unidade: 'Hospital' },
     LOGISTICA: { label: 'Operador de logística', home: null, unidade: 'Logística · Hemocentro Central' },
-    GESTOR: { label: 'Gestor da rede', home: null, unidade: 'Rede de sangue (simulada)' }
+    GESTOR: { label: 'Gestor da rede', home: 'gestor/indicadores.html', unidade: 'Rede de sangue (simulada)' }
   };
   const KEY_SESSAO = 'rv.sessao';
   const KEY_CONTAS = 'rv.contas';

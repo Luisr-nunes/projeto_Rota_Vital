@@ -42,6 +42,12 @@
     route: '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/>',
     thermo: '<path d="M14 14.8V4.5a2 2 0 0 0-4 0v10.3a4 4 0 1 0 4 0Z"/><path d="M12 11v6"/>',
     file: '<path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8l-5-5Z"/><path d="M14 3v5h5M8.5 13h7M8.5 17h5"/>',
+    risk: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    net: '<circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M12 7.2v4.3M12 11.5 6.4 17.3M12 11.5l5.6 5.8"/>',
+    zap: '<path d="M13 3 4 14h7l-1 7 9-11h-7l1-7Z"/>',
+    globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5Z"/>',
+    server: '<rect x="3.5" y="4" width="17" height="7" rx="2"/><rect x="3.5" y="13" width="17" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+    db: '<ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/>',
     building: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h2M14 7h2M8 11h2M14 11h2"/>'
   };
   function icon(name, size = 20, color = 'currentColor', sw = 1.8) {
@@ -113,6 +119,10 @@
     hemocentro: {
       busca: 'Buscar bolsa, doador ou requisição…',
       itens: [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'], ['Doações', 'drop', null], ['Requisições', 'inbox', 'hemocentro/requisicoes.html']]
+    },
+    gestor: {
+      busca: 'Buscar hospital, relatório…',
+      itens: [['Painel', 'chart', null], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'], ['Relatórios', 'file', null], ['Hospitais', 'building', null]]
     }
   };
   function requireSession() {
@@ -151,6 +161,7 @@
     top.querySelector('[data-busca]').addEventListener('submit', (e) => {
       e.preventDefault();
       const q = e.target.querySelector('input').value.trim();
+      if (menu !== 'hemocentro') { toast('info', 'Busca: em breve', 'A busca desta área ainda vai ser implementada.'); return; }
       location.href = url('hemocentro/estoque.html') + (q ? '?q=' + encodeURIComponent(q) : '');
     });
     return s;
