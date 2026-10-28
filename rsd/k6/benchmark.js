@@ -9,6 +9,10 @@ const CENARIO = __ENV.CENARIO || 'baixo';
 const CENARIOS = {
   // 10 usuários simultâneos: uso normal de um hemocentro e poucos hospitais
   baixo: { executor: 'constant-vus', vus: 10, duration: '1m' },
+  // 50 usuários: vários hospitais pedindo bolsas ao mesmo tempo (plantão)
+  moderado: { executor: 'constant-vus', vus: 50, duration: '2m' },
+  // 100 usuários: pico de emergência; no plano gratuito do Render, rodar só com a equipe avisada
+  alto: { executor: 'constant-vus', vus: 100, duration: '2m' },
 };
 
 if (!CENARIOS[CENARIO]) {
