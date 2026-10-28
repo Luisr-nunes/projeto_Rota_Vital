@@ -25,9 +25,9 @@ management:
         include: health,prometheus
   metrics:
     distribution:
-      # histograma necessário para o p50/p95 agregado de /api/v1/metricas/rede (PI2-173)
-      percentiles-histogram:
-        http.server.requests: true
+      # baldes fixos de latência para o p50/p95 agregado de /api/v1/metricas/rede (PI2-173)
+      slo:
+        http.server.requests: 5ms,10ms,25ms,50ms,100ms,250ms,500ms,1s,2500ms,5s
 
 hemorede:
   seed:
