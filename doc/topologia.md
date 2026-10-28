@@ -102,6 +102,51 @@ Exemplo em produção: `https://rota-vital-jnmx.onrender.com/api/telemetria/temp
 
 ---
 
+## 6. Fluxo de Observabilidade (U2)
+
+**Task:** PI2-173 — Actuator + Micrometer e `GET /api/v1/metricas/rede`
+
+A aplicação mede a própria comunicação HTTP com o Spring Boot Actuator e o Micrometer. Cada requisição atendida pelo Spring MVC alimenta o timer `http.server.requests`, separado por URI, método e status.
+
+```mermaid
+flowchart LR
+    C["Cliente / Painel de rede<br/>(rede.html)"] -->|"HTTPS/443"| B["Borda Render<br/>(TLS)"]
+    B -->|"HTTP/8080"| A["Spring Boot<br/>Controllers"]
+    A -->|"registra cada requisição"| M["Micrometer<br/>http.server.requests"]
+    M --> E["GET /api/v1/metricas/rede<br/>(agregado para o painel)"]
+    M -.->|"HTTP/8080, só em dev"| P["Prometheus<br/>/actuator/prometheus"]
+```
+
+| Origem | Destino | Protocolo / Porta | Rede | Exposição | Finalidade |
+|---|---|---|---|---|---|
+| Painel de rede (navegador) | `GET /api/v1/metricas/rede` | HTTPS/443 na borda → HTTP/8080 | Externa → interna | Pública | Latência p50/p95, requisições por segundo, erros 4xx e 5xx |
+| Render (health check) | `GET /actuator/health` | HTTPS/443 → HTTP/8080 | Externa → interna | Pública | Liberar o tráfego para uma nova versão só quando `{"status":"UP"}` |
+| Prometheus (coletor) | `GET /actuator/prometheus` | HTTP/8080 | Interna (dev/local) | Não exposto em produção | Série completa por URI/status para diagnóstico |
+
+**Decisões:**
+
+- Em produção (`application-prod.yml`) o Actuator expõe só `health`. O `/actuator/prometheus` lista todas as URIs internas da API e não tem autenticação, por isso fica fora da borda pública.
+- O painel não lê o Prometheus diretamente: consulta `GET /api/v1/metricas/rede`, que devolve só os números agregados.
+- O endpoint ignora `/actuator/*` e a própria `/api/v1/metricas/rede`. Sem isso, o painel, que consulta a cada 10 s, distorceria a medição.
+- Latência por baldes fixos (`management.metrics.distribution.slo`): 5, 10, 25, 50, 100, 250, 500 ms, 1 s, 2,5 s e 5 s. O p50/p95 devolvido é o limite superior do balde em que o percentil cai. Acima de 5 s, usa-se o máximo observado.
+- `requisicoesPorSegundo` é a vazão média desde o início do processo. No plano gratuito do Render a instância hiberna após ~15 min sem tráfego, então o valor zera a cada *cold start*.
+
+Exemplo de resposta (`GET /api/v1/metricas/rede`, execução local com 24 requisições):
+
+```json
+{
+  "calculadoEm": "2026-10-28T12:11:45.152",
+  "totalRequisicoes": 24,
+  "requisicoesPorSegundo": 12.0,
+  "latenciaP50Ms": 10.0,
+  "latenciaP95Ms": 50.0,
+  "erros4xx": 3,
+  "erros5xx": 0
+}
+```
+
+---
+
 ## Fontes
 
 - [`doc/contratos-api.md`](../doc/contratos-api.md) — versão inicial do diagrama de topologia, tabela de protocolos e ambientes de execução
