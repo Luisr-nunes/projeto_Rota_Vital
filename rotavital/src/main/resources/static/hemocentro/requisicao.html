@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Requisição · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    .fefo { --cols: 24px 70px minmax(120px, 1fr) 70px 170px 130px; }
+    .item-row { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 16px; background: var(--surface-2); }
+    .item-row .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .item-row h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink); }
+    .compat { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+    .compat > div { display: flex; gap: 6px; flex-wrap: wrap; max-width: 220px; }
+    .item-group + .item-group { margin-top: 18px; }
+    .item-group .grp { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted-2); }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content" id="main">
+    <div class="page-head">
+      <div class="page-titles">
+        <a class="crumb" href="requisicoes.html" data-back>Requisições</a>
+        <h1 class="page-title" id="titulo">Requisição</h1>
+        <p class="page-sub" id="sub">&nbsp;</p>
+      </div>
+      <div class="page-actions" id="badges"></div>
+    </div>
+    <div class="row stack-md">
+      <div class="col grow">
+        <section class="card gap-14"><h2 class="card-title">Itens solicitados</h2><div class="list" id="itens"></div></section>
+        <section class="card gap-14" id="fefoCard">
+          <div class="card-head">
+            <div><h2 class="card-title" id="fefoTitulo">Bolsas sugeridas por FEFO</h2><p class="card-sub" id="fefoSub">Compatíveis, disponíveis e dentro da validade · a que vence primeiro sai primeiro</p></div>
+            <span id="fefoChip"></span>
+          </div>
+          <div id="fefoAlerta"></div>
+          <div id="fefo"></div>
+        </section>
+      </div>
+      <div class="col col-380">
+        <section class="card" id="resumo"></section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, hemo, esc } = RV;
+      if (!ui.shell('hemocentro', 'Requisições')) return;
+      document.querySelector('[data-back]').insertAdjacentHTML('afterbegin', ui.icon('arrowL', 14, '#2F5E55', 2));
+      const $ = (id) => document.getElementById(id);
+      const id = Number(new URLSearchParams(location.search).get('id'));
+      $('itens').innerHTML = ui.skeletonRows(1, 84);
+      $('fefo').innerHTML = ui.skeletonRows(4, 48);
+      $('resumo').innerHTML = ui.skeletonRows(5, 32);
+
+      let req, reqs;
+      try {
+        reqs = await hemo.requisicoes();
+        req = reqs.find((r) => r.id === id);
+      } catch (e) { return falha(ui.erroMsg(e)); }
+      if (!req) return falha(`A requisição #${id || '?'} não foi encontrada.`);
+
+      document.title = `Requisição #${req.id} · Rota Vital`;
+      $('titulo').textContent = `Requisição #${req.id}`;
+      $('sub').textContent = `${hemo.hospitalNome(req)} · solicitada em ${RV.fmtDate(req.dataSolicitacao)} às ${RV.fmtTime(req.dataSolicitacao)}`;
+      $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq(req.status);
+
+      // Itens solicitados
+      $('itens').innerHTML = (req.itens || []).map((i) => `<div class="item-row">${ui.blood(i.tipoSanguineo, 52)}
+        <div class="grow"><h3>${i.quantidade} ${i.quantidade === 1 ? 'bolsa' : 'bolsas'} de ${esc(RV.compLabel(i.hemoComponente))} ${RV.tipoLabel(i.tipoSanguineo)}</h3>
+          <span class="sub" style="font-size:13px">Transporte ${esc((RV.COMPONENTE[i.hemoComponente] || {}).frase || '')}</span></div>
+        <div class="compat">Doadores compatíveis (ABO/Rh)<div>${RV.DOADORES[i.tipoSanguineo].map((t) => ui.blood(t, 28)).join('')}</div></div></div>`).join('');
+
+      if (req.status !== 'PENDENTE') return mostrarAlocadas();
+
+      // Sugestão FEFO por item, sem repetir bolsa entre itens iguais.
+      let plano;
+      try {
+        const usadas = new Set();
+        plano = [];
+        for (const item of req.itens || []) {
+          const cand = (await hemo.sugestaoFEFO(item)).filter((b) => !usadas.has(b.id));
+          const escolhidas = cand.slice(0, item.quantidade);
+          escolhidas.forEach((b) => usadas.add(b.id));
+          plano.push({ item, cand, escolhidas });
+        }
+      } catch (e) { return falha(ui.erroMsg(e)); }
+
+      const necessario = plano.reduce((s, p) => s + p.item.quantidade, 0);
+      const encontrado = plano.reduce((s, p) => s + p.escolhidas.length, 0);
+      const suficiente = encontrado >= necessario;
+      renderFEFO();
+      renderResumo();
+      if (!suficiente) avisoFalta();
+
+      function renderFEFO() {
+        $('fefoChip').innerHTML = suficiente
+          ? `<span class="chip active">${ui.icon('check', 14, '#fff', 2)}${encontrado} de ${necessario} selecionadas</span>`
+          : `<span class="chip">${ui.icon('alert', 14, '#3E4F4B', 2)}${encontrado} de ${necessario} disponíveis</span>`;
+        $('fefo').innerHTML = plano.map(({ item, cand, escolhidas }) => {
+          const linhas = cand.slice(0, item.quantidade + 1);
+          const corpo = linhas.length ? linhas.map((b, i) => {
+            const on = escolhidas.includes(b); const v = RV.validade(b.dataValidade);
+            return `<div class="tr${on ? '' : ' dim'}"><span class="cbx${on ? ' on' : ''}">${on ? ui.icon('check', 13, '#fff', 3) : ''}</span>
+              <span style="font-weight:500">${i + 1}º</span><span class="td-strong">${RV.codigoBolsa(b)}</span><span>${ui.blood(b.tipoSanguineo, 32)}</span>
+              <span class="stack"><span style="font-weight:500">${RV.fmtDate(b.dataValidade)}</span><span class="sub semi ${v.cls}">${v.txt}</span></span><span>${ui.badgeBolsa('DISPONIVEL')}</span></div>`;
+          }).join('') : `<div class="tr"><span></span><span class="t-muted" style="grid-column:2/-1">Nenhuma bolsa compatível disponível.</span></div>`;
+          const titulo = plano.length > 1 ? `<p class="grp">${item.quantidade}× ${esc(RV.compLabel(item.hemoComponente))} ${RV.tipoLabel(item.tipoSanguineo)}</p>` : '';
+          return `<div class="item-group">${titulo}<div class="table fefo"><div class="tr thead"><span></span><span>Ordem</span><span>Bolsa</span><span>Tipo</span><span>Validade</span><span>Status</span></div>${corpo}</div></div>`;
+        }).join('');
+      }
+
+      function renderResumo(erroServidor) {
+        const ok = suficiente && !erroServidor;
+        const pct = necessario ? Math.round(Math.min(encontrado, necessario) / necessario * 100) : 0;
+        const tipos = [...new Set(plano.flatMap((p) => p.escolhidas.map((b) => RV.tipoLabel(b.tipoSanguineo))))];
+        $('resumo').innerHTML = `
+          <h2 class="card-title">Resumo da alocação</h2>
+          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted" style="font-size:13px;font-weight:500">Bolsas selecionadas</span><b style="font-size:13px;color:var(--ink)">${encontrado} / ${necessario}</b></div>
+            <div class="progress${ok ? '' : ' err'}"><span style="width:${pct}%"></span></div></div>
+          <div class="checks">
+            ${ui.checkItem(true, 'Compatibilidade ABO/Rh', tipos.length ? `Bolsas ${tipos.join(' e ')}, compatíveis com o pedido` : 'Somente tipos doadores compatíveis')}
+            ${ui.checkItem(true, 'Dentro da validade', 'Nenhuma bolsa vencida ou bloqueada')}
+            ${ui.checkItem(true, 'Ordem FEFO', 'Validade mais próxima priorizada')}
+          </div>
+          <div class="muted-box"><b>${ok ? 'Ao aprovar' : 'Situação'}</b><p>${ok
+            ? 'A requisição passa para Aprovada, as bolsas ficam Reservadas e o pedido segue para a fila de roteirização.'
+            : 'Não é possível aprovar parcialmente. A requisição continua Pendente e nenhuma bolsa é reservada.'}</p></div>
+          <button type="button" class="btn btn-primary lg block" id="aprovar" ${ok ? '' : 'disabled'}>${ui.icon('check', 18, '#fff', 2)}${ok ? `Aprovar e reservar ${necessario} ${necessario === 1 ? 'bolsa' : 'bolsas'}` : 'Aprovar e reservar'}</button>
+          <a class="btn btn-secondary block" href="requisicoes.html">Voltar à fila</a>`;
+        const b = $('aprovar'); if (b) b.onclick = aprovar;
+      }
+
+      function avisoFalta(msgServidor) {
+        const faltas = plano.filter((p) => p.escolhidas.length < p.item.quantidade);
+        const txt = msgServidor || faltas.map((p) => `Só ${p.escolhidas.length === 1 ? 'existe 1 bolsa' : `existem ${p.escolhidas.length} bolsas`} de ${RV.compLabel(p.item.hemoComponente)} compatível com ${RV.tipoLabel(p.item.tipoSanguineo)} disponível e dentro da validade (necessário ${p.item.quantidade}).`).join(' ') + ' A requisição permanece Pendente até haver estoque.';
+        $('fefoAlerta').innerHTML = ui.alertBox('error', 'Estoque compatível insuficiente', txt,
+          `<button type="button" class="btn btn-secondary sm" id="avisar">${ui.icon('send', 18, '#1F2D2A', 2)}Copiar aviso ao hospital</button>`);
+        $('avisar').onclick = async () => {
+          const m = `Rota Vital · Requisição #${req.id}: no momento não há estoque compatível suficiente para atender o pedido. A requisição segue pendente e será atendida assim que houver bolsas disponíveis.`;
+          try { await navigator.clipboard.writeText(m); ui.toast('success', 'Aviso copiado', `Cole a mensagem no canal de contato com o ${hemo.hospitalNome(req)}.`); }
+          catch (e) { ui.toast('info', 'Copie o aviso', m, 12000); }
+        };
+        const falta = necessario - encontrado;
+        ui.toast('error', 'Sem estoque compatível', msgServidor || `Faltam ${falta} ${falta === 1 ? 'bolsa' : 'bolsas'} para atender a requisição #${req.id}.`);
+      }
+
+      async function aprovar() {
+        const b = $('aprovar');
+        b.disabled = true; b.innerHTML = '<span class="spin"></span>Aprovando…';
+        try {
+          const r = await RV.api(`/api/requisicoes/${req.id}/aprovar`, { method: 'POST' });
+          sucesso(r);
+        } catch (e) {
+          if (e.status === 422 || e.status === 409) { renderResumo(true); avisoFalta(e.message); return; }
+          renderResumo();
+          ui.toast('error', 'Não foi possível aprovar', ui.erroMsg(e));
+        }
+      }
+
+      // 2.8 · Sucesso
+      function sucesso(r) {
+        const bolsas = ((r && r.itens) || []).flatMap((i) => i.bolsasAlocadas || []);
+        const proxima = reqs.find((x) => x.status === 'PENDENTE' && x.id !== req.id);
+        const n = bolsas.length || necessario;
+        ui.overlay(`<span class="status-circle">${ui.icon('check', 30, '#fff', 2.6)}</span>
+          <h2>Requisição #${req.id} aprovada</h2>
+          <p>${n} ${n === 1 ? 'bolsa foi reservada' : 'bolsas foram reservadas'} por FEFO. O pedido já está na fila de roteirização da logística.</p>
+          <div class="kv" style="width:100%;gap:8px">${bolsas.map((b) => `<div style="align-items:center"><span class="cell">${ui.blood(b.tipoSanguineo, 28)}<span class="semi" style="font-size:13px">${RV.codigoBolsa(b)}</span></span>${ui.badgeBolsa('RESERVADA')}</div>`).join('')}</div>
+          <div class="modal-actions"><a class="btn btn-secondary" href="requisicoes.html">Voltar à fila</a>
+            ${proxima ? `<a class="btn btn-primary" href="requisicao.html?id=${proxima.id}">Próxima requisição ${ui.icon('arrowR', 18, '#fff', 2)}</a>` : `<a class="btn btn-primary" href="painel.html">Ir ao painel</a>`}</div>`, { cls: 'center w500' });
+        $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq('APROVADA');
+        req = r || req; mostrarAlocadas();
+      }
+
+      // Requisição já analisada: mostra as bolsas reservadas.
+      function mostrarAlocadas() {
+        const bolsas = (req.itens || []).flatMap((i) => i.bolsasAlocadas || []);
+        $('fefoTitulo').textContent = 'Bolsas reservadas';
+        $('fefoSub').textContent = 'Alocadas por FEFO no momento da aprovação';
+        $('fefoChip').innerHTML = ''; $('fefoAlerta').innerHTML = '';
+        $('fefo').innerHTML = bolsas.length
+          ? `<div class="table fefo" style="--cols:70px minmax(120px,1fr) 70px 170px 130px"><div class="tr thead"><span>Ordem</span><span>Bolsa</span><span>Tipo</span><span>Validade</span><span>Status</span></div>` +
+            bolsas.map((b, i) => `<div class="tr"><span style="font-weight:500">${i + 1}º</span><span class="td-strong">${RV.codigoBolsa(b)}</span><span>${ui.blood(b.tipoSanguineo, 32)}</span><span>${RV.fmtDate(b.dataValidade)}</span><span>${ui.badgeBolsa(b.status || 'RESERVADA')}</span></div>`).join('') + '</div>'
+          : '<p class="sub">Nenhuma bolsa associada a esta requisição.</p>';
+        $('resumo').innerHTML = `<h2 class="card-title">Situação</h2>
+          <div class="kv"><div><span class="k">Status</span>${ui.badgeReq(req.status)}</div><div><span class="k">Bolsas reservadas</span><span class="v">${bolsas.length}</span></div><div><span class="k">Hospital</span><span class="v">${esc(hemo.hospitalNome(req))}</span></div></div>
+          <a class="btn btn-secondary block" href="requisicoes.html">Voltar à fila</a>`;
+      }
+
+      function falha(msg) {
+        $('itens').innerHTML = ui.alertBox('error', 'Não foi possível abrir a requisição', msg, '<a class="btn btn-secondary sm" href="requisicoes.html">Voltar à fila</a>');
+        $('fefoCard').hidden = true; $('resumo').parentElement.hidden = true;
+      }
+    })();
+  </script>
+</body>
+</html>

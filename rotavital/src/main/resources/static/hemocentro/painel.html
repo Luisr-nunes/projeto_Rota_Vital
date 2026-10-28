@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do hemocentro · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title" id="ola">Olá</h1>
+        <p class="page-sub" id="sub"></p>
+      </div>
+      <div class="page-actions">
+        <a class="btn btn-secondary" href="estoque.html" data-ic="search">Consultar estoque</a>
+        <button type="button" class="btn btn-primary" data-ic="plus" data-soon="Registrar doação">Registrar doação</button>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+
+    <div class="row stack-md">
+      <section class="card grow gap-12" aria-labelledby="t-fila">
+        <div class="card-head">
+          <div><h2 class="card-title" id="t-fila">Requisições aguardando alocação</h2><p class="card-sub">Urgentes primeiro, depois por ordem de chegada</p></div>
+          <a class="btn btn-ghost sm" href="requisicoes.html">Ver fila completa <span data-arrow></span></a>
+        </div>
+        <div class="list" id="fila"></div>
+      </section>
+
+      <div class="col col-420">
+        <section class="card gap-12" aria-labelledby="t-fefo">
+          <div><h2 class="card-title" id="t-fefo">Vencem primeiro (FEFO)</h2><p class="card-sub">Bolsas disponíveis com validade mais próxima</p></div>
+          <div class="list" id="fefo"></div>
+        </section>
+        <section class="card gap-12" aria-labelledby="t-min">
+          <div><h2 class="card-title" id="t-min">Alerta de estoque mínimo</h2><p class="card-sub">Hemácias · limite mínimo configurado no estoque</p></div>
+          <div id="minimo"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, hemo } = RV;
+      const s = ui.shell('hemocentro', 'Painel');
+      if (!s) return;
+      hemo.avisoPendente();
+      document.querySelectorAll('[data-ic]').forEach((b) => b.insertAdjacentHTML('afterbegin', ui.icon(b.dataset.ic, 18, b.classList.contains('btn-primary') ? '#fff' : '#1F2D2A', 2)));
+      document.querySelector('[data-arrow]').outerHTML = ui.icon('arrowR', 18, '#2F5E55', 2);
+      document.querySelectorAll('.page-actions [data-soon]').forEach((b) => b.addEventListener('click', () => ui.toast('info', 'Registrar doação: em breve', 'A tela de doação (HU01) faz parte da jornada do atendente e vem no próximo PR.')));
+
+      const primeiro = (s.nome || '').split(' ')[0];
+      document.getElementById('ola').textContent = `${RV.saudacao()}, ${primeiro}`;
+      document.getElementById('sub').textContent = `${s.unidade || 'Hemocentro Central'} · ${RV.fmtDate(new Date().toISOString())} · dados sintéticos`;
+
+      const kpis = document.getElementById('kpis');
+      const fila = document.getElementById('fila');
+      const fefo = document.getElementById('fefo');
+      const minimo = document.getElementById('minimo');
+      kpis.innerHTML = ui.skeletonRows(4, 104);
+      fila.innerHTML = ui.skeletonRows(5, 70);
+      fefo.innerHTML = ui.skeletonRows(3, 36);
+
+      let reqs = [], bolsas = [], abaixo = [];
+      try {
+        [reqs, bolsas] = await Promise.all([hemo.requisicoes(), hemo.bolsasDisponiveis()]);
+        abaixo = await tiposAbaixoDoMinimo();
+      } catch (e) {
+        const msg = ui.alertBox('error', 'Não foi possível carregar o painel', ui.erroMsg(e));
+        kpis.innerHTML = ''; fila.innerHTML = msg; fefo.innerHTML = ''; minimo.innerHTML = '';
+        return;
+      }
+
+      // KPIs
+      const pend = reqs.filter((r) => r.status === 'PENDENTE');
+      const urg = pend.filter((r) => r.prioridade === 'URGENTE').length;
+      const comps = new Set(bolsas.map((b) => b.hemoComponente)).size;
+      const venc5 = bolsas.filter((b) => RV.diasAte(b.dataValidade) <= 5).length;
+      kpis.innerHTML = [
+        ui.kpi('Aguardando alocação', pend.length, 'inbox', '#B7791F', '#FFF6DB', urg ? `${urg} ${urg === 1 ? 'urgente' : 'urgentes'}` : '', 't-red'),
+        ui.kpi('Bolsas disponíveis', bolsas.length, 'bag', '#E53935', '#FDECEC', `em ${comps} ${comps === 1 ? 'hemocomponente' : 'hemocomponentes'}`),
+        ui.kpi('Vencem em 5 dias', venc5, 'clock', '#C62828', '#FDECEC', venc5 ? 'priorizar (FEFO)' : '', 't-red'),
+        ui.kpi('Tipos abaixo do mínimo', abaixo.length, 'alert', '#C62828', '#FDECEC', abaixo.map((a) => `${RV.tipoLabel(a.tipo)} · ${a.qtd} bolsas`).join(', '), 't-red')
+      ].join('');
+
+      // Fila
+      fila.innerHTML = pend.length
+        ? pend.slice(0, 5).map((r) => hemo.reqRow(r, `requisicao.html?id=${r.id}`)).join('')
+        : ui.empty('Nenhuma requisição pendente', 'Quando um hospital enviar um pedido, ele aparece aqui para alocação.');
+
+      // Vencem primeiro
+      fefo.innerHTML = bolsas.length ? bolsas.slice(0, 3).map((b) => {
+        const v = RV.validade(b.dataValidade);
+        const txt = v.n <= 1 ? v.txt : `vence em ${v.n} dias`;
+        return `<a class="cell" href="estoque.html?bolsa=${b.id}" style="gap:12px">${ui.blood(b.tipoSanguineo, 36)}
+          <span class="stack" style="flex:1"><span class="semi" style="color:var(--ink)">${RV.codigoBolsa(b)}</span><span class="sub">${RV.compLabel(b.hemoComponente)}</span></span>
+          <span class="semi ${v.cls}" style="font-size:13px">${txt}</span></a>`;
+      }).join('') : '<p class="sub">Nenhuma bolsa disponível.</p>';
+
+      // Estoque mínimo
+      minimo.innerHTML = abaixo.length
+        ? abaixo.map((a) => ui.alertBox('error', `${RV.tipoLabel(a.tipo)} abaixo do mínimo`, `${a.qtd} ${a.qtd === 1 ? 'bolsa disponível' : 'bolsas disponíveis'}. Considere convocar doadores ${RV.tipoLabel(a.tipo)}.`)).join('<div style="height:8px"></div>')
+        : ui.alertBox('success', 'Nenhum tipo abaixo do mínimo', 'Todos os tipos de hemácias estão acima do limite configurado.');
+
+      // Consulta /api/estoques/{id}/alerta para cada tipo (hemácias).
+      async function tiposAbaixoDoMinimo() {
+        const estoques = (await RV.api('/api/estoques')) || [];
+        if (!estoques.length) return [];
+        const id = estoques[0].id;
+        const res = await Promise.all(RV.TIPOS.map((t) =>
+          RV.api(`/api/estoques/${id}/alerta?tipoSanguineo=${t}&hemoComponente=HEMACIAS`).then((r) => r && r.abaixoDoMinimo)));
+        return RV.TIPOS.filter((t, i) => res[i]).map((t) => ({ tipo: t, qtd: bolsas.filter((b) => b.tipoSanguineo === t && b.hemoComponente === 'HEMACIAS').length }));
+      }
+    })();
+  </script>
+</body>
+</html>

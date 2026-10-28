@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Requisições · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    #lista { --cols: 110px minmax(160px, 1fr) 250px 120px 120px 120px 110px; }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Requisições</h1>
+        <p class="page-sub">Pedidos dos hospitais aguardando análise e alocação de bolsas</p>
+      </div>
+      <div class="page-actions"><button type="button" class="btn btn-secondary" id="exportar">Exportar</button></div>
+    </div>
+
+    <section class="card">
+      <div class="card-head" style="flex-wrap:wrap">
+        <div class="seg" role="tablist" aria-label="Status" id="abas"></div>
+        <div class="chips" role="group" aria-label="Prioridade" id="prio"></div>
+      </div>
+      <div id="filtroTipo" hidden></div>
+      <div id="lista" class="table"></div>
+      <div class="table-foot" id="rodape"></div>
+    </section>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, hemo, esc } = RV;
+      if (!ui.shell('hemocentro', 'Requisições')) return;
+      document.getElementById('exportar').insertAdjacentHTML('afterbegin', ui.icon('download', 18, '#1F2D2A', 2));
+
+      const ABAS = [
+        ['PENDENTE', 'Pendentes', (r) => r.status === 'PENDENTE'],
+        ['APROVADA', 'Aprovadas', (r) => r.status === 'APROVADA' || r.status === 'ALOCADA'],
+        ['EM_ROTA', 'Em rota', (r) => r.status === 'EM_ROTA'],
+        ['ENTREGUE', 'Entregues', (r) => r.status === 'ENTREGUE'],
+        ['TODAS', 'Todas', () => true]
+      ];
+      const POR_PAGINA = 8;
+      const params = new URLSearchParams(location.search);
+      const st = { aba: params.get('status') || 'PENDENTE', prio: '', pagina: 0, tipo: params.get('tipo') || '' };
+      const $ = (id) => document.getElementById(id);
+      const lista = $('lista'), rodape = $('rodape');
+      lista.innerHTML = ui.skeletonRows(6, 52);
+
+      let reqs = [];
+      try { reqs = await hemo.requisicoes(); }
+      catch (e) { lista.innerHTML = ui.alertBox('error', 'Não foi possível carregar as requisições', ui.erroMsg(e)); return; }
+
+      // Filtro vindo do detalhe da bolsa: requisições que uma bolsa do tipo X pode atender.
+      const receptores = st.tipo ? RV.receptoresDe(st.tipo) : null;
+      if (st.tipo) {
+        $('filtroTipo').hidden = false;
+        $('filtroTipo').innerHTML = ui.alertBox('info', `Compatíveis com bolsas ${RV.tipoLabel(st.tipo)}`,
+          `Mostrando requisições de ${receptores.map(RV.tipoLabel).join(', ')}.`, '<a class="btn btn-secondary sm" href="requisicoes.html">Ver todas</a>');
+      }
+      const base = () => reqs.filter((r) => !receptores || (r.itens || []).some((i) => receptores.includes(i.tipoSanguineo)));
+      const visiveis = () => {
+        const f = ABAS.find((a) => a[0] === st.aba)[2];
+        return base().filter((r) => f(r) && (!st.prio || r.prioridade === st.prio));
+      };
+
+      function render() {
+        $('abas').innerHTML = ABAS.map(([k, l, f]) => {
+          const n = base().filter(f).length;
+          return `<button type="button" role="tab" aria-selected="${st.aba === k}" class="${st.aba === k ? 'active' : ''}" data-aba="${k}">${l}${k === 'TODAS' ? '' : ' · ' + n}</button>`;
+        }).join('');
+        $('prio').innerHTML = '<span class="sub" style="font-size:13px;font-weight:500">Prioridade:</span>' +
+          [['', 'Todas'], ['URGENTE', 'Urgente'], ['NORMAL', 'Normal']].map(([k, l]) => `<button type="button" class="chip${st.prio === k ? ' active' : ''}" data-prio="${k}" aria-pressed="${st.prio === k}">${l}</button>`).join('');
+
+        const vs = visiveis();
+        if (!vs.length) {
+          lista.innerHTML = ui.empty('Nenhuma requisição aqui', 'Não há requisições para o filtro selecionado.');
+          rodape.hidden = true; return;
+        }
+        rodape.hidden = false;
+        const paginas = Math.max(1, Math.ceil(vs.length / POR_PAGINA));
+        st.pagina = Math.min(st.pagina, paginas - 1);
+        const pg = vs.slice(st.pagina * POR_PAGINA, (st.pagina + 1) * POR_PAGINA);
+        const primeiraPendente = pg.find((r) => r.status === 'PENDENTE');
+        lista.innerHTML = `<div class="tr thead"><span>Requisição</span><span>Hospital</span><span>Itens</span><span>Prioridade</span><span>Solicitada</span><span>Status</span><span></span></div>` +
+          pg.map((r) => {
+            const pend = r.status === 'PENDENTE';
+            const destaque = r === primeiraPendente;
+            return `<div class="tr${destaque ? ' hl' : ''}">
+              <span class="td-strong">#${r.id}</span>
+              <span style="font-weight:500">${esc(hemo.hospitalNome(r))}</span>
+              <span class="cell">${ui.blood(hemo.tipoPrincipal(r), 32)}<span style="font-weight:500">${esc(hemo.itensTexto(r))}</span></span>
+              <span>${ui.prioridade(r.prioridade)}</span>
+              <span>${esc(RV.desde(r.dataSolicitacao))}</span>
+              <span>${ui.badgeReq(r.status)}</span>
+              <span><a class="btn ${destaque ? 'btn-primary' : 'btn-secondary'} sm" href="requisicao.html?id=${r.id}">${pend ? 'Alocar' : 'Ver'} ${ui.icon('arrowR', 18, destaque ? '#fff' : '#1F2D2A', 2)}</a></span>
+            </div>`;
+          }).join('');
+        const nomeAba = ABAS.find((a) => a[0] === st.aba)[1].toLowerCase();
+        rodape.innerHTML = `<span>${pg.length} de ${vs.length} ${st.aba === 'TODAS' ? 'requisições' : nomeAba} · ordenadas por prioridade e chegada</span>
+          <span class="pager"><button type="button" class="btn btn-secondary sm" data-p="-1" ${st.pagina === 0 ? 'disabled' : ''}>Anterior</button><button type="button" class="btn btn-secondary sm" data-p="1" ${st.pagina >= paginas - 1 ? 'disabled' : ''}>Próxima</button></span>`;
+      }
+      render();
+
+      $('abas').addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (!b) return; st.aba = b.dataset.aba; st.pagina = 0; render(); });
+      $('prio').addEventListener('click', (e) => { const b = e.target.closest('[data-prio]'); if (!b) return; st.prio = b.dataset.prio; st.pagina = 0; render(); });
+      rodape.addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (!b) return; st.pagina += Number(b.dataset.p); render(); });
+      $('exportar').addEventListener('click', () => hemo.baixarCSV(`requisicoes-${new Date().toISOString().slice(0, 10)}.csv`,
+        ['Requisição', 'Hospital', 'Itens', 'Prioridade', 'Solicitada em', 'Status'],
+        visiveis().map((r) => [r.id, hemo.hospitalNome(r), hemo.itensTexto(r), r.prioridade === 'URGENTE' ? 'Urgente' : 'Normal', `${RV.fmtDate(r.dataSolicitacao)} ${RV.fmtTime(r.dataSolicitacao)}`, (RV.STATUS_REQ[r.status] || [r.status])[0]])));
+    })();
+  </script>
+</body>
+</html>

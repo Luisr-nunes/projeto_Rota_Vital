@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/rota-vital.css">
+</head>
+<body class="bg-auth">
+  <header class="navbar">
+    <a class="brand" href="login.html" data-drop></a>
+    <nav class="navbar-links" aria-label="Institucional">
+      <a href="index.html">Home</a>
+      <a href="index.html#sobre">Quem somos</a>
+      <a href="mailto:contato@rotavital.com">Entrar em contato</a>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <form class="auth-card wide glass" id="form" novalidate>
+      <div class="auth-row">
+        <span class="logo-tile lg" data-drop-lg></span>
+        <div class="auth-head">
+          <h1 class="auth-title sm">Criar conta</h1>
+          <p class="auth-sub">Cadastre-se para acessar o painel da rede de sangue.</p>
+        </div>
+      </div>
+
+      <div id="erro" hidden></div>
+
+      <div class="auth-grid">
+        <label class="field"><span class="field-label">Nome</span><span class="input glass-input"><input name="nome" autocomplete="given-name" placeholder="Seu nome" required></span></label>
+        <label class="field"><span class="field-label">Sobrenome</span><span class="input glass-input"><input name="sobrenome" autocomplete="family-name" placeholder="Seu sobrenome" required></span></label>
+        <label class="field full"><span class="field-label">E-mail institucional</span><span class="input glass-input"><input type="email" name="email" autocomplete="email" placeholder="voce@instituicao.com" required></span></label>
+        <label class="field"><span class="field-label">Data de nascimento</span><span class="input glass-input" data-ic="cal"><input type="text" name="nascimento" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10"></span></label>
+        <label class="field"><span class="field-label">Gênero</span><span class="input glass-input" data-icr="chevD"><select name="genero" class="ph"><option value="" selected>Selecione</option><option>Feminino</option><option>Masculino</option><option>Não binário</option><option>Prefiro não informar</option></select></span></label>
+        <label class="field"><span class="field-label">Função</span><span class="input glass-input" data-icr="chevD"><select name="perfil" class="ph" required>
+          <option value="" selected>Selecione</option>
+          <option value="ATENDENTE">Atendente do hemocentro</option>
+          <option value="HEMOCENTRO">Profissional do hemocentro</option>
+          <option value="HOSPITAL">Profissional do hospital</option>
+          <option value="LOGISTICA">Operador de logística</option>
+          <option value="GESTOR">Gestor da rede</option>
+        </select></span></label>
+        <label class="field"><span class="field-label">Instituição</span><span class="input glass-input" data-icr="chevD"><select name="instituicao" class="ph" required><option value="" selected>Hospital ou hemocentro</option><option>Hemocentro Central</option></select></span></label>
+        <div class="field"><span class="field-label"><label for="senha">Senha</label></span><span class="input glass-input"><input id="senha" type="password" name="senha" autocomplete="new-password" placeholder="••••••••••" required><button type="button" class="icon-btn" data-toggle></button></span></div>
+        <div class="field"><span class="field-label"><label for="senha2">Confirmar senha</label></span><span class="input glass-input"><input id="senha2" type="password" name="senha2" autocomplete="new-password" placeholder="••••••••••" required><button type="button" class="icon-btn" data-toggle></button></span></div>
+        <div class="strength full" aria-live="polite">
+          <div class="strength-bars"><span></span><span></span><span></span><span></span></div>
+          <span id="forca">Mínimo de 8 caracteres, com letras e números</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary xl block">Criar conta</button>
+      <p class="auth-foot" style="margin:0">Já possui uma conta? <a href="login.html">Entrar</a></p>
+    </form>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const { ui } = RV;
+    authChrome();
+    const form = document.getElementById('form');
+    const erro = document.getElementById('erro');
+
+    // Selects mostram o placeholder em cinza até a escolha.
+    form.querySelectorAll('select').forEach((s) => s.addEventListener('change', () => s.classList.toggle('ph', !s.value)));
+
+    // Instituições: Hemocentro Central + hospitais cadastrados na API.
+    RV.api('/api/hospitais').then((hs) => {
+      const sel = form.instituicao;
+      (hs || []).forEach((h) => sel.insertAdjacentHTML('beforeend', `<option>${RV.esc(h.nome)}</option>`));
+    }).catch(() => { /* sem API, fica só o Hemocentro Central */ });
+
+    // Máscara dd/mm/aaaa
+    form.nascimento.addEventListener('input', (e) => {
+      const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+      e.target.value = d.replace(/^(\d{2})(\d)/, '$1/$2').replace(/^(\d{2}\/\d{2})(\d)/, '$1/$2');
+    });
+
+    // Força da senha
+    const bars = form.querySelectorAll('.strength-bars span');
+    const forca = document.getElementById('forca');
+    function nivel(s) {
+      let n = 0;
+      if (s.length >= 8) n++;
+      if (/[a-zA-Z]/.test(s) && /\d/.test(s)) n++;
+      if (/[A-Z]/.test(s) && /[a-z]/.test(s)) n++;
+      if (/[^a-zA-Z0-9]/.test(s) || s.length >= 12) n++;
+      return s ? Math.max(n, 1) : 0;
+    }
+    form.senha.addEventListener('input', () => {
+      const n = nivel(form.senha.value);
+      const cls = n <= 1 ? 'weak' : n === 2 ? 'mid' : 'on';
+      bars.forEach((b, i) => { b.className = i < n ? cls : ''; });
+      forca.textContent = !n ? 'Mínimo de 8 caracteres, com letras e números'
+        : n <= 1 ? 'Senha fraca · use 8 caracteres, com letras e números'
+        : n === 2 ? 'Senha razoável · combine maiúsculas e minúsculas'
+        : 'Senha forte · mínimo de 8 caracteres, com letras e números';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = form;
+      const msgs = [];
+      if (markInvalid(f.nome, !f.nome.value.trim()) | markInvalid(f.sobrenome, !f.sobrenome.value.trim())) msgs.push('Informe nome e sobrenome.');
+      if (markInvalid(f.email, !/^\S+@\S+\.\S+$/.test(f.email.value.trim()))) msgs.push('Informe um e-mail válido.');
+      if (f.nascimento.value && markInvalid(f.nascimento, !/^\d{2}\/\d{2}\/\d{4}$/.test(f.nascimento.value))) msgs.push('A data de nascimento deve estar no formato dd/mm/aaaa.');
+      if (markInvalid(f.perfil, !f.perfil.value)) msgs.push('Escolha sua função.');
+      if (markInvalid(f.instituicao, !f.instituicao.value)) msgs.push('Escolha sua instituição.');
+      if (markInvalid(f.senha, !(f.senha.value.length >= 8 && /[a-zA-Z]/.test(f.senha.value) && /\d/.test(f.senha.value)))) msgs.push('A senha precisa de 8 caracteres, com letras e números.');
+      else if (markInvalid(f.senha2, f.senha.value !== f.senha2.value)) msgs.push('As senhas não conferem.');
+      const email = f.email.value.trim().toLowerCase();
+      if (!msgs.length && RV.sessao.contas()[email]) { markInvalid(f.email, true); msgs.push('Já existe uma conta com este e-mail. Entre pela tela de login.'); }
+      if (msgs.length) {
+        erro.innerHTML = ui.alertBox('error', 'Revise o cadastro', msgs.join(' '));
+        erro.hidden = false;
+        return;
+      }
+      const conta = {
+        email, senhaHash: await RV.hashSenha(email, f.senha.value),
+        nome: `${f.nome.value.trim()} ${f.sobrenome.value.trim()}`,
+        perfil: f.perfil.value, instituicao: f.instituicao.value
+      };
+      RV.sessao.salvarConta(conta);
+      RV.sessao.entrar({ email, nome: conta.nome, perfil: conta.perfil, unidade: conta.instituicao }, true);
+      irParaHome(conta.perfil);
+    });
+  </script>
+</body>
+</html>

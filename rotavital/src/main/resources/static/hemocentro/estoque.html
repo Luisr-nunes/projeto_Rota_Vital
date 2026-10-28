@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estoque · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    #lista { --cols: 180px 80px minmax(120px, 1fr) 140px 170px 140px 40px; }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Estoque</h1>
+        <p class="page-sub">Bolsas disponíveis ordenadas pela validade mais próxima · vencidas, reservadas e bloqueadas não aparecem</p>
+      </div>
+      <div class="page-actions"><button type="button" class="btn btn-secondary" id="exportar">Exportar</button></div>
+    </div>
+
+    <section class="type-summary" id="resumo" aria-label="Resumo por tipo sanguíneo"></section>
+
+    <section class="card" aria-label="Lista de bolsas">
+      <div class="filters">
+        <label class="input grow" style="height:40px" data-ic="search"><input type="search" id="q" placeholder="Buscar por código da bolsa" aria-label="Buscar por código da bolsa"></label>
+        <div class="chips" role="group" aria-label="Grupo ABO" id="grupos"></div>
+        <label class="select-btn"><select id="componente" aria-label="Hemocomponente">
+          <option value="">Hemocomponente: Todos</option>
+          <option value="HEMACIAS">Hemocomponente: Hemácias</option>
+          <option value="PLASMA">Hemocomponente: Plasma</option>
+          <option value="PLAQUETAS">Hemocomponente: Plaquetas</option>
+          <option value="CRIOPRECIPITADO">Hemocomponente: Crioprecipitado</option>
+        </select><span data-chev></span></label>
+        <label class="select-btn lead"><select id="janela" aria-label="Validade">
+          <option value="">Validade: todas</option>
+          <option value="7">Validade: próximos 7 dias</option>
+          <option value="30">Validade: próximos 30 dias</option>
+          <option value="60" selected>Validade: próximos 60 dias</option>
+        </select><span data-cal></span></label>
+      </div>
+      <div id="lista" class="table"></div>
+      <div class="table-foot" id="rodape"></div>
+    </section>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, hemo, esc } = RV;
+      if (!ui.shell('hemocentro', 'Estoque')) return;
+      document.querySelectorAll('[data-ic]').forEach((el) => el.insertAdjacentHTML('afterbegin', ui.icon(el.dataset.ic, 18, '#5B6B68')));
+      document.querySelector('[data-chev]').outerHTML = ui.icon('chevD', 18, '#1F2D2A', 2);
+      document.querySelector('[data-cal]').outerHTML = ui.icon('cal', 18, '#1F2D2A', 2);
+      document.getElementById('exportar').insertAdjacentHTML('afterbegin', ui.icon('download', 18, '#1F2D2A', 2));
+
+      const POR_PAGINA = 8;
+      const GRUPOS = { '': 'Todos', A: 'A', B: 'B', AB: 'AB', O: 'O' };
+      const params = new URLSearchParams(location.search);
+      const st = { grupo: '', componente: '', janela: '60', q: params.get('q') || '', pagina: 0 };
+      const $ = (id) => document.getElementById(id);
+      $('q').value = st.q;
+      if (st.q) { st.janela = ''; $('janela').value = ''; }
+
+      const lista = $('lista'), rodape = $('rodape'), resumo = $('resumo');
+      lista.innerHTML = ui.skeletonRows(6, 48);
+      resumo.innerHTML = RV.TIPOS.map(() => '<div class="skeleton" style="height:58px;border-radius:16px"></div>').join('');
+
+      let todas = [], abaixo = new Set();
+      try {
+        todas = await hemo.bolsasDisponiveis();
+      } catch (e) {
+        lista.innerHTML = ui.alertBox('error', 'Não foi possível carregar o estoque', ui.erroMsg(e));
+        resumo.innerHTML = ''; return;
+      }
+      await carregarAlertas();
+
+      function grupoDe(t) { return t.replace(/_(POS|NEG)$/, ''); }
+      function filtradas() {
+        const q = st.q.toLowerCase().replace(/\s+/g, '');
+        return todas.filter((b) =>
+          (!st.componente || b.hemoComponente === st.componente) &&
+          (!st.grupo || grupoDe(b.tipoSanguineo) === st.grupo) &&
+          (!st.janela || RV.diasAte(b.dataValidade) <= Number(st.janela)) &&
+          (!q || RV.codigoBolsa(b).toLowerCase().includes(q) || String(b.id) === q));
+      }
+
+      async function carregarAlertas() {
+        abaixo = new Set();
+        try {
+          const est = (await RV.api('/api/estoques')) || [];
+          if (!est.length) return;
+          const comp = st.componente || 'HEMACIAS';
+          const r = await Promise.all(RV.TIPOS.map((t) => RV.api(`/api/estoques/${est[0].id}/alerta?tipoSanguineo=${t}&hemoComponente=${comp}`)));
+          RV.TIPOS.forEach((t, i) => { if (r[i] && r[i].abaixoDoMinimo) abaixo.add(t); });
+        } catch (e) { /* alerta é complementar; a lista continua visível */ }
+      }
+
+      function renderResumo() {
+        const base = todas.filter((b) => !st.componente || b.hemoComponente === st.componente);
+        resumo.innerHTML = RV.TIPOS.map((t) => {
+          const n = base.filter((b) => b.tipoSanguineo === t).length;
+          const crit = abaixo.has(t);
+          return `<div class="type-card${crit ? ' crit' : ''}">${ui.blood(t, 36)}<div><b>${n}</b><span class="sub">${crit ? 'crítico' : (n === 1 ? 'bolsa' : 'bolsas')}</span></div></div>`;
+        }).join('');
+      }
+
+      function renderGrupos() {
+        $('grupos').innerHTML = Object.entries(GRUPOS).map(([k, l]) => `<button type="button" class="chip${st.grupo === k ? ' active' : ''}" data-g="${k}" aria-pressed="${st.grupo === k}">${l}</button>`).join('');
+      }
+
+      function renderLista() {
+        const fs = filtradas();
+        const paginas = Math.max(1, Math.ceil(fs.length / POR_PAGINA));
+        st.pagina = Math.min(st.pagina, paginas - 1);
+        if (!fs.length) {
+          const desc = [st.componente && RV.compLabel(st.componente), st.grupo && st.grupo].filter(Boolean).join(' ');
+          lista.innerHTML = ui.empty('Nenhuma bolsa encontrada',
+            `Não há bolsas${desc ? ' de ' + desc : ''} disponíveis para o filtro selecionado. Ajuste os filtros ou consulte outro hemocomponente.`,
+            `<button type="button" class="btn btn-secondary" id="limpar">${ui.icon('refresh', 18, '#1F2D2A', 2)}Limpar filtros</button>`);
+          rodape.hidden = true;
+          $('limpar').onclick = () => { Object.assign(st, { grupo: '', componente: '', janela: '', q: '', pagina: 0 }); $('q').value = ''; $('componente').value = ''; $('janela').value = ''; carregarAlertas().then(renderTudo); };
+          return;
+        }
+        rodape.hidden = false;
+        const pagina = fs.slice(st.pagina * POR_PAGINA, (st.pagina + 1) * POR_PAGINA);
+        lista.innerHTML = `<div class="tr thead"><span>Bolsa</span><span>Tipo</span><span>Hemocomponente</span><span>Coleta</span><span>Validade</span><span>Status</span><span></span></div>` +
+          pagina.map((b) => {
+            const v = RV.validade(b.dataValidade);
+            return `<div class="tr click" role="button" tabindex="0" data-id="${b.id}" aria-label="Ver bolsa ${RV.codigoBolsa(b)}">
+              <span class="td-strong">${RV.codigoBolsa(b)}</span>
+              <span>${ui.blood(b.tipoSanguineo, 32)}</span>
+              <span>${esc(RV.compLabel(b.hemoComponente))}</span>
+              <span>${RV.fmtDate(b.dataColeta)}</span>
+              <span class="stack"><span style="font-weight:500">${RV.fmtDate(b.dataValidade)}</span><span class="sub semi ${v.cls}">${v.txt}</span></span>
+              <span>${ui.badgeBolsa('DISPONIVEL')}</span>
+              <span>${ui.icon('chevR', 18, '#8A9794')}</span></div>`;
+          }).join('');
+        const total = todas.length;
+        rodape.innerHTML = `<span>Mostrando ${pagina.length} de ${fs.length} ${fs.length === 1 ? 'bolsa' : 'bolsas'}${fs.length !== total ? ` (de ${total} disponíveis)` : ' disponíveis'}</span>
+          <span class="pager"><button type="button" class="btn btn-secondary sm" data-p="-1" ${st.pagina === 0 ? 'disabled' : ''}>Anterior</button><button type="button" class="btn btn-secondary sm" data-p="1" ${st.pagina >= paginas - 1 ? 'disabled' : ''}>Próxima</button></span>`;
+      }
+
+      function renderTudo() { renderResumo(); renderGrupos(); renderLista(); }
+      renderTudo();
+
+      // Eventos
+      $('grupos').addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; st.grupo = b.dataset.g; st.pagina = 0; renderGrupos(); renderLista(); });
+      $('componente').addEventListener('change', async (e) => { st.componente = e.target.value; st.pagina = 0; await carregarAlertas(); renderTudo(); });
+      $('janela').addEventListener('change', (e) => { st.janela = e.target.value; st.pagina = 0; renderLista(); });
+      let t; $('q').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value.trim(); st.pagina = 0; renderLista(); }, 150); });
+      rodape.addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (!b) return; st.pagina += Number(b.dataset.p); renderLista(); });
+      lista.addEventListener('click', (e) => { const r = e.target.closest('[data-id]'); if (r) detalhe(Number(r.dataset.id)); });
+      lista.addEventListener('keydown', (e) => { const r = e.target.closest('[data-id]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); detalhe(Number(r.dataset.id)); } });
+      $('exportar').addEventListener('click', () => {
+        const fs = filtradas();
+        hemo.baixarCSV(`estoque-${new Date().toISOString().slice(0, 10)}.csv`,
+          ['Bolsa', 'Tipo', 'Hemocomponente', 'Coleta', 'Validade', 'Dias para vencer', 'Status'],
+          fs.map((b) => [RV.codigoBolsa(b), RV.tipoLabel(b.tipoSanguineo), RV.compLabel(b.hemoComponente), RV.fmtDate(b.dataColeta), RV.fmtDate(b.dataValidade), RV.diasAte(b.dataValidade), 'Disponível']));
+      });
+
+      // 2.4 · Detalhe da bolsa (painel lateral)
+      function detalhe(id) {
+        const b = todas.find((x) => x.id === id);
+        if (!b) { ui.toast('warn', 'Bolsa indisponível', 'Ela não está mais disponível no estoque.'); return; }
+        const v = RV.validade(b.dataValidade);
+        const ini = RV.parseDate(b.dataColeta), fim = RV.parseDate(b.dataValidade);
+        const totalDias = Math.max(1, Math.round((fim - ini) / 86400000));
+        const passados = Math.min(totalDias, Math.max(0, Math.round((RV.today() - ini) / 86400000)));
+        const pct = Math.round(passados / totalDias * 100);
+        const urgente = v.n <= 7;
+        const C = RV.COMPONENTE[b.hemoComponente] || {};
+        const html = `
+          <div class="card-head"><span class="semi t-muted">Detalhe da bolsa</span><button type="button" class="close" data-close aria-label="Fechar">${ui.icon('x', 20, '#5B6B68')}</button></div>
+          <div class="cell" style="gap:18px">${ui.blood(b.tipoSanguineo, 96)}
+            <div class="stack" style="gap:6px"><b style="font-size:22px;letter-spacing:-.01em;color:var(--ink)">${RV.codigoBolsa(b)}</b>
+              <span class="t-muted">${esc(C.label || b.hemoComponente)}</span>
+              <span class="cell" style="gap:8px">${ui.badgeBolsa('DISPONIVEL')}${urgente ? ui.badge('Vence em breve', 'b-vence') : ''}</span></div></div>
+          <div class="muted-box" style="gap:10px;padding:16px;background:${urgente ? '#FDECEC' : 'var(--surface-2)'}">
+            <div class="card-head"><b style="font-size:14px;color:${urgente ? '#B71C1C' : 'var(--ink)'}">Validade: ${RV.fmtDate(b.dataValidade)}</b><span class="semi" style="font-size:13px;color:${urgente ? '#B71C1C' : 'var(--muted)'}">${passados} de ${totalDias} dias</span></div>
+            <div class="progress" style="background:#fff"><span style="width:${pct}%;background:linear-gradient(90deg,#97B2BF,#E53935)"></span></div>
+            <p>${urgente ? 'Prioridade máxima na próxima alocação compatível (FEFO).' : `Faltam ${v.n} dias para o vencimento.`}</p>
+          </div>
+          <div class="stack" style="gap:12px"><h3 class="section-title">Informações</h3>
+            <div class="kv-lines">
+              <div><span class="k">Código interno</span><span class="v">#${b.id}</span></div>
+              <div><span class="k">Data da coleta</span><span class="v">${RV.fmtDate(b.dataColeta)}</span></div>
+              <div><span class="k">Refrigeração exigida</span><span class="v">${esc(C.transporte || '—')}</span></div>
+              <div><span class="k">Compatível com</span><span class="v">${RV.receptoresDe(b.tipoSanguineo).map(RV.tipoLabel).join(', ')}</span></div>
+            </div></div>
+          <div class="stack" style="gap:12px"><h3 class="section-title">Histórico</h3>
+            <div class="timeline">
+              <div><i style="background:#34C759"></i><div class="stack"><span class="semi" style="font-size:13px">Bolsa disponível no estoque</span><span class="sub">${RV.fmtDate(b.dataColeta)}</span></div></div>
+              <div><i></i><div class="stack"><span class="semi" style="font-size:13px">Coleta registrada</span><span class="sub">${RV.fmtDate(b.dataColeta)}</span></div></div>
+            </div></div>
+          <span class="grow"></span>
+          <div class="modal-actions"><button type="button" class="btn btn-secondary" data-close>Fechar</button>
+            <a class="btn btn-primary" href="requisicoes.html?tipo=${b.tipoSanguineo}">Ver requisições compatíveis ${ui.icon('arrowR', 18, '#fff', 2)}</a></div>`;
+        ui.overlay(html, { side: true });
+      }
+      const abrir = Number(params.get('bolsa'));
+      if (abrir) { st.janela = ''; $('janela').value = ''; renderLista(); detalhe(abrir); }
+    })();
+  </script>
+</body>
+</html>
