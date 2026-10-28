@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/rota-vital.css">
+</head>
+<body class="bg-auth">
+  <header class="navbar">
+    <a class="brand" href="login.html" data-drop></a>
+    <nav class="navbar-links" aria-label="Institucional">
+      <a href="index.html">Home</a>
+      <a href="index.html#sobre">Quem somos</a>
+      <a href="mailto:contato@rotavital.com">Entrar em contato</a>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <form class="auth-card glass" id="form" novalidate>
+      <div class="auth-head">
+        <div class="auth-logo"><span class="logo-tile" data-drop-lg></span><span class="brand-name">Rota Vital</span></div>
+        <div class="spacer"></div>
+        <h1 class="auth-title">Acesse sua conta</h1>
+        <p class="auth-sub">Gestão e distribuição de hemocomponentes da rede de sangue.</p>
+      </div>
+
+      <div id="erro" hidden></div>
+
+      <div class="auth-fields">
+        <label class="field">
+          <span class="field-label">E-mail</span>
+          <span class="input lg glass-input" data-ic="mail"><input type="email" name="email" autocomplete="username" placeholder="voce@rotavital.com" required></span>
+        </label>
+        <div class="field">
+          <span class="field-label"><label for="senha">Senha</label><a href="recuperar-senha.html">Esqueceu a senha?</a></span>
+          <span class="input lg glass-input" data-ic="lock"><input id="senha" type="password" name="senha" autocomplete="current-password" placeholder="••••••••••" required><button type="button" class="icon-btn" data-toggle aria-label="Mostrar senha"></button></span>
+        </div>
+        <label class="check"><input type="checkbox" name="lembrar" checked><span class="box" data-check></span>Manter conectado</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary xl block" id="entrar">Entrar <span data-arrow></span></button>
+      <div class="auth-divider"></div>
+      <p class="auth-foot" style="margin:0">Não possui uma conta? <a href="criar-conta.html">Criar conta</a></p>
+    </form>
+  </main>
+
+  <p class="tagline">O componente certo, no lugar certo,<br>no tempo certo e na temperatura certa.</p>
+
+  <script src="js/core.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const { ui } = RV;
+    authChrome();
+    document.querySelector('[data-arrow]').outerHTML = ui.icon('arrowR', 18, '#fff', 2);
+    const form = document.getElementById('form');
+    const erro = document.getElementById('erro');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.email.value.trim().toLowerCase();
+      const senha = form.senha.value;
+      const bad = [];
+      markInvalid(form.email, !/^\S+@\S+\.\S+$/.test(email)) && bad.push('e-mail');
+      markInvalid(form.senha, !senha) && bad.push('senha');
+      if (bad.length) { showErro('Preencha o ' + bad.join(' e a ') + ' para continuar.'); return; }
+
+      const conta = RV.sessao.contas()[email];
+      if (conta && conta.senhaHash !== await RV.hashSenha(email, senha)) { markInvalid(form.senha, true); showErro('E-mail ou senha incorretos.'); return; }
+      const perfil = conta ? conta.perfil : 'HEMOCENTRO';
+      const nome = conta ? conta.nome : nomeDoEmail(email);
+      RV.sessao.entrar({ email, nome, perfil, unidade: conta && conta.instituicao }, form.lembrar.checked);
+      irParaHome(perfil);
+    });
+
+    function showErro(msg) { erro.innerHTML = ui.alertBox('error', 'Não foi possível entrar', msg); erro.hidden = false; }
+    function nomeDoEmail(email) {
+      const base = email.split('@')[0].replace(/[._-]+/g, ' ');
+      return base.replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  </script>
+</body>
+</html>
