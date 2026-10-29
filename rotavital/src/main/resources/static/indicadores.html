@@ -189,7 +189,62 @@
             margin: 0;
         }
 
+        /* PI2-179 · Risco de desabastecimento (faixas da seção 4.3 de doc/est-u2-probabilidade.md) */
+        .secao-u2 { margin-top: 1rem; }
+        .secao-u2 .cabecalho {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .secao-u2 .cabecalho h2 { margin: 0; }
+        .secao-u2 .cabecalho p { margin: .3rem 0 0; color: var(--muted); font-size: .9rem; }
+        .seletor { display: inline-flex; gap: .25rem; padding: .25rem; border-radius: .6rem; background: #f1f5f9; }
+        .seletor button {
+            margin: 0; padding: .4rem .8rem; border: 0; border-radius: .45rem;
+            background: transparent; color: var(--texto); font-size: .88rem; font-weight: 600;
+        }
+        .seletor button[aria-pressed="true"] { background: white; box-shadow: 0 1px 4px rgb(15 23 42 / 12%); }
+        .cards-risco { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .8rem; }
+        .card-risco {
+            padding: 1rem; border-radius: .75rem; border: 1px solid var(--faixa-borda);
+            background: var(--faixa-fundo); display: flex; flex-direction: column; gap: .35rem;
+        }
+        .card-risco .topo { display: flex; justify-content: space-between; align-items: center; }
+        .card-risco .tipo { font-weight: 800; font-size: 1.05rem; }
+        .card-risco .faixa {
+            font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+            padding: .15rem .5rem; border-radius: 999px; color: white; background: var(--faixa-cor);
+        }
+        .card-risco .prob { font-size: 1.8rem; font-weight: 800; color: var(--faixa-texto); line-height: 1.1; }
+        .card-risco .detalhe { font-size: .82rem; color: var(--muted); }
+        .card-risco .acao { font-size: .84rem; font-weight: 600; color: var(--faixa-texto); }
+        .faixa-verde { --faixa-cor: #15803d; --faixa-fundo: #f0fdf4; --faixa-borda: #bbf7d0; --faixa-texto: #166534; }
+        .faixa-amarela { --faixa-cor: #b45309; --faixa-fundo: #fffbeb; --faixa-borda: #fde68a; --faixa-texto: #92400e; }
+        .faixa-vermelha { --faixa-cor: #b91c1c; --faixa-fundo: #fef2f2; --faixa-borda: #fecaca; --faixa-texto: #991b1b; }
+        .legenda { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .9rem; font-size: .82rem; color: var(--muted); }
+        .legenda span::before {
+            content: ""; display: inline-block; width: .7rem; height: .7rem; border-radius: 3px;
+            margin-right: .35rem; vertical-align: -1px; background: var(--faixa-cor);
+        }
+
+        /* PI2-179 · Gráfico de descarte por vencimento */
+        .grafico-descarte { display: flex; flex-direction: column; gap: .55rem; }
+        .linha-descarte { display: grid; grid-template-columns: 170px 1fr 150px; gap: .8rem; align-items: center; font-size: .9rem; }
+        .linha-descarte .rotulo { font-weight: 650; }
+        .linha-descarte .trilho { height: 14px; border-radius: 999px; background: #f1f5f9; overflow: hidden; }
+        .linha-descarte .preenchido { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fb7185, var(--vermelho)); min-width: 2px; }
+        .linha-descarte .valor { text-align: right; color: var(--muted); }
+        .linha-descarte .valor strong { color: var(--texto); }
+        .eixo { display: grid; grid-template-columns: 170px 1fr 150px; gap: .8rem; font-size: .75rem; color: var(--muted); }
+        .eixo div { display: flex; justify-content: space-between; }
+        .aviso-secao {
+            padding: .9rem 1rem; border-radius: .6rem; font-size: .9rem; line-height: 1.45;
+            background: #f8fafc; border: 1px dashed #cbd5e1; color: var(--muted);
+        }
+        .aviso-secao.erro { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
         @media (max-width: 760px) {
+            .linha-descarte, .eixo { grid-template-columns: 110px 1fr; }
+            .linha-descarte .valor, .eixo > span:last-child { grid-column: 1 / -1; text-align: left; }
             .grade { grid-template-columns: 1fr; }
             .controles { align-items: stretch; flex-direction: column; }
         }
@@ -263,6 +318,45 @@
                 <tbody id="tabela-status"></tbody>
             </table>
         </article>
+    </section>
+
+    <!-- PI2-179 · Cards de risco de desabastecimento (GET /api/v1/indicadores/risco-desabastecimento) -->
+    <section class="painel secao-u2" aria-labelledby="titulo-risco">
+        <div class="cabecalho">
+            <div>
+                <h2 id="titulo-risco">Risco de desabastecimento por tipo sanguíneo</h2>
+                <p>Probabilidade de a demanda superar o estoque atual no horizonte escolhido (modelo de Poisson).</p>
+            </div>
+            <div class="seletor" role="group" aria-label="Horizonte do risco" id="horizonte-risco">
+                <button type="button" data-dias="1" aria-pressed="false">1 dia</button>
+                <button type="button" data-dias="3" aria-pressed="true">3 dias</button>
+                <button type="button" data-dias="7" aria-pressed="false">7 dias</button>
+            </div>
+        </div>
+        <div id="cards-risco" class="cards-risco" aria-live="polite"></div>
+        <div class="legenda" aria-label="Faixas de leitura">
+            <span class="faixa-verde">abaixo de 10% · rotina</span>
+            <span class="faixa-amarela">10% a 50% · priorizar coleta do tipo</span>
+            <span class="faixa-vermelha">acima de 50% · campanha de doação ou remanejamento</span>
+        </div>
+        <p class="metodologia" id="risco-calculado"></p>
+    </section>
+
+    <!-- PI2-179 · Gráfico de descarte por vencimento (GET /api/v1/indicadores/descarte) -->
+    <section class="painel secao-u2" aria-labelledby="titulo-descarte">
+        <div class="cabecalho">
+            <div>
+                <h2 id="titulo-descarte">Taxa de descarte por vencimento</h2>
+                <p>Das bolsas que chegaram à validade no período, quantas foram descartadas, por tipo e hemocomponente.</p>
+            </div>
+            <div class="seletor" role="group" aria-label="Período do descarte" id="periodo-descarte">
+                <button type="button" data-dias="7" aria-pressed="true">7 dias</button>
+                <button type="button" data-dias="15" aria-pressed="false">15 dias</button>
+                <button type="button" data-dias="30" aria-pressed="false">30 dias</button>
+            </div>
+        </div>
+        <div id="grafico-descarte" class="grafico-descarte" aria-live="polite"></div>
+        <p class="metodologia" id="descarte-calculado"></p>
     </section>
 
     <p class="metodologia" id="atualizado-em"></p>
@@ -354,8 +448,99 @@
         }
     }
 
-    document.querySelector('#atualizar').addEventListener('click', carregarIndicadores);
-    carregarIndicadores();
+    /* ---------- PI2-179 · Risco de desabastecimento e descarte ---------- */
+    const COMPONENTES = { HEMACIAS: 'Hemácias', PLASMA: 'Plasma', PLAQUETAS: 'Plaquetas', CRIOPRECIPITADO: 'Crioprecipitado' };
+    const tipoLegivel = (t) => t.replace('_POS', '+').replace('_NEG', '−');
+    const escapar = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dataHora = (iso) => new Date(iso).toLocaleString('pt-BR');
+    const selecionado = (grupo) => Number(document.querySelector(`#${grupo} [aria-pressed="true"]`).dataset.dias);
+
+    // Faixas da seção 4.3 de doc/est-u2-probabilidade.md (probabilidade em 0..1)
+    function faixaDe(p) {
+        if (p > 0.5) return { classe: 'faixa-vermelha', nome: 'Alto', acao: 'Campanha de doação ou remanejamento entre unidades' };
+        if (p >= 0.1) return { classe: 'faixa-amarela', nome: 'Atenção', acao: 'Priorizar coleta do tipo' };
+        return { classe: 'faixa-verde', nome: 'Baixo', acao: 'Rotina' };
+    }
+
+    async function lerJson(url) {
+        const r = await fetch(url);
+        const corpo = await r.json().catch(() => null);
+        if (!r.ok) {
+            const e = new Error((corpo && corpo.mensagem) || `A API respondeu com status ${r.status}`);
+            e.status = r.status;
+            throw e;
+        }
+        return corpo;
+    }
+
+    async function carregarRisco() {
+        const dias = selecionado('horizonte-risco');
+        const alvo = document.querySelector('#cards-risco');
+        const rodape = document.querySelector('#risco-calculado');
+        try {
+            const dados = await lerJson(`/api/v1/indicadores/risco-desabastecimento?dias=${dias}`);
+            const riscos = (dados.riscos || []).slice().sort((a, b) => b.probabilidadeDesabastecimento - a.probabilidadeDesabastecimento);
+            if (!riscos.length) {
+                alvo.innerHTML = '<div class="aviso-secao" style="grid-column:1/-1">Sem dados de estoque e demanda para calcular o risco. Nenhum valor é exibido para não apresentar números fictícios.</div>';
+            } else {
+                alvo.innerHTML = riscos.map((r) => {
+                    const f = faixaDe(r.probabilidadeDesabastecimento);
+                    return `<article class="card-risco ${f.classe}" aria-label="${tipoLegivel(r.tipoSanguineo)}: risco ${f.nome}">
+                        <div class="topo"><span class="tipo">${tipoLegivel(r.tipoSanguineo)}</span><span class="faixa">${f.nome}</span></div>
+                        <span class="prob">${numero.format(r.probabilidadeDesabastecimento * 100)}%</span>
+                        <span class="detalhe">Estoque atual: <strong>${r.estoqueAtual}</strong> ${r.estoqueAtual === 1 ? 'bolsa' : 'bolsas'} · λ = ${numero.format(r.lambdaDiario)}/dia</span>
+                        <span class="acao">${f.acao}</span>
+                    </article>`;
+                }).join('');
+            }
+            rodape.textContent = `Horizonte de ${dados.dias} ${dados.dias === 1 ? 'dia' : 'dias'} · calculado em ${dataHora(dados.calculadoEm)}.`;
+        } catch (e) {
+            alvo.innerHTML = `<div class="aviso-secao erro" style="grid-column:1/-1">${e.status === 503
+                ? 'O modelo probabilístico ainda não está configurado (λ de demanda por tipo ausente). O risco não é exibido para não apresentar números fictícios.'
+                : 'Não foi possível carregar o risco de desabastecimento: ' + escapar(e.message)}</div>`;
+            rodape.textContent = '';
+        }
+    }
+
+    async function carregarDescarte() {
+        const dias = selecionado('periodo-descarte');
+        const alvo = document.querySelector('#grafico-descarte');
+        const rodape = document.querySelector('#descarte-calculado');
+        try {
+            const dados = await lerJson(`/api/v1/indicadores/descarte?dias=${dias}`);
+            const taxas = (dados.taxas || []).slice().sort((a, b) => b.taxaPercentual - a.taxaPercentual);
+            const periodo = `${new Date(dados.inicioPeriodo + 'T00:00').toLocaleDateString('pt-BR')} a ${new Date(dados.fimPeriodo + 'T00:00').toLocaleDateString('pt-BR')}`;
+            if (!taxas.length) {
+                alvo.innerHTML = `<div class="aviso-secao">Nenhuma bolsa chegou à validade no período (${periodo}), então não há base para calcular a taxa de descarte. O gráfico fica vazio para não apresentar números fictícios.</div>`;
+            } else {
+                alvo.innerHTML = `<div class="eixo" aria-hidden="true"><span></span><div><span>0%</span><span>50%</span><span>100%</span></div><span></span></div>` +
+                    taxas.map((t) => `<div class="linha-descarte">
+                        <span class="rotulo">${tipoLegivel(t.tipoSanguineo)} · ${COMPONENTES[t.hemoComponente] || t.hemoComponente}</span>
+                        <div class="trilho" role="img" aria-label="${numero.format(t.taxaPercentual)}% descartado"><div class="preenchido" style="width:${Math.min(100, t.taxaPercentual)}%"></div></div>
+                        <span class="valor"><strong>${numero.format(t.taxaPercentual)}%</strong> · ${t.bolsasDescartadas} de ${t.bolsasVencidasNoPeriodo}</span>
+                    </div>`).join('');
+            }
+            rodape.textContent = `Período: ${periodo} (${dados.diasAnalisados} dias) · calculado em ${dataHora(dados.calculadoEm)}.`;
+        } catch (e) {
+            alvo.innerHTML = `<div class="aviso-secao erro">Não foi possível carregar a taxa de descarte: ${escapar(e.message)}</div>`;
+            rodape.textContent = '';
+        }
+    }
+
+    function ligarSeletor(id, carregar) {
+        document.querySelector(`#${id}`).addEventListener('click', (ev) => {
+            const b = ev.target.closest('button[data-dias]');
+            if (!b) return;
+            document.querySelectorAll(`#${id} button`).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+            carregar();
+        });
+    }
+    ligarSeletor('horizonte-risco', carregarRisco);
+    ligarSeletor('periodo-descarte', carregarDescarte);
+
+    function carregarTudo() { carregarIndicadores(); carregarRisco(); carregarDescarte(); }
+    document.querySelector('#atualizar').addEventListener('click', carregarTudo);
+    carregarTudo();
 </script>
 </body>
 </html>
