@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indicadores de estoque · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <link rel="stylesheet" href="../css/gestor.css">
+</head>
+<body class="bg-app">
+  <!-- Figma 5.6 · EST · Risco de desabastecimento e descarte (PI2-179) -->
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Indicadores de estoque</h1>
+        <p class="page-sub" id="sub">Risco de desabastecimento e descarte por vencimento</p>
+      </div>
+      <div class="page-actions">
+        <span class="badge b-info">Dados sintéticos</span>
+        <div class="seg" role="group" aria-label="Horizonte do risco" id="horizonte" style="background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.8);backdrop-filter:blur(16px)">
+          <button type="button" data-d="1">1 dia</button><button type="button" data-d="3" class="active">3 dias</button><button type="button" data-d="7">7 dias</button>
+        </div>
+        <button type="button" class="btn btn-secondary" id="exportar">Exportar</button>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="t-risco">
+      <div class="card-head" style="flex-wrap:wrap">
+        <div><h2 class="card-title" id="t-risco">Risco de desabastecimento por tipo</h2><p class="card-sub">Probabilidade de a demanda (Poisson) superar o estoque disponível no horizonte</p></div>
+        <div class="legend"><span><i style="--c:#34C759"></i>&lt; 10% rotina</span><span><i style="--c:#E0A100"></i>10–50% priorizar coleta</span><span><i style="--c:#E53935"></i>&gt; 50% campanha de doação</span></div>
+      </div>
+      <div id="riscos"></div>
+    </section>
+
+    <div class="row stack-md">
+      <section class="card grow gap-14" aria-labelledby="t-desc">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-desc">Taxa de descarte por vencimento</h2><p class="card-sub" id="descSub">Bolsas descartadas ÷ bolsas que venceram no período · últimos 7 dias</p></div>
+          <div class="chips" role="group" aria-label="Hemocomponente" id="comps"></div>
+        </div>
+        <div id="grafico"></div>
+      </section>
+      <section class="card col-380 gap-14" aria-labelledby="t-res">
+        <div><h2 class="card-title" id="t-res">Resumo do período</h2><p class="card-sub" id="periodo">&nbsp;</p></div>
+        <div id="resumo"></div>
+        <div class="alert a-info" role="note"><span data-info></span><div class="txt"><b>Como o descarte é medido</b><p>Inferido por status Descartada com validade dentro da janela. Grupos sem vencimentos no período não aparecem.</p></div></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, esc } = RV;
+      if (!ui.shell('gestor', 'Indicadores')) return;
+      document.getElementById('exportar').insertAdjacentHTML('afterbegin', ui.icon('download', 18, '#1F2D2A', 2));
+      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2.2);
+
+      const $ = (id) => document.getElementById(id);
+      const DIAS_DESCARTE = 7;
+      const COMPS = [['HEMACIAS', 'Hemácias'], ['PLASMA', 'Plasma'], ['PLAQUETAS', 'Plaquetas'], ['CRIOPRECIPITADO', 'Crio']];
+      const st = { dias: 3, comp: 'HEMACIAS', risco: null, descarte: null };
+      const pct = (v, d = 1) => RV.num(v, d) + '%';
+
+      // ---------- Risco ----------
+      function faixa(p) { // p em %
+        if (p > 50) return ['high', 'Campanha', 'b-minimo'];
+        if (p >= 10) return ['mid', 'Priorizar coleta', 'b-vence'];
+        return ['', 'Rotina', 'b-ok'];
+      }
+      async function carregarRisco() {
+        $('riscos').innerHTML = `<div class="risk-grid">${ui.skeletonRows(8, 112)}</div>`;
+        try {
+          st.risco = await RV.api(`/api/indicadores/risco-desabastecimento?dias=${st.dias}`);
+        } catch (e) {
+          st.risco = null;
+          $('riscos').innerHTML = e.status === 503
+            ? ui.alertBox('warn', 'Modelo de demanda indisponível', 'O cálculo do risco depende das taxas diárias de demanda (λ) por tipo, que ainda não foram configuradas. Nenhum valor é exibido para não apresentar números fictícios.')
+            : ui.alertBox('error', 'Não foi possível calcular o risco', ui.erroMsg(e));
+          return;
+        }
+        $('sub').textContent = `Risco de desabastecimento nos próximos ${st.dias} ${st.dias === 1 ? 'dia' : 'dias'} e descarte por vencimento · calculado em ${RV.fmtDate(st.risco.calculadoEm)} às ${RV.fmtTime(st.risco.calculadoEm)}`;
+        const porTipo = Object.fromEntries((st.risco.riscos || []).map((r) => [r.tipoSanguineo, r]));
+        const tipos = RV.TIPOS.filter((t) => porTipo[t]);
+        if (!tipos.length) { $('riscos').innerHTML = ui.empty('Sem dados para calcular o risco', 'Não há bolsas nem demanda registradas para o horizonte escolhido.'); return; }
+        $('riscos').innerHTML = `<div class="risk-grid">${tipos.map((t) => {
+          const r = porTipo[t];
+          const p = (r.probabilidadeDesabastecimento || 0) * 100;
+          const [cls, label, bcls] = faixa(p);
+          return `<article class="risk ${cls}" aria-label="Risco ${RV.tipoLabel(t)}: ${pct(p)}">
+            <div class="risk-top"><div class="cell">${ui.blood(t, 36)}<div class="risk-pct"><b>${pct(p)}</b><span>chance de faltar</span></div></div>${ui.badge(label, bcls)}</div>
+            <div class="bar"><span style="width:${Math.min(100, p).toFixed(1)}%"></span></div>
+            <span class="sub">Estoque ${r.estoqueAtual} ${r.estoqueAtual === 1 ? 'bolsa' : 'bolsas'} · demanda λ ${RV.num(r.lambdaDiario, 2)}/dia</span>
+          </article>`;
+        }).join('')}</div>`;
+      }
+
+      // ---------- Descarte ----------
+      async function carregarDescarte() {
+        $('grafico').innerHTML = ui.skeletonRows(1, 250);
+        try { st.descarte = await RV.api(`/api/indicadores/descarte?dias=${DIAS_DESCARTE}`); }
+        catch (e) { st.descarte = null; $('grafico').innerHTML = ui.alertBox('error', 'Não foi possível calcular o descarte', ui.erroMsg(e)); $('resumo').innerHTML = ''; return; }
+        $('periodo').textContent = `${RV.fmtDate(st.descarte.inicioPeriodo)} a ${RV.fmtDate(st.descarte.fimPeriodo)}`;
+        $('descSub').textContent = `Bolsas descartadas ÷ bolsas que venceram no período · últimos ${st.descarte.diasAnalisados} dias`;
+        renderDescarte(); renderResumo();
+      }
+      function renderComps() {
+        $('comps').innerHTML = COMPS.map(([k, l]) => `<button type="button" class="chip${st.comp === k ? ' active' : ''}" data-c="${k}" aria-pressed="${st.comp === k}">${l}</button>`).join('');
+      }
+      function renderDescarte() {
+        const taxas = (st.descarte.taxas || []).filter((x) => x.hemoComponente === st.comp);
+        if (!taxas.length) {
+          $('grafico').innerHTML = ui.empty('Nenhuma bolsa venceu no período', `Não há bolsas de ${RV.compLabel(st.comp)} com validade nos últimos ${st.descarte.diasAnalisados} dias, então não há taxa de descarte para mostrar.`);
+          return;
+        }
+        const porTipo = Object.fromEntries(taxas.map((x) => [x.tipoSanguineo, x]));
+        const maior = Math.max(...taxas.map((x) => x.taxaPercentual));
+        const topo = Math.max(10, Math.ceil(maior / 10) * 10);
+        const passo = topo / 4;
+        const altura = 180; // área das barras (250 − 26 − 44)
+        const grades = [0, 1, 2, 3, 4].map((i) => `<div class="grid${i ? '' : ' zero'}" style="top:${26 + altura - (altura * i / 4)}px"><em>${RV.num(passo * i, passo * i % 1 ? 1 : 0)}%</em></div>`).join('');
+        const cols = RV.TIPOS.map((t) => {
+          const x = porTipo[t];
+          if (!x) return `<div class="col"><span class="bar-s zero"></span><span class="val" style="bottom:9px;color:var(--faint)">—</span><span class="lbl"><b>${RV.tipoLabel(t)}</b><span>sem vencimentos</span></span></div>`;
+          const h = Math.round(altura * x.taxaPercentual / topo);
+          return `<div class="col" title="${RV.tipoLabel(t)}: ${x.bolsasDescartadas} de ${x.bolsasVencidasNoPeriodo} descartadas">
+            <span class="bar-s${h ? '' : ' zero'}" style="height:${h}px"></span>
+            <span class="val${x.taxaPercentual >= 20 ? ' hi' : ''}" style="bottom:${Math.max(h, 3) + 6}px">${pct(x.taxaPercentual)}</span>
+            <span class="lbl"><b>${RV.tipoLabel(t)}</b><span>${x.bolsasDescartadas} de ${x.bolsasVencidasNoPeriodo}</span></span></div>`;
+        }).join('');
+        $('grafico').innerHTML = `<div class="plot" role="img" aria-label="Taxa de descarte de ${RV.compLabel(st.comp)} por tipo sanguíneo">${grades}<div class="cols">${cols}</div></div>`;
+      }
+      function renderResumo() {
+        const taxas = st.descarte.taxas || [];
+        if (!taxas.length) { $('resumo').innerHTML = ui.alertBox('info', 'Sem vencimentos no período', 'Nenhuma bolsa chegou à validade nos dias analisados.'); return; }
+        const venc = taxas.reduce((s, x) => s + x.bolsasVencidasNoPeriodo, 0);
+        const desc = taxas.reduce((s, x) => s + x.bolsasDescartadas, 0);
+        const top = taxas.slice().sort((a, b) => b.taxaPercentual - a.taxaPercentual)[0];
+        $('resumo').innerHTML = `<div class="kv">
+          <div><span class="k">Bolsas que venceram</span><b class="v">${venc}</b></div>
+          <div><span class="k">Bolsas descartadas</span><b class="v">${desc}</b></div>
+          <div><span class="k">Taxa geral</span><b class="v t-red">${pct(venc ? desc * 100 / venc : 0)}</b></div>
+          <div><span class="k">Maior taxa</span><b class="v t-red">${RV.tipoLabel(top.tipoSanguineo)} · ${esc(RV.compLabel(top.hemoComponente))} · ${pct(top.taxaPercentual)}</b></div></div>`;
+      }
+
+      renderComps();
+      await Promise.all([carregarRisco(), carregarDescarte()]);
+
+      $('horizonte').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-d]'); if (!b || Number(b.dataset.d) === st.dias) return;
+        st.dias = Number(b.dataset.d);
+        $('horizonte').querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b));
+        carregarRisco();
+      });
+      $('comps').addEventListener('click', (e) => { const b = e.target.closest('[data-c]'); if (!b || !st.descarte) return; st.comp = b.dataset.c; renderComps(); renderDescarte(); });
+      $('exportar').addEventListener('click', () => {
+        const linhas = [];
+        (st.risco ? st.risco.riscos : []).forEach((r) => linhas.push(['Risco', RV.tipoLabel(r.tipoSanguineo), '', `${st.dias} dias`, r.estoqueAtual, RV.num(r.lambdaDiario, 2), RV.num(r.probabilidadeDesabastecimento * 100, 2) + '%']));
+        (st.descarte ? st.descarte.taxas : []).forEach((x) => linhas.push(['Descarte', RV.tipoLabel(x.tipoSanguineo), RV.compLabel(x.hemoComponente), `${st.descarte.diasAnalisados} dias`, `${x.bolsasDescartadas} de ${x.bolsasVencidasNoPeriodo}`, '', RV.num(x.taxaPercentual, 2) + '%']));
+        RV.hemo.baixarCSV(`indicadores-${new Date().toISOString().slice(0, 10)}.csv`, ['Indicador', 'Tipo', 'Hemocomponente', 'Período', 'Estoque / bolsas', 'λ diário', 'Valor'], linhas);
+      });
+    })();
+  </script>
+</body>
+</html>
