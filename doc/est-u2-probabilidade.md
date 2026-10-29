@@ -225,7 +225,7 @@ já vencidas.
 | Lambdas configurados em `application.yml` | feito nesta entrega (endpoint de risco deixa de responder 503) | Luis Felipe |
 | Endpoint de risco (`/risco-desabastecimento`) | integrado na main (PI2-176) | Luis Gallindo |
 | Endpoint de descarte (`/descarte`) | integrado na main (PI2-178) | Luis Gallindo |
-| Cards de risco e gráfico de descarte no `indicadores.html` | pendente, usa as faixas da seção 4.3 | Mariana (PI2-179) |
+| Cards de risco e gráfico de descarte no `indicadores.html` | feito: cards coloridos pelas faixas da seção 4.3 (horizonte de 1, 3 ou 7 dias) e gráfico de barras da taxa por tipo e hemocomponente (7, 15 ou 30 dias); sem base de cálculo ou com 503, o painel mostra o aviso em vez de números | Mariana (PI2-179) |
 | Estimar λ pelo histórico (seção 3.1) | evolução opcional da U2 (previsão simples de demanda) | EST |
 | `dataDescarte` e motivo em `Bolsa` | sugestão para POO, não bloqueia a U2 | POO |
 
