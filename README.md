@@ -77,7 +77,7 @@ O **Rota Vital** é uma aplicação web que:
 |---|---|
 | **Java** | Linguagem principal |
 | **Spring Boot** | Framework web (Controllers, Services, Repositories) |
-| **HTML / CSS / JavaScript** | Interface web estática (`index.html` e `indicadores.html`) consumindo a API REST |
+| **HTML / CSS / JavaScript** | Interface web estática (`index.html`, `login.html`, `hemocentro/*.html`, `operacao.html` e `indicadores.html`) consumindo a API REST |
 | **PostgreSQL / H2** | PostgreSQL no Docker e em produção (Supabase); H2 em memória no desenvolvimento local e nos testes rápidos |
 | **Cucumber + Testcontainers** | Testes de aceitação em Gherkin e integração com PostgreSQL real |
 | [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
@@ -120,7 +120,10 @@ O **Rota Vital** é uma aplicação web que:
      ```
 
 ### Acessos e Endpoints Principais
-* **Aplicação / Base API:** `http://localhost:8080`
+* **Home (nova interface):** `http://localhost:8080`
+* **Login:** `http://localhost:8080/login.html`
+* **Painel do hemocentro:** `http://localhost:8080/hemocentro/painel.html`
+* **Página operacional anterior (HU04 e HU05):** `http://localhost:8080/operacao.html`
 * **Painel Web de Indicadores:** `http://localhost:8080/indicadores.html`
 * **Health Check (Spring Boot Actuator):** `http://localhost:8080/actuator/health`
 * **Console H2 (Banco em Memória):** `http://localhost:8080/h2-console`
@@ -144,6 +147,34 @@ docker compose logs -f api   # acompanha os logs da aplicação
 ```
 
 Para parar: `docker compose down` (os dados continuam no volume `pgdata`). Para apagar também os dados: `docker compose down -v`.
+
+Com a API no ar, abra `http://localhost:8080`. Veja [Como acessar a interface](#como-acessar-a-interface).
+
+**Se algo der errado:**
+
+| Sintoma | Causa provável | Como resolver |
+|---|---|---|
+| `Bind for 0.0.0.0:8080 failed: port is already allocated` | Outro container ou programa já usa a porta (por exemplo, uma cópia antiga do projeto) | `docker ps` para achar quem está na 8080 e `docker stop <nome>`; ou suba em outra porta com `API_PORT=8081 docker compose up` |
+| Aparece a página antiga ou 404 em `/login.html` | O container que responde é de outra versão, ou a branch local é outra | Confira `git branch --show-current`, pare containers antigos e rode `docker compose up --build` |
+| A API reinicia com `Unable to determine Dialect without JDBC metadata` | A API não conseguiu conectar ao banco, quase sempre por um `.env` antigo ou incompleto | `cp .env.example .env`, depois `docker compose down -v` e `docker compose up` |
+| A tela muda pouco depois de atualizar o código | Cache do navegador | Recarregue com `Ctrl+Shift+R` |
+
+### Como acessar a interface
+
+As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resources/static/` e são servidas pela própria API.
+
+- **Entrar:** em `/login.html`, qualquer e-mail válido e qualquer senha entram como **Profissional do hemocentro**. O backend ainda não tem autenticação: a sessão fica só no navegador.
+- **Outros perfis:** em `/criar-conta.html`, a **Função** escolhida define o perfil. A conta fica salva no navegador (a senha é guardada como hash, nunca em texto). Os perfis de hospital, logística e gestor ainda não têm telas próprias e caem no painel do hemocentro, com um aviso.
+- **Dados:** são os dados sintéticos carregados na primeira subida (`HEMOREDE_SEED_ENABLED=true`).
+
+| Tela | Endereço |
+|---|---|
+| Home pública (Quem somos · Contato) | `/` |
+| Login · Criar conta · Recuperar senha | `/login.html` · `/criar-conta.html` · `/recuperar-senha.html` |
+| Painel do hemocentro | `/hemocentro/painel.html` |
+| Consulta de estoque (HU02) | `/hemocentro/estoque.html` |
+| Fila de requisições | `/hemocentro/requisicoes.html` |
+| Alocação por FEFO (HU04) | `/hemocentro/requisicao.html?id=<id>` |
 
 | Variável (`.env`) | Para quê | Padrão |
 |---|---|---|
