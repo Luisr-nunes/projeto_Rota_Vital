@@ -1,0 +1,4 @@
+main
+main_asan
+*.exe
+*.o
