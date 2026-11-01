@@ -1,10 +1,11 @@
 # Telemetria de Temperatura da Cadeia Fria — Rota Vital
 
 **Task:** PI2-120 — Especificação do canal de telemetria (RSD)
-**Responsável:** Micaella Cabral
+**Responsável:** Lucas Henrique
 **Disciplina:** Redes e Sistemas Distribuídos (RSD)
 **Sprint:** 08e09
 **Implementação do endpoint:** PI2-121 — implementado em `TelemetriaController` / `TelemetriaService` (testes: `TelemetriaControllerIntegrationTest`, `TelemetriaServiceTest`).
+**Implementação da ingestão:** PI2-168 — implementada em `TelemetriaLeituraController` / `TelemetriaIngestaoService` / `ConsumidorTelemetria` (testes: `TelemetriaLeituraControllerIntegrationTest`, `TelemetriaIngestaoServiceTest`).
 
 Hemocomponentes têm faixa de temperatura de transporte obrigatória (`TipoRefrigeracao`: hemácias refrigeradas a 2–6 °C, plasma congelado a −20 °C, plaquetas a 20–24 °C). A telemetria simula sensores nos veículos e permite detectar quebra da cadeia fria durante a entrega (HU05/HU06).
 
@@ -52,6 +53,8 @@ Hemocomponentes têm faixa de temperatura de transporte obrigatória (`TipoRefri
 
 Na U2 o broker ficaria na sub-rede privada de aplicação; a linha do diagrama seria **tracejada** (assíncrona), conforme a convenção da rubrica de RSD.
 
+A entrada de leituras na aplicação por HTTP/JSON (`POST`, seção 6) usa o mesmo caminho `HTTPS/443` → `HTTP/8080` da U1, mas com resposta assíncrona (`202`).
+
 ## 5. Endpoint de consulta (U1)
 
 `GET /api/telemetria/temperatura?veiculoId={id}`
@@ -62,8 +65,59 @@ Na U2 o broker ficaria na sub-rede privada de aplicação; a linha do diagrama s
 | Veículo inexistente | `404 Not Found` | `{"timestamp": "...", "erro": "IllegalArgumentException", "mensagem": "Veículo não encontrado: {id}"}` |
 | `veiculoId` ausente | `400 Bad Request` | Erro padrão de validação |
 
-## 6. Fora de escopo nesta entrega
+## 6. Endpoint de ingestão (PI2-168)
 
-- Histórico persistido de leituras e gráfico de temperatura.
+`POST /api/v1/telemetria/leituras`
+
+Recebe uma leitura, valida o corpo e a coloca em uma **fila em memória** (capacidade 1000), respondendo `202 Accepted` sem esperar o processamento. Um pool fixo de threads consumidoras (2 por padrão, configurável em `hemorede.telemetria.consumidores`) retira as leituras da fila e as repassa ao `AgregadorTelemetria` (PI2-169).
+
+Corpo:
+
+```json
+{
+  "veiculoId": 1,
+  "temperaturaC": 4.5,
+  "timestamp": "2026-11-02T09:00:00-03:00"
+}
+```
+
+| Campo | Obrigatório | Observação |
+|-------|-------------|------------|
+| `veiculoId` | sim | Identificador do veículo |
+| `temperaturaC` | sim | Temperatura em °C |
+| `timestamp` | não | ISO-8601 com fuso, no mesmo formato da seção 1 |
+
+O campo `status` não é enviado no corpo.
+
+| Status | Quando |
+|---|---|
+| `202 Accepted` | Leitura válida, colocada na fila (processamento assíncrono) |
+| `400 Bad Request` | `veiculoId` ou `temperaturaC` ausentes (corpo com `erros` por campo), ou corpo ilegível / `timestamp` fora do formato ISO-8601 |
+| `503 Service Unavailable` | Fila cheia (capacidade 1000); o cliente deve tentar novamente |
+
+Exemplo de `400` (campo ausente):
+
+```json
+{
+  "timestamp": "2026-11-02T09:00:01",
+  "erro": "DadosInvalidos",
+  "mensagem": "Dados de entrada inválidos",
+  "erros": { "veiculoId": "veiculoId é obrigatório" }
+}
+```
+
+Exemplo de `503` (fila cheia):
+
+```json
+{
+  "timestamp": "2026-11-02T09:00:01",
+  "erro": "FilaTelemetriaCheiaException",
+  "mensagem": "Fila de telemetria cheia (capacidade 1000); tente novamente em instantes"
+}
+```
+
+## 7. Fora de escopo nesta entrega
+
+- Histórico persistido de leituras e gráfico de temperatura (o consumidor apenas agrega em memória, via `AgregadorTelemetria`).
 - Envio de alerta ativo (notificação) ao hospital.
 - Autenticação do sensor (na U2: credenciais no broker MQTT).

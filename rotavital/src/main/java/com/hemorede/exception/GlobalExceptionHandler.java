@@ -70,6 +70,11 @@ public class GlobalExceptionHandler {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
     }
 
+    @ExceptionHandler(FilaTelemetriaCheiaException.class)
+    public ResponseEntity<Map<String, Object>> handleFilaCheia(FilaTelemetriaCheiaException ex) {
+        return corpoErro(HttpStatus.SERVICE_UNAVAILABLE, ex);
+    }
+
     // Corpo inválido (Bean Validation nos DTOs de entrada): 400 com a mensagem de cada campo.
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidacao(MethodArgumentNotValidException ex) {
