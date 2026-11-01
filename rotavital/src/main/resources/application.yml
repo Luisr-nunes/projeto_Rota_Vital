@@ -51,3 +51,11 @@ hemorede:
         AB_POS: 0.10
         B_NEG: 0.08
         AB_NEG: 0.02
+  simulador:
+    # Desligado por padrão. Para ligar: --hemorede.simulador.enabled=true
+    enabled: false
+    cenario: baixo        # baixo | moderado | alto
+    cenarios:
+      baixo:    { veiculos: 10,  intervalo-ms: 5000 }
+      moderado: { veiculos: 50,  intervalo-ms: 1000 }
+      alto:     { veiculos: 100, intervalo-ms: 200 }

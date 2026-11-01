@@ -94,7 +94,7 @@ public class TelemetriaService {
         return dentro ? OK : ALERTA;
     }
 
-    static double minimoSeguro(TipoRefrigeracao tipo) {
+    public static double minimoSeguro(TipoRefrigeracao tipo) {
         return switch (tipo) {
             case REFRIGERADO_2_6 -> 2.0;
             case CONGELADO_MENOS_20 -> -30.0;
@@ -102,7 +102,7 @@ public class TelemetriaService {
         };
     }
 
-    static double maximoSeguro(TipoRefrigeracao tipo) {
+    public static double maximoSeguro(TipoRefrigeracao tipo) {
         return switch (tipo) {
             case REFRIGERADO_2_6 -> 6.0;
             case CONGELADO_MENOS_20 -> -20.0;
