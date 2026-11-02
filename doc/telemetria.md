@@ -116,7 +116,25 @@ Exemplo de `503` (fila cheia):
 }
 ```
 
-## 7. Fora de escopo nesta entrega
+## 7. Simulador de veículos (PI2-170)
+
+Gera leituras sintéticas e as coloca na mesma fila do `POST /api/v1/telemetria/leituras`, passando pelos consumidores e pelo `AgregadorTelemetria`. Fica desligado por padrão.
+
+| Cenário | Veículos | Intervalo por veículo |
+|---|---|---|
+| `baixo` | 10 | 5000 ms |
+| `moderado` | 50 | 1000 ms |
+| `alto` | 100 | 200 ms |
+
+Como rodar (a partir de `rotavital/`):
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--hemorede.simulador.enabled=true --hemorede.simulador.cenario=moderado"
+```
+
+Com Docker, acrescente `HEMOREDE_SIMULADOR_ENABLED: "true"` e `HEMOREDE_SIMULADOR_CENARIO: alto` em `environment` do serviço da API no `compose.yaml`. Ao subir, o log mostra `Simulador de telemetria ligado: cenário ...`. Se a fila encher (capacidade 1000), o simulador descarta o resto da rodada e registra um aviso.
+
+## 8. Fora de escopo nesta entrega
 
 - Histórico persistido de leituras e gráfico de temperatura (o consumidor apenas agrega em memória, via `AgregadorTelemetria`).
 - Envio de alerta ativo (notificação) ao hospital.
