@@ -353,7 +353,7 @@ svg { flex-shrink: 0; display: block; }
 .chip-ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; }
 .kpi-val { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .kpi-val b { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); line-height: 1.1; }
-.kpi-val b.empty { color: #B5C0BD; }
+.kpi-val b.kpi-empty { color: #B5C0BD; }
 .kpi-val span { font-size: 12px; font-weight: 500; color: var(--muted); }
 .kpi-val span.t-red { color: var(--red-dark); } .kpi-val span.t-green { color: #1E7A3A; } .kpi-val span.t-cyan { color: #00728A; }
 
