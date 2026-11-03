@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel gerencial · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <link rel="stylesheet" href="../css/gestor.css">
+</head>
+<body class="bg-app">
+  <!-- Figma 5.1 · HU07 · Painel gerencial e 5.2 · Painel sem dados (PI2-197) -->
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Painel gerencial</h1>
+        <p class="page-sub" id="sub">Indicadores calculados com os dados armazenados</p>
+      </div>
+      <div class="page-actions">
+        <span class="badge b-info">Dados sintéticos</span>
+        <button type="button" class="btn btn-secondary" id="exportar">Exportar</button>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="Indicadores principais"></section>
+
+    <div class="row stack-md">
+      <section class="card grow gap-14" aria-labelledby="t-est">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-est">Estoque por tipo sanguíneo</h2><p class="card-sub" id="estSub">Hemácias · bolsas disponíveis por tipo ABO/Rh (dados armazenados)</p></div>
+          <div class="chips" role="group" aria-label="Hemocomponente" id="comps"></div>
+        </div>
+        <div class="legend" id="legenda">
+          <span><i style="--c:#E53935;border-radius:4px"></i>Bolsas disponíveis</span>
+          <span><i style="--c:#C62828"></i>Abaixo do mínimo</span>
+        </div>
+        <div id="grafico"></div>
+      </section>
+
+      <div class="col col-400" style="width:400px;flex-shrink:0">
+        <section class="card gap-14" aria-labelledby="t-desc">
+          <div><h2 class="card-title" id="t-desc">Estatística descritiva</h2><p class="card-sub">Nível de estoque por tipo (8 tipos)</p></div>
+          <div class="kv-lines" id="estatisticas"></div>
+        </section>
+        <section class="card gap-14" aria-labelledby="t-st">
+          <div><h2 class="card-title" id="t-st">Requisições por status</h2><p class="card-sub" id="stSub">&nbsp;</p></div>
+          <div id="status"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (async function () {
+      const { ui, hemo, esc } = RV;
+      if (!ui.shell('gestor', 'Painel')) return;
+      hemo.avisoPendente();
+      document.getElementById('exportar').insertAdjacentHTML('afterbegin', ui.icon('download', 18, '#1F2D2A', 2));
+
+      const $ = (id) => document.getElementById(id);
+      const JANELA = 5; // dias para "próximas do vencimento" (padrão do endpoint)
+      const COMPS = [['HEMACIAS', 'Hemácias'], ['PLASMA', 'Plasma'], ['PLAQUETAS', 'Plaquetas'], ['CRIOPRECIPITADO', 'Crio']];
+      const STATUS = [['ENTREGUE', 'Entregue', '#34C759'], ['PENDENTE', 'Pendente', '#E0A100'], ['APROVADA', 'Aprovada', '#48726A'], ['ALOCADA', 'Alocada', '#7FA79F'], ['EM_ROTA', 'Em rota', '#00C0E8'], ['CANCELADA', 'Cancelada', '#B5C0BD']];
+      const st = { comp: 'HEMACIAS', ind: null, bolsas: [], reqs: [], estoqueId: null, criticos: new Set() };
+
+      const duracao = (min) => {
+        if (min === null || min === undefined) return null;
+        const h = Math.floor(min / 60), m = Math.round(min % 60);
+        return h ? `${h}h ${RV.pad(m)}min` : `${m} min`;
+      };
+
+      $('kpis').innerHTML = ui.skeletonRows(4, 104);
+      $('grafico').innerHTML = ui.skeletonRows(1, 520);
+      $('estatisticas').innerHTML = ui.skeletonRows(6, 28);
+
+      try {
+        const [ind, bolsas, reqs, estoques] = await Promise.all([
+          RV.api(`/api/indicadores?diasProximoVencimento=${JANELA}`),
+          hemo.bolsasDisponiveis(),
+          RV.api('/api/requisicoes'),
+          RV.api('/api/estoques')
+        ]);
+        Object.assign(st, { ind, bolsas: bolsas || [], reqs: reqs || [], estoqueId: (estoques && estoques[0] && estoques[0].id) || null });
+      } catch (e) {
+        const m = ui.alertBox('error', 'Não foi possível carregar o painel', ui.erroMsg(e));
+        $('kpis').innerHTML = ''; $('grafico').innerHTML = m; $('estatisticas').innerHTML = ''; $('status').innerHTML = '';
+        return;
+      }
+
+      const est = st.ind.estoque || {}, venc = st.ind.vencimento || {}, rq = st.ind.requisicoes || {};
+      const vazio = !est.totalDisponivel && !rq.total;
+      $('sub').textContent = `Período: todos os registros · atualizado em ${RV.fmtDate(st.ind.geradoEm)} às ${RV.fmtTime(st.ind.geradoEm)}`;
+
+      // ---------- KPIs ----------
+      const porStatus = rq.porStatus || {};
+      const urg = st.reqs.filter((r) => r.status === 'PENDENTE' && r.prioridade === 'URGENTE').length;
+      const tipos = Object.values(est.porTipoSanguineo || {}).filter((n) => n > 0).length;
+      $('kpis').innerHTML = [
+        ui.kpi('Bolsas disponíveis', vazio ? null : RV.num(est.totalDisponivel), 'bag', '#E53935', '#FDECEC', vazio ? '' : `${tipos} ${tipos === 1 ? 'tipo' : 'tipos'} ABO/Rh`),
+        ui.kpi('Requisições pendentes', vazio ? null : RV.num(porStatus.PENDENTE || 0), 'inbox', '#B7791F', '#FFF6DB', urg && !vazio ? `${urg} ${urg === 1 ? 'urgente' : 'urgentes'}` : '', 't-red'),
+        ui.kpi('Entregas realizadas', vazio ? null : RV.num(porStatus.ENTREGUE || 0), 'truck', '#1E7A3A', '#E3F7E8', vazio ? '' : `de ${RV.num(rq.total)} requisições`),
+        ui.kpi('Tempo médio de atendimento', vazio ? null : duracao(rq.tempoMedioAtendimentoEmMinutos), 'clock', '#48726A', '#E6F2EF', rq.tempoMedioAtendimentoEmMinutos != null ? 'da requisição à entrega' : '')
+      ].join('');
+
+      // ---------- Estatística descritiva ----------
+      const pt = est.porTipoSanguineo || {};
+      const tiposOrd = RV.TIPOS.filter((t) => pt[t] !== undefined);
+      const minT = tiposOrd.filter((t) => pt[t] === est.minimoPorTipo)[0];
+      const maxT = tiposOrd.filter((t) => pt[t] === est.maximoPorTipo)[0];
+      const linhasEst = vazio ? [['Média'], ['Mediana'], ['Mínimo'], ['Máximo'], ['Desvio-padrão'], [`Próximas do vencimento (≤ ${venc.janelaEmDias || JANELA} dias)`]] : [
+        ['Média', `${RV.num(est.mediaPorTipo, 1)} bolsas`],
+        ['Mediana', `${RV.num(est.medianaPorTipo, est.medianaPorTipo % 1 ? 1 : 0)} bolsas`],
+        ['Mínimo', `${RV.num(est.minimoPorTipo)}${minT ? ' · ' + RV.tipoLabel(minT) : ''}`],
+        ['Máximo', `${RV.num(est.maximoPorTipo)}${maxT ? ' · ' + RV.tipoLabel(maxT) : ''}`],
+        ['Desvio-padrão', RV.num(est.desvioPadraoPorTipo, 1)],
+        [`Próximas do vencimento (≤ ${venc.janelaEmDias} dias)`, `${RV.num(venc.quantidadeProximaDoVencimento)} bolsas · ${RV.num(venc.percentualProximoDoVencimento, 1)}%`]
+      ];
+      function renderEstatisticas() {
+        $('estatisticas').innerHTML = linhasEst.map(([k, v]) => {
+          const crit = k === 'Mínimo' && minT && st.criticos.has(minT);
+          return `<div><span class="k">${esc(k)}</span><span class="v${crit ? ' t-red' : ''}"${v ? '' : ' style="color:#B5C0BD"'}>${esc(v || '—')}</span></div>`;
+        }).join('');
+      }
+
+      // ---------- Requisições por status ----------
+      const totalReq = rq.total || 0;
+      $('stSub').textContent = totalReq ? `${RV.num(totalReq)} ${totalReq === 1 ? 'requisição' : 'requisições'} no período` : 'Nenhuma requisição no período';
+      if (!totalReq) {
+        $('status').innerHTML = ui.alertBox('info', 'Sem dados para exibir', 'A distribuição aparece quando houver requisições registradas.');
+      } else {
+        const itens = STATUS.filter(([k]) => porStatus[k] !== undefined && (porStatus[k] > 0 || k !== 'ALOCADA'));
+        const pc = (n) => n * 100 / totalReq;
+        $('status').innerHTML = `<div class="status-bar" role="img" aria-label="Distribuição das requisições por status">${itens.map(([k, , c]) => `<span style="width:${pc(porStatus[k] || 0)}%;background:${c}"></span>`).join('')}</div>
+          <div class="stack" style="gap:10px;margin-top:4px">${itens.map(([k, l, c]) => `<div class="cls-row"><i style="--c:${c}"></i><span class="name">${l}</span><b>${RV.num(porStatus[k] || 0)}</b><span class="sub" style="width:34px;text-align:right">${RV.num(pc(porStatus[k] || 0))}%</span></div>`).join('')}</div>`;
+      }
+
+      // ---------- Estoque por tipo (efeito sangue) ----------
+      async function carregarCriticos() {
+        st.criticos = new Set();
+        if (!st.estoqueId) return;
+        try {
+          const r = await Promise.all(RV.TIPOS.map((t) => RV.api(`/api/estoques/${st.estoqueId}/alerta?tipoSanguineo=${t}&hemoComponente=${st.comp}`)));
+          RV.TIPOS.forEach((t, i) => { if (r[i] && r[i].abaixoDoMinimo) st.criticos.add(t); });
+        } catch (e) { /* o alerta é complementar */ }
+      }
+      function renderComps() {
+        $('comps').innerHTML = COMPS.map(([k, l]) => `<button type="button" class="chip${st.comp === k ? ' active' : ''}" data-c="${k}" aria-pressed="${st.comp === k}">${l}</button>`).join('');
+      }
+      function renderGrafico() {
+        const nome = COMPS.find(([k]) => k === st.comp)[1];
+        $('estSub').textContent = `${RV.compLabel(st.comp)} · bolsas disponíveis por tipo ABO/Rh (dados armazenados)`;
+        const cont = Object.fromEntries(RV.TIPOS.map((t) => [t, st.bolsas.filter((b) => b.tipoSanguineo === t && b.hemoComponente === st.comp).length]));
+        const max = Math.max(...Object.values(cont));
+        if (vazio || (!max && !st.criticos.size)) {
+          $('grafico').innerHTML = ui.empty(vazio ? 'Sem registros armazenados' : `Nenhuma bolsa de ${nome} disponível`,
+            vazio ? 'Não existem bolsas, requisições ou entregas registradas. Nenhum valor é exibido para não apresentar números fictícios.'
+                  : `Não há bolsas de ${RV.compLabel(st.comp)} disponíveis e dentro da validade no estoque.`);
+          return;
+        }
+        const passo = [1, 2, 5, 10, 25, 50, 100, 250, 500].find((s) => s * 3 >= max * 1.1) || 1000;
+        const topo = passo * 3, altura = 442; // 520 − 28 − 50
+        const grade = [0, 1, 2, 3].map((i) => `<div class="grid${i ? '' : ' zero'}" style="top:${28 + altura - altura * i / 3}px"><em>${RV.num(passo * i)}</em></div>`).join('');
+        const cols = RV.TIPOS.map((t) => {
+          const n = cont[t], h = Math.round(altura * n / topo), crit = st.criticos.has(t);
+          return `<div class="col" title="${RV.tipoLabel(t)}: ${n} ${n === 1 ? 'bolsa' : 'bolsas'}">
+            <span class="bar-s${n ? '' : ' zero'}" style="height:${h}px"></span>
+            <span class="val${crit ? ' crit' : ''}" style="bottom:${Math.max(h, 3) + 8}px">${RV.num(n)}</span>
+            ${crit ? `<span class="tag-crit" style="bottom:${Math.max(h, 3) + 32}px">Crítico</span>` : ''}
+            <span class="lbl">${RV.tipoLabel(t)}</span></div>`;
+        }).join('');
+        $('grafico').innerHTML = `<div class="estoque-plot" role="img" aria-label="Bolsas de ${esc(RV.compLabel(st.comp))} disponíveis por tipo sanguíneo">${grade}<div class="cols">${cols}</div></div>`;
+      }
+
+      renderComps();
+      await carregarCriticos();
+      renderGrafico(); renderEstatisticas();
+
+      $('comps').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-c]'); if (!b || b.dataset.c === st.comp) return;
+        st.comp = b.dataset.c; renderComps(); await carregarCriticos(); renderGrafico();
+      });
+      $('exportar').addEventListener('click', () => {
+        const L = [];
+        RV.TIPOS.forEach((t) => L.push(['Estoque por tipo (todos os componentes)', RV.tipoLabel(t), pt[t] ?? 0]));
+        linhasEst.forEach(([k, v]) => L.push(['Estatística descritiva', k, v || '—']));
+        STATUS.forEach(([k, l]) => porStatus[k] !== undefined && L.push(['Requisições por status', l, porStatus[k]]));
+        L.push(['Requisições', 'Tempo médio de atendimento (min)', rq.tempoMedioAtendimentoEmMinutos ?? '—']);
+        hemo.baixarCSV(`painel-gerencial-${new Date().toISOString().slice(0, 10)}.csv`, ['Seção', 'Item', 'Valor'], L);
+      });
+    })();
+  </script>
+</body>
+</html>

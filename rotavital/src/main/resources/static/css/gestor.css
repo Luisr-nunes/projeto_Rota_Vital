@@ -58,3 +58,24 @@
 @keyframes pulse { 50% { opacity: .35; } }
 
 @media (max-width: 1280px) { .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- 5.1 · Painel gerencial ---------- */
+.estoque-plot { position: relative; height: 520px; margin-left: 44px; }
+.estoque-plot .grid { position: absolute; left: 0; right: 0; border-top: 1px dashed #DDE3E1; }
+.estoque-plot .grid.zero { border-top-style: solid; }
+.estoque-plot .grid em { position: absolute; left: -44px; top: -8px; width: 34px; text-align: right; font-style: normal; font-size: 12px; font-weight: 500; color: #7A8885; }
+.estoque-plot .cols { position: absolute; inset: 28px 0 50px 0; display: grid; grid-template-columns: repeat(8, 1fr); }
+.estoque-plot .col { position: relative; display: flex; justify-content: center; }
+.estoque-plot .bar-s {
+  position: absolute; bottom: 0; width: 52px; border-radius: 16px 16px 8px 8px; overflow: hidden;
+  background: var(--grad-blood-bar); box-shadow: 0 8px 16px rgba(198, 40, 40, .18);
+}
+.estoque-plot .bar-s::after { content: ""; position: absolute; inset: 0; background: var(--grad-glass-tint); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35); }
+.estoque-plot .bar-s.zero { height: 3px !important; background: var(--line); box-shadow: none; border-radius: 2px; }
+.estoque-plot .bar-s.zero::after { display: none; }
+.estoque-plot .val { position: absolute; font-size: 13px; font-weight: 700; color: var(--ink); }
+.estoque-plot .val.crit { color: var(--red-dark); }
+.estoque-plot .tag-crit { position: absolute; height: 20px; padding: 0 8px; border-radius: 999px; display: inline-flex; align-items: center; background: #FDECEC; color: var(--red-dark); font-size: 11px; font-weight: 600; }
+.estoque-plot .lbl { position: absolute; bottom: -32px; font-size: 14px; font-weight: 700; color: var(--ink); }
+.status-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line-3); }
+.status-bar span { display: block; height: 100%; }

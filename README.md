@@ -77,7 +77,7 @@ O **Rota Vital** é uma aplicação web que:
 |---|---|
 | **Java** | Linguagem principal |
 | **Spring Boot** | Framework web (Controllers, Services, Repositories) |
-| **HTML / CSS / JavaScript** | Interface web estática (`index.html`, `login.html`, `hemocentro/*.html`, `operacao.html` e `indicadores.html`) consumindo a API REST |
+| **HTML / CSS / JavaScript** | Interface web estática (`index.html`, `login.html`, `hemocentro/*.html`, `gestor/*.html`, `operacao.html` e `indicadores.html`) consumindo a API REST |
 | **PostgreSQL / H2** | PostgreSQL no Docker e em produção (Supabase); H2 em memória no desenvolvimento local e nos testes rápidos |
 | **Cucumber + Testcontainers** | Testes de aceitação em Gherkin e integração com PostgreSQL real |
 | [**Jira**](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) | Gestão e controle de atividades do projeto — [quadro do projeto](https://csprj-adsr-3p-e5.atlassian.net/browse/PI2) |
@@ -123,6 +123,7 @@ O **Rota Vital** é uma aplicação web que:
 * **Home (nova interface):** `http://localhost:8080`
 * **Login:** `http://localhost:8080/login.html`
 * **Painel do hemocentro:** `http://localhost:8080/hemocentro/painel.html`
+* **Painel gerencial (gestor):** `http://localhost:8080/gestor/painel.html`
 * **Página operacional anterior (HU04 e HU05):** `http://localhost:8080/operacao.html`
 * **Painel Web de Indicadores:** `http://localhost:8080/indicadores.html`
 * **Health Check (Spring Boot Actuator):** `http://localhost:8080/actuator/health`
@@ -164,7 +165,7 @@ Com a API no ar, abra `http://localhost:8080`. Veja [Como acessar a interface](#
 As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resources/static/` e são servidas pela própria API.
 
 - **Entrar:** em `/login.html`, qualquer e-mail válido e qualquer senha entram como **Profissional do hemocentro**. O backend ainda não tem autenticação: a sessão fica só no navegador.
-- **Outros perfis:** em `/criar-conta.html`, a **Função** escolhida define o perfil. A conta fica salva no navegador (a senha é guardada como hash, nunca em texto). Os perfis de hospital, logística e gestor ainda não têm telas próprias e caem no painel do hemocentro, com um aviso.
+- **Outros perfis:** em `/criar-conta.html`, a **Função** escolhida define o perfil. A conta fica salva no navegador (a senha é guardada como hash, nunca em texto). O perfil **Gestor da rede** abre o painel gerencial. Os perfis de hospital e logística ainda não têm telas próprias e caem no painel do hemocentro, com um aviso.
 - **Dados:** são os dados sintéticos carregados na primeira subida (`HEMOREDE_SEED_ENABLED=true`).
 
 | Tela | Endereço |
@@ -175,6 +176,9 @@ As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resou
 | Consulta de estoque (HU02) | `/hemocentro/estoque.html` |
 | Fila de requisições | `/hemocentro/requisicoes.html` |
 | Alocação por FEFO (HU04) | `/hemocentro/requisicao.html?id=<id>` |
+| Painel gerencial (HU07) | `/gestor/painel.html` |
+| Risco de desabastecimento e descarte | `/gestor/indicadores.html` |
+| Painel de rede | `/gestor/rede.html` |
 
 | Variável (`.env`) | Para quê | Padrão |
 |---|---|---|

@@ -82,7 +82,7 @@
   function kpi(label, value, ic, color, bg, note = '', noteCls = '') {
     const isEmpty = value === null || value === undefined || value === '—';
     return `<div class="kpi"><div class="kpi-top"><span class="chip-ic" style="background:${bg}">${icon(ic, 20, color, 2)}</span>${esc(label)}</div>
-      <div class="kpi-val"><b class="${isEmpty ? 'empty' : ''}">${isEmpty ? '—' : esc(value)}</b>${note ? `<span class="${noteCls}">${esc(note)}</span>` : ''}</div></div>`;
+      <div class="kpi-val"><b class="${isEmpty ? 'kpi-empty' : ''}">${isEmpty ? '—' : esc(value)}</b>${note ? `<span class="${noteCls}">${esc(note)}</span>` : ''}</div></div>`;
   }
   const skeletonRows = (n, h = 44) => Array.from({ length: n }, () => `<div class="skeleton" style="height:${h}px"></div>`).join('');
 
@@ -122,7 +122,7 @@
     },
     gestor: {
       busca: 'Buscar hospital, relatório…',
-      itens: [['Painel', 'chart', null], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'], ['Relatórios', 'file', null], ['Hospitais', 'building', null]]
+      itens: [['Painel', 'chart', 'gestor/painel.html'], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'], ['Relatórios', 'file', null], ['Hospitais', 'building', null]]
     }
   };
   function requireSession() {
