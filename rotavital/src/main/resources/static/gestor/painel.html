@@ -50,11 +50,42 @@
         </section>
       </div>
     </div>
+    <!-- Análises da U2 (risco e descarte, componentes da tela 5.6) -->
+    <div class="page-head" style="margin-top:8px">
+      <div class="page-titles">
+        <h2 class="page-title" style="font-size:22px">Análises da U2</h2>
+        <p class="page-sub">Risco de desabastecimento nos próximos 3 dias e descarte por vencimento nos últimos 7 dias</p>
+      </div>
+      <a class="btn btn-ghost" href="indicadores.html" id="verMais">Ver análise completa</a>
+    </div>
+    <div id="u2"></div>
+    <section class="card" aria-labelledby="t-risco" data-u2>
+      <div class="card-head" style="flex-wrap:wrap">
+        <div><h2 class="card-title" id="t-risco">Risco de desabastecimento por tipo</h2><p class="card-sub">Probabilidade de a demanda (Poisson) superar o estoque disponível no horizonte</p></div>
+        <div class="legend"><span><i style="--c:#34C759"></i>&lt; 10% rotina</span><span><i style="--c:#E0A100"></i>10–50% priorizar coleta</span><span><i style="--c:#E53935"></i>&gt; 50% campanha de doação</span></div>
+      </div>
+      <div id="riscos"></div>
+    </section>
+    <div class="row stack-md" data-u2>
+      <section class="card grow gap-14" aria-labelledby="t-descarte">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-descarte">Taxa de descarte por vencimento</h2><p class="card-sub" id="descSub">Bolsas descartadas ÷ bolsas que venceram no período · últimos 7 dias</p></div>
+          <div class="chips" role="group" aria-label="Hemocomponente do descarte" id="compsDesc"></div>
+        </div>
+        <div id="descarte"></div>
+      </section>
+      <section class="card col-380 gap-14" aria-labelledby="t-res">
+        <div><h2 class="card-title" id="t-res">Resumo do período</h2><p class="card-sub" id="periodo">&nbsp;</p></div>
+        <div id="resumoDesc"></div>
+        <div class="alert a-info" role="note"><span data-info></span><div class="txt"><b>Como o descarte é medido</b><p>Inferido por status Descartada com validade dentro da janela. Grupos sem vencimentos no período não aparecem.</p></div></div>
+      </section>
+    </div>
   </main>
 
   <script src="../js/core.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/hemocentro.js"></script>
+  <script src="../js/gestor.js"></script>
   <script>
     (async function () {
       const { ui, hemo, esc } = RV;
@@ -179,6 +210,40 @@
       renderComps();
       await carregarCriticos();
       renderGrafico(); renderEstatisticas();
+
+
+      // ---------- Análises da U2 (mesmos componentes da tela 5.6) ----------
+      const G = RV.gestor;
+      const u2 = { comp: 'HEMACIAS', descarte: null };
+      document.getElementById('verMais').insertAdjacentHTML('beforeend', ui.icon('arrowR', 18, '#2F5E55', 2));
+      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2.2);
+      if (vazio) {
+        document.querySelectorAll('[data-u2]').forEach((el) => { el.hidden = true; });
+        $('u2').outerHTML = `<section class="card">${ui.empty('Sem dados para as análises', 'Risco e descarte aparecem quando houver bolsas e vencimentos registrados. Nenhum valor é exibido para não apresentar números fictícios.')}</section>`;
+      } else {
+        $('u2').remove();
+        $('riscos').innerHTML = `<div class="risk-grid">${ui.skeletonRows(8, 112)}</div>`;
+        $('descarte').innerHTML = ui.skeletonRows(1, 250);
+        $('compsDesc').innerHTML = G.chipsHTML(u2.comp);
+        const [risco, descarte] = await Promise.allSettled([
+          RV.api('/api/indicadores/risco-desabastecimento?dias=3'),
+          RV.api('/api/indicadores/descarte?dias=7')
+        ]);
+        $('riscos').innerHTML = risco.status === 'fulfilled' ? G.riscoHTML(risco.value) : G.riscoErroHTML(risco.reason);
+        if (descarte.status === 'fulfilled') {
+          u2.descarte = descarte.value;
+          $('periodo').textContent = `${RV.fmtDate(u2.descarte.inicioPeriodo)} a ${RV.fmtDate(u2.descarte.fimPeriodo)}`;
+          $('descSub').textContent = `Bolsas descartadas ÷ bolsas que venceram no período · últimos ${u2.descarte.diasAnalisados} dias`;
+          $('descarte').innerHTML = G.descarteHTML(u2.descarte, u2.comp);
+          $('resumoDesc').innerHTML = G.resumoDescarteHTML(u2.descarte);
+        } else {
+          $('descarte').innerHTML = ui.alertBox('error', 'Não foi possível calcular o descarte', ui.erroMsg(descarte.reason));
+        }
+        $('compsDesc').addEventListener('click', (e) => {
+          const b = e.target.closest('[data-c]'); if (!b || !u2.descarte) return;
+          u2.comp = b.dataset.c; $('compsDesc').innerHTML = G.chipsHTML(u2.comp); $('descarte').innerHTML = G.descarteHTML(u2.descarte, u2.comp);
+        });
+      }
 
       $('comps').addEventListener('click', async (e) => {
         const b = e.target.closest('[data-c]'); if (!b || b.dataset.c === st.comp) return;
