@@ -80,6 +80,38 @@ class ConfirmarEntregaIntegrationTest {
                 bolsaRepository.findById(bolsa.getId()).orElseThrow().getStatus());
     }
 
+    @Test
+    @DisplayName("Dada requisição PENDENTE, quando confirmar a entrega, então responde 409 e nada muda")
+    void deveRecusarEntregaDeRequisicaoNaoAlocada() throws Exception {
+        Requisicao requisicao = requisicaoRepository.save(
+                novaRequisicao(StatusRequisicao.PENDENTE, List.of()));
+
+        mockMvc.perform(patch("/api/v1/requisicoes/{id}/entrega", requisicao.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.erro").value("TransicaoStatusInvalidaException"));
+
+        assertEquals(StatusRequisicao.PENDENTE,
+                requisicaoRepository.findById(requisicao.getId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("Dada requisição já ENTREGUE, quando confirmar de novo, então responde 409")
+    void deveRecusarSegundaConfirmacaoDeEntrega() throws Exception {
+        Bolsa bolsa = bolsaRepository.save(novaBolsa(StatusBolsa.UTILIZADA));
+        Requisicao requisicao = requisicaoRepository.save(
+                novaRequisicao(StatusRequisicao.ENTREGUE, List.of(bolsa)));
+
+        mockMvc.perform(patch("/api/v1/requisicoes/{id}/entrega", requisicao.getId()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("Dada requisição inexistente, quando confirmar a entrega, então responde 404")
+    void deveResponder404ParaRequisicaoInexistente() throws Exception {
+        mockMvc.perform(patch("/api/v1/requisicoes/{id}/entrega", 999_999L))
+                .andExpect(status().isNotFound());
+    }
+
     private Requisicao novaRequisicao(StatusRequisicao status, List<Bolsa> bolsas) {
         Hospital hospital = new Hospital();
         hospital.setNome("Hospital Entrega");
