@@ -9,7 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/rota-vital.css">
   <style>
-    #lista { --cols: 110px minmax(160px, 1fr) 250px 120px 120px 120px 110px; }
+    #lista { --cols: 110px minmax(160px, 1fr) 250px 120px 120px 120px 250px; }
+    #lista .acoes { display: flex; gap: 8px; justify-content: flex-end; }
   </style>
 </head>
 <body class="bg-app">
@@ -52,6 +53,8 @@
       const POR_PAGINA = 8;
       const params = new URLSearchParams(location.search);
       const st = { aba: params.get('status') || 'PENDENTE', prio: '', pagina: 0, tipo: params.get('tipo') || '' };
+      // HU06: só requisições com bolsas já reservadas podem ter a entrega confirmada.
+      const ENTREGAVEIS = ['ALOCADA', 'APROVADA', 'EM_ROTA'];
       const $ = (id) => document.getElementById(id);
       const lista = $('lista'), rodape = $('rodape');
       lista.innerHTML = ui.skeletonRows(6, 52);
@@ -102,7 +105,7 @@
               <span>${ui.prioridade(r.prioridade)}</span>
               <span>${esc(RV.desde(r.dataSolicitacao))}</span>
               <span>${ui.badgeReq(r.status)}</span>
-              <span><a class="btn ${destaque ? 'btn-primary' : 'btn-secondary'} sm" href="requisicao.html?id=${r.id}">${pend ? 'Alocar' : 'Ver'} ${ui.icon('arrowR', 18, destaque ? '#fff' : '#1F2D2A', 2)}</a></span>
+              <span class="acoes">${ENTREGAVEIS.includes(r.status) ? `<button type="button" class="btn btn-primary sm" data-entrega="${r.id}">${ui.icon('truck', 18, '#fff', 2)}Confirmar entrega</button>` : ''}<a class="btn ${destaque ? 'btn-primary' : 'btn-secondary'} sm" href="requisicao.html?id=${r.id}">${pend ? 'Alocar' : 'Ver'} ${ui.icon('arrowR', 18, destaque ? '#fff' : '#1F2D2A', 2)}</a></span>
             </div>`;
           }).join('');
         const nomeAba = ABAS.find((a) => a[0] === st.aba)[1].toLowerCase();
@@ -113,6 +116,30 @@
 
       $('abas').addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (!b) return; st.aba = b.dataset.aba; st.pagina = 0; render(); });
       $('prio').addEventListener('click', (e) => { const b = e.target.closest('[data-prio]'); if (!b) return; st.prio = b.dataset.prio; st.pagina = 0; render(); });
+      // HU06 · Confirmar entrega: PATCH /api/v1/requisicoes/{id}/entrega.
+      lista.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-entrega]'); if (!b) return;
+        const r = reqs.find((x) => x.id === Number(b.dataset.entrega)); if (!r) return;
+        const n = hemo.totalBolsas(r);
+        const m = ui.overlay(`<span class="status-circle">${ui.icon('truck', 30, '#fff', 2.4)}</span>
+          <h2>Confirmar entrega da requisição #${r.id}?</h2>
+          <p>${esc(hemo.hospitalNome(r))} recebeu ${n} ${n === 1 ? 'bolsa' : 'bolsas'} (${esc(hemo.itensTexto(r))}). A requisição passa a <b>Entregue</b> e as bolsas a <b>Utilizada</b>; não é possível desfazer.</p>
+          <div class="modal-actions"><button type="button" class="btn btn-secondary" data-close>Cancelar</button>
+            <button type="button" class="btn btn-primary" id="confirmarEntrega">Confirmar entrega</button></div>`, { cls: 'center w500' });
+        const ok = m.el.querySelector('#confirmarEntrega');
+        ok.onclick = async () => {
+          ok.disabled = true; ok.innerHTML = '<span class="spin"></span>Confirmando…';
+          try {
+            const atualizada = await RV.api(`/api/v1/requisicoes/${r.id}/entrega`, { method: 'PATCH' });
+            Object.assign(r, atualizada || { status: 'ENTREGUE' });
+            m.close(); render();
+            ui.toast('success', `Requisição #${r.id} entregue`, `${n} ${n === 1 ? 'bolsa registrada' : 'bolsas registradas'} como utilizada no ${hemo.hospitalNome(r)}.`);
+          } catch (err) {
+            m.close();
+            ui.toast('error', 'Não foi possível confirmar a entrega', ui.erroMsg(err));
+          }
+        };
+      });
       rodape.addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (!b) return; st.pagina += Number(b.dataset.p); render(); });
       $('exportar').addEventListener('click', () => hemo.baixarCSV(`requisicoes-${new Date().toISOString().slice(0, 10)}.csv`,
         ['Requisição', 'Hospital', 'Itens', 'Prioridade', 'Solicitada em', 'Status'],
