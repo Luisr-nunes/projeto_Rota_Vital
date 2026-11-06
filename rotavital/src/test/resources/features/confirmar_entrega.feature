@@ -1,7 +1,6 @@
 # language: pt
-# Contrato do Jira PI2-127/PI2-181; endpoint ainda ausente na main recebida.
-# Estes cenarios NAO contam como testes aprovados. Ver doc/testes-bdd.md.
-@HU06 @pendente_PI2_181
+# Contrato do Jira PI2-127/PI2-181: PATCH /api/v1/requisicoes/{id}/entrega.
+@HU06
 Funcionalidade: Confirmar recebimento das bolsas pelo hospital
   Como profissional responsavel pela entrega
   Quero confirmar o recebimento das bolsas

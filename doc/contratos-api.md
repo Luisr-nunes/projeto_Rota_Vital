@@ -144,4 +144,15 @@ registro logistico de Rota com motorista e veiculo.
 
 Compatibilidade ainda usa `TipoSanguineo` atraves de
 `CompatibilidadeSanguineaService`; integracao da matriz PI2-165 pendente.
-Ver [testes BDD](testes-bdd.md) para execucao e pendencia da HU06/PI2-181.
+Ver [testes BDD](testes-bdd.md) para execucao.
+
+## HU06 — confirmar entrega (PI2-181)
+
+`PATCH /api/v1/requisicoes/{id}/entrega` (alias legado: `/api/requisicoes/{id}/entrega`).
+Sem corpo.
+
+- 200: a `Requisicao` com `status: ENTREGUE` e as bolsas dos itens com
+  `status: UTILIZADA`.
+- 409: requisicao fora de ALOCADA/APROVADA/EM_ROTA (ex.: PENDENTE ou ja
+  ENTREGUE), ou bolsa associada fora de RESERVADA/EM_TRANSITO. Nada e alterado.
+- 404: requisicao inexistente.

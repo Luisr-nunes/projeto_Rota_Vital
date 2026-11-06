@@ -38,6 +38,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(TransicaoStatusInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> handleTransicaoInvalida(TransicaoStatusInvalidaException ex) {
+        return corpoErro(HttpStatus.CONFLICT, ex);
+    }
+
     @ExceptionHandler(DiasPrevisaoInvalidoException.class)
     public ResponseEntity<Map<String, Object>> handleDiasPrevisao(DiasPrevisaoInvalidoException ex) {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);

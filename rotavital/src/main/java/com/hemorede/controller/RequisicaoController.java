@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/requisicoes")
+@RequestMapping({"/api/v1/requisicoes", "/api/requisicoes"})
 public class RequisicaoController {
 
     private final RequisicaoRepository requisicaoRepository;
@@ -47,5 +47,15 @@ public class RequisicaoController {
     @PostMapping("/{id}/aprovar")
     public ResponseEntity<Requisicao> aprovar(@PathVariable Long id) {
         return ResponseEntity.ok(requisicaoService.aprovar(id));
+    }
+
+    /**
+     * HU06 - Confirma a entrega: requisição ALOCADA/APROVADA/EM_ROTA passa a
+     * ENTREGUE e suas bolsas a UTILIZADA. 409 se a requisição não estiver
+     * alocada; 404 se não existir.
+     */
+    @PatchMapping("/{id}/entrega")
+    public ResponseEntity<Requisicao> confirmarEntrega(@PathVariable Long id) {
+        return ResponseEntity.ok(requisicaoService.confirmarEntrega(id));
     }
 }
