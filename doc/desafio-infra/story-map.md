@@ -47,14 +47,15 @@ integração (com o banco) e um teste de aceitação. A coluna **Situação** mo
 
 | # | Tarefa | Teste | Nível | Situação |
 |---|---|---|---|---|
-| 1 | Transição de status: requisição `ALOCADA` → `ENTREGUE`, bolsas `RESERVADA` → `UTILIZADA` | Teste unitário do service de requisição | Unitário | Pendente (PI2-181, sprint 14e15) |
-| 2 | Impedir entrega de requisição não alocada (409) | Teste unitário do service de requisição | Unitário | Pendente (PI2-181) |
-| 3 | `PATCH /api/v1/requisicoes/{id}/entrega` gravando os status | Teste de integração com o banco | Integração | Pendente (PI2-181) |
-| 4 | Cenários de aceitação da entrega | [`confirmar_entrega.feature`](../../rotavital/src/test/resources/features/confirmar_entrega.feature) | Aceitação | Escrito antes do código (marcado `@pendente_PI2_181`) |
+| 1 | Transição de status: requisição `ALOCADA` → `ENTREGUE`, bolsas `RESERVADA` → `UTILIZADA` | `ConfirmarEntregaIntegrationTest.deveConfirmarEntregaDeRequisicaoAlocada` | Integração | Concluída (PI2-181) |
+| 2 | Impedir entrega de requisição não alocada (409) | `ConfirmarEntregaIntegrationTest` (PENDENTE, já ENTREGUE e 404) | Integração | Concluída (PI2-181) |
+| 3 | `PATCH /api/v1/requisicoes/{id}/entrega` gravando os status | `ConfirmarEntregaIntegrationTest` (MockMvc + H2, confere o banco) | Integração | Concluída (PI2-181) |
+| 4 | Cenários de aceitação da entrega | [`confirmar_entrega.feature`](../../rotavital/src/test/resources/features/confirmar_entrega.feature) | Aceitação | Escritos antes do código; verdes desde a PI2-181 |
 
 A HU06 é o exemplo mais puro de TDD do projeto: os cenários de aceitação foram escritos **antes**
-de existir o endpoint e hoje estão vermelhos de propósito. Eles passam a contar como aprovados
-quando a PI2-181 entrar na main.
+de existir o endpoint e ficaram vermelhos de propósito (marcados `@pendente_PI2_181`). Com a
+PI2-181 os testes de entrega foram commitados primeiro (vermelhos), o endpoint em seguida, e a
+tag foi removida para que os cenários passem a rodar na suíte padrão.
 
 ## 3. Quais regras ganharam teste primeiro e por quê
 

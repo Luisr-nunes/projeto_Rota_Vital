@@ -12,9 +12,9 @@ Nenhum controller ou service de negocio e substituido por mock.
   (422), estoque insuficiente (409), bolsa vencida ignorada, hospital sem rota
   e rollback integral quando um segundo item nao pode ser atendido.
   Conferem tambem status e associacoes persistidos, nao apenas o HTTP.
-- HU06: dois cenarios e respectivos steps preparados, mas BLOQUEADOS pela
-  PI2-181 de Matheus. Estao marcados `@pendente_PI2_181` e excluidos da execucao
-  padrao. Nao sao testes aprovados e a PI2-188 NAO esta totalmente concluida.
+- HU06: dois cenarios (entrega de requisicao alocada e recusa 409 de requisicao
+  pendente). Escritos antes do endpoint; desbloqueados com a PI2-181 e agora
+  executados na suite padrao.
 
 ## Execucao
 
@@ -34,29 +34,23 @@ Relatorios: `rotavital/target/cucumber/relatorio.html` e `relatorio.json`.
 O runner termina em `Test` para ser descoberto pelo Surefire usado por `mvn test`.
 O pipeline deve usar esse comando sem `skipTests`; sua configuracao cabe a PI2-189.
 
-## Desbloquear HU06
+## HU06 — confirmar entrega (PI2-181)
 
-O contrato vigente usado aqui e o Jira PI2-127/PI2-181:
+Contrato do Jira PI2-127/PI2-181, implementado em `RequisicaoService.confirmarEntrega`:
 
-- `PATCH /api/v1/requisicoes/{id}/entrega`;
-- requisicao ALOCADA passa a ENTREGUE; bolsas RESERVADA passam a UTILIZADA;
-- requisicao nao alocada retorna 409.
+- `PATCH /api/v1/requisicoes/{id}/entrega` (alias legado `/api/requisicoes/{id}/entrega`);
+- requisicao ALOCADA (ou APROVADA/EM_ROTA) passa a ENTREGUE; bolsas RESERVADA
+  (ou EM_TRANSITO) passam a UTILIZADA; resposta 200 com a requisicao;
+- requisicao nao alocada (PENDENTE, ENTREGUE, CANCELADA) retorna 409 sem alterar nada;
+- requisicao inexistente retorna 404.
 
-O teste de sucesso espera HTTP 200; confirmar esse detalhe com Matheus, pois o
-ticket nao fixa o codigo de sucesso. O documento antigo de historias usa
-ATENDIDA/ENTREGUE, divergindo do Jira e dos enums atuais. Nao renomear os enums
-sem alinhar esse contrato.
-
-Apos integrar PI2-181, executar:
+Os dois cenarios de `confirmar_entrega.feature` rodam na suite padrao (a tag
+`@pendente_PI2_181` e o filtro de `junit-platform.properties` foram removidos).
+Cobertura complementar em `ConfirmarEntregaIntegrationTest`.
 
 ```bash
 mvn -Dtest=AceitacaoBddTest -Dcucumber.filter.tags=@HU06 test
 ```
-
-Hoje esse comando deve falhar por endpoint ausente (404), explicitando o bloqueio.
-Quando os dois cenarios passarem, remover a tag `@pendente_PI2_181` da feature
-e o filtro de `junit-platform.properties`, executar a suite completa e registrar
-no Jira o commit e a execucao do CI. Nao marcar a tarefa concluida antes disso.
 
 ## Integracao da alocacao — PI2-164
 
@@ -78,5 +72,4 @@ por esta entrega.
 ## Evidencias
 
 Registrar no Jira o link do commit publicado, a execucao verde do CI e o relatorio
-HTML. A quantidade de cenarios HU08 executados e a pendencia HU06 devem aparecer
-separadamente. Teste local verde nao comprova deploy nem execucao verde do CI.
+HTML. A quantidade de cenarios HU08 e HU06 executados deve aparecer separadamente. Teste local verde nao comprova deploy nem execucao verde do CI.

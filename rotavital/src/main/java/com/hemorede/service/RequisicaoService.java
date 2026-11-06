@@ -1,9 +1,12 @@
 package com.hemorede.service;
 
+import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.StatusRequisicao;
 import com.hemorede.exception.EstoqueInsuficienteException;
 import com.hemorede.exception.EstoqueCompativelInsuficienteException;
 import com.hemorede.exception.NenhumaBolsaCompativelException;
+import com.hemorede.exception.TransicaoStatusInvalidaException;
+import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Hospital;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
@@ -15,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Regra de negócio 8: uma requisição só é aprovada quando todos os seus
@@ -23,6 +28,14 @@ import java.util.List;
  */
 @Service
 public class RequisicaoService {
+
+    /** Status a partir dos quais a entrega pode ser confirmada (bolsas já reservadas). */
+    private static final Set<StatusRequisicao> PRONTAS_PARA_ENTREGA =
+            EnumSet.of(StatusRequisicao.ALOCADA, StatusRequisicao.APROVADA, StatusRequisicao.EM_ROTA);
+
+    /** Status de bolsa que podem passar a UTILIZADA na entrega. */
+    private static final Set<StatusBolsa> BOLSAS_ENTREGAVEIS =
+            EnumSet.of(StatusBolsa.RESERVADA, StatusBolsa.EM_TRANSITO);
 
     private final RequisicaoRepository requisicaoRepository;
     private final HospitalRepository hospitalRepository;
@@ -88,6 +101,39 @@ public class RequisicaoService {
         }
 
         requisicao.setStatus(StatusRequisicao.APROVADA);
+        return requisicaoRepository.save(requisicao);
+    }
+
+    /**
+     * HU06 - Confirmar entrega. Só vale para requisição com bolsas já
+     * reservadas (ALOCADA, APROVADA ou EM_ROTA): ela passa a ENTREGUE e cada
+     * bolsa RESERVADA/EM_TRANSITO passa a UTILIZADA. Qualquer outro status
+     * (PENDENTE, ENTREGUE, CANCELADA) é recusado sem alterar nada.
+     *
+     * @throws IllegalArgumentException se a requisição não existir (404)
+     * @throws TransicaoStatusInvalidaException se a transição não for permitida (409)
+     */
+    @Transactional
+    public Requisicao confirmarEntrega(Long requisicaoId) {
+        Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
+                .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + requisicaoId));
+
+        if (!PRONTAS_PARA_ENTREGA.contains(requisicao.getStatus())) {
+            throw new TransicaoStatusInvalidaException("Requisição " + requisicaoId + " está "
+                    + requisicao.getStatus() + "; só é possível confirmar a entrega de requisição alocada");
+        }
+
+        for (ItemRequisicao item : requisicao.getItens()) {
+            for (Bolsa bolsa : item.getBolsasAlocadas()) {
+                if (!BOLSAS_ENTREGAVEIS.contains(bolsa.getStatus())) {
+                    throw new TransicaoStatusInvalidaException("Bolsa " + bolsa.getId() + " está "
+                            + bolsa.getStatus() + " e não pode ser entregue");
+                }
+                bolsa.setStatus(StatusBolsa.UTILIZADA);
+            }
+        }
+
+        requisicao.setStatus(StatusRequisicao.ENTREGUE);
         return requisicaoRepository.save(requisicao);
     }
 }
