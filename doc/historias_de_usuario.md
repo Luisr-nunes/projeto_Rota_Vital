@@ -139,7 +139,7 @@ Cenário: Não existir caminho para o hospital
 
 - A entrega só pode ser confirmada quando existir uma rota e houver bolsas associadas à requisição.
 - O sistema deve registrar a data e a hora da entrega.
-- Ao confirmar a entrega, a requisição deve mudar para `ATENDIDA` e as bolsas para `ENTREGUE`.
+- Ao confirmar a entrega, a requisição deve mudar para `ENTREGUE` e as bolsas para `UTILIZADA`, saindo do estoque disponível.
 
 ### Cenários BDD
 
@@ -148,8 +148,8 @@ Cenário: Confirmar uma entrega realizada
   Dado que a requisição possui bolsas associadas e uma rota registrada
   Quando o operador confirmar a entrega ao hospital
   Então o sistema deve registrar a data e a hora da entrega
-  E deve alterar a requisição para atendida
-  E deve alterar as bolsas para entregues
+  E deve alterar a requisição para entregue
+  E deve alterar as bolsas para utilizadas
 
 Cenário: Impedir confirmação sem bolsas associadas
   Dado que a requisição não possui bolsas associadas
@@ -183,3 +183,43 @@ Cenário: Exibir painel sem dados
   Então o sistema deve apresentar um estado vazio
   E não deve exibir valores fictícios
 ```
+
+## HU08 - Alocar bolsa compatível (ABO/Rh) por FEFO
+
+> “Como profissional do hemocentro, quero reservar para uma requisição as bolsas compatíveis com o receptor que vencem primeiro e já calcular a rota até o hospital, para atender no tempo certo e reduzir o descarte por vencimento.”
+
+### Regras de negócio
+
+- Só podem ser reservadas bolsas compatíveis com o tipo do receptor, segundo a matriz ABO/Rh (8 receptores × 8 doadores).
+- Entre as bolsas compatíveis, disponíveis e dentro da validade, é reservada a que vence primeiro (FEFO), mesmo que seja de outro tipo compatível.
+- Bolsas vencidas nunca são reservadas.
+- A alocação é tudo ou nada: se faltar bolsa para qualquer item, ou se não houver rota até o hospital, nenhuma bolsa é reservada e a requisição continua `PENDENTE`.
+- Ao alocar, a requisição muda para `ALOCADA`, as bolsas para `RESERVADA`, e a resposta traz a rota de menor custo (Dijkstra) e o custo total.
+
+### Cenários BDD
+
+```gherkin
+Cenário: Reservar a bolsa compatível que vence primeiro
+  Dado uma requisição pendente de 1 bolsa para receptor A+
+  E uma bolsa A+ que vence em 10 dias e uma bolsa O− que vence em 2 dias
+  Quando o profissional solicitar a alocação
+  Então o sistema deve reservar a bolsa O−
+  E deve manter a bolsa A+ disponível
+  E deve informar a rota e o custo até o hospital
+
+Cenário: Impedir alocação com estoque incompatível
+  Dado uma requisição pendente de 1 bolsa para receptor O−
+  E somente uma bolsa AB+ no estoque
+  Quando o profissional solicitar a alocação
+  Então o sistema não deve reservar nenhuma bolsa
+  E deve informar que não há bolsa compatível
+
+Cenário: Impedir reserva parcial por falta de estoque
+  Dado uma requisição pendente de 2 bolsas para receptor A+
+  E somente 1 bolsa compatível no estoque
+  Quando o profissional solicitar a alocação
+  Então o sistema não deve reservar nenhuma bolsa
+  E deve informar que são necessárias 2 bolsas e há 1 disponível
+```
+
+Os seis cenários automatizados estão em [`alocar_bolsa.feature`](../rotavital/src/test/resources/features/alocar_bolsa.feature).
