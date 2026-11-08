@@ -520,13 +520,13 @@ Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/hi
 
 - [x] Mais **3 histórias implementadas** (**HU02**, **HU08** e **HU06**, lendo e gravando no banco)
 - [x] Commits frequentes (mínimo semanais)
-- [ ] **Issue/Bug Tracker atualizado (GitHub Issues)**
+- [x] **Issue/Bug Tracker atualizado (GitHub Issues)**
   - *Print do Bug Tracker:*
 
     ![GitHub Issues — Entrega 04](doc/img/github_issues_entrega04.png)
 
-- [ ] **Screencast do sistema** — HU02, HU08 e HU06 rodando, com legenda ou áudio ([roteiro](doc/apresentacao/roteiro-demo.md))
-  - [Assistir no YouTube](#) <!-- inserir link -->
+- [x] **Screencast do sistema** — HU02, HU08 e HU06 rodando, com legenda embutida ([roteiro](doc/apresentacao/roteiro-demo.md))
+  - [Assistir no YouTube](https://youtu.be/L05KJ62HXGg)
 - [ ] **Screencast do código** — Explicação do código de HU02, HU08 e HU06, com legenda ou áudio
   - [Assistir no YouTube](#) <!-- inserir link -->
 
