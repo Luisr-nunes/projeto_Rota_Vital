@@ -548,7 +548,7 @@ Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/hi
 - [x] **Screencast do sistema** — HU02, HU08 e HU06 rodando, mais o painel gerencial (HU07), com legenda embutida ([roteiro](doc/apresentacao/roteiro-demo.md))
   - [Assistir no YouTube](https://www.youtube.com/watch?v=aqQ9OXByu1w)
 - [ ] **Screencast do código** — Explicação do código de HU02, HU08 e HU06, com legenda ou áudio
-  - [Assistir no YouTube](#) <!-- inserir link -->
+  - [Assistir no YouTube](https://youtu.be/elh8MVJKxs4) <!-- inserir link -->
 
 ---
 
