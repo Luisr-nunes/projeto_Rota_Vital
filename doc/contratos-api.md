@@ -10,7 +10,7 @@ Endpoints implementados no código (`rotavital/src/main/java/com/hemorede/contro
 |--------|---------|-----------|------------------|--------|
 | `POST` | `/api/doacoes` | Registra a doação e a bolsa coletada, na mesma transação (HU01). | `Bolsa` criada (id, tipo, hemocomponente, datas, status `DISPONIVEL`); cabeçalho `Location: /api/doacoes/{id}` | `201`, `400`, `404`, `422` |
 | `GET` | `/api/estoques` | Lista os estoques dos hemocentros. | `List<Estoque>` | `200` |
-| `GET` | `/api/estoques/bolsas?tipo=&componente=` | Bolsas `DISPONIVEL` e não vencidas do tipo/hemocomponente, ordenadas por validade (FEFO) — HU02. | `{bolsas:[...], mensagem}` | `200`, `400` |
+| `GET` | `/api/v1/estoques/bolsas?tipo=&componente=&venceEmDias=` | Bolsas `DISPONIVEL` e não vencidas do tipo/hemocomponente, ordenadas por validade (FEFO) — HU02. `venceEmDias` é opcional: mantém só as bolsas que vencem em até N dias (inclusive, `0` = hoje). O caminho antigo `/api/estoques/bolsas` continua como alias. | `{bolsas:[...], mensagem}` | `200`, `400` |
 | `GET` | `/api/estoques/{id}/alerta?tipoSanguineo=&hemoComponente=` | Informa se o estoque está abaixo do mínimo para o tipo/hemocomponente. | `{"abaixoDoMinimo": true\|false}` | `200`, `404` |
 | `GET` | `/api/hospitais` | Lista os hospitais. | `List<Hospital>` | `200` |
 | `GET` | `/api/hospitais/{id}` | Detalha um hospital. | `Hospital` | `200`, `404` |

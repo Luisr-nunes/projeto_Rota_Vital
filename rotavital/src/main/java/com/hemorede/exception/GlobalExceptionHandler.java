@@ -48,6 +48,11 @@ public class GlobalExceptionHandler {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
     }
 
+    @ExceptionHandler(FiltroValidadeInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handleFiltroValidade(FiltroValidadeInvalidoException ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
     @ExceptionHandler(ModeloProbabilisticoIndisponivelException.class)
     public ResponseEntity<Map<String, Object>> handleModeloPendente(ModeloProbabilisticoIndisponivelException ex) {
         return corpoErro(HttpStatus.SERVICE_UNAVAILABLE, ex);

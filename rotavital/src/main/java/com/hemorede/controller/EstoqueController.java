@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/estoques")
+@RequestMapping({"/api/v1/estoques", "/api/estoques"})
 public class EstoqueController {
 
     private final EstoqueRepository estoqueRepository;
@@ -53,11 +53,19 @@ public class EstoqueController {
      * Um {@code tipo} ou {@code componente} inválido (fora do enum) resulta
      * em 400, tratado pelo {@code GlobalExceptionHandler}.
      * </p>
+     * <p>
+     * Caminho canônico: {@code GET /api/v1/estoques/bolsas} (PI2-182). O
+     * caminho antigo {@code /api/estoques/bolsas} segue respondendo como alias.
+     * O parâmetro opcional {@code venceEmDias} mantém só as bolsas que vencem
+     * em até N dias (inclusive, contando hoje); negativo ou não numérico
+     * resulta em 400.
+     * </p>
      */
     @GetMapping("/bolsas")
     public ResponseEntity<ConsultaEstoqueResponse> consultarBolsas(@RequestParam TipoSanguineo tipo,
-                                                                     @RequestParam HemoComponente componente) {
-        List<Bolsa> bolsas = estoqueService.consultarBolsasDisponiveis(tipo, componente);
+                                                                     @RequestParam HemoComponente componente,
+                                                                     @RequestParam(required = false) Integer venceEmDias) {
+        List<Bolsa> bolsas = estoqueService.consultarBolsasDisponiveis(tipo, componente, venceEmDias);
         List<BolsaDisponivelResponse> itens = bolsas.stream()
                 .map(BolsaDisponivelResponse::fromEntidade)
                 .toList();

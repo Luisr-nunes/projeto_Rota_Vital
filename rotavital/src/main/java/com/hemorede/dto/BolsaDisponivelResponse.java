@@ -8,7 +8,7 @@ import com.hemorede.domain.model.Bolsa;
 
 /**
  * Representação enxuta de uma bolsa disponível, usada na resposta de
- * {@code GET /api/estoques/bolsas} (HU02). Evita expor as associações JPA
+ * {@code GET /api/v1/estoques/bolsas} (HU02). Evita expor as associações JPA
  * de {@link Bolsa} (doador, estoque) que não interessam a esta consulta.
  *
  * @param id             Identificador da bolsa.
