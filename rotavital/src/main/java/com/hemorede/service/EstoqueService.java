@@ -1,5 +1,6 @@
 package com.hemorede.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
+import com.hemorede.exception.FiltroValidadeInvalidoException;
 import com.hemorede.repository.BolsaRepository;
 
 /**
@@ -79,6 +81,31 @@ public class EstoqueService {
                         hemoComponente, tipoSanguineo, StatusBolsa.DISPONIVEL)
                 .forEach(indice::adicionarBolsa);
         return indice.consultarEstoque(tipoSanguineo).disponiveisOrdenadas();
+    }
+
+    /**
+     * HU02 - Consultar estoque com filtro opcional de validade. Parte da lista
+     * FEFO de {@link #consultarBolsasDisponiveis(TipoSanguineo, HemoComponente)}
+     * (já sem vencidas) e, quando {@code venceEmDias} é informado, mantém só as
+     * bolsas que vencem em até essa quantidade de dias a partir de hoje (limite
+     * inclusivo; {@code 0} = vencem hoje). A ordem FEFO é preservada.
+     *
+     * @param venceEmDias janela em dias; {@code null} desliga o filtro.
+     * @throws FiltroValidadeInvalidoException se {@code venceEmDias} for negativo.
+     */
+    public List<Bolsa> consultarBolsasDisponiveis(TipoSanguineo tipoSanguineo, HemoComponente hemoComponente,
+                                                   Integer venceEmDias) {
+        if (venceEmDias != null && venceEmDias < 0) {
+            throw new FiltroValidadeInvalidoException("venceEmDias não pode ser negativo: " + venceEmDias);
+        }
+        List<Bolsa> disponiveis = consultarBolsasDisponiveis(tipoSanguineo, hemoComponente);
+        if (venceEmDias == null) {
+            return disponiveis;
+        }
+        LocalDate dataLimite = LocalDate.now().plusDays(venceEmDias);
+        return disponiveis.stream()
+                .filter(b -> !b.getDataValidade().isAfter(dataLimite))
+                .toList();
     }
 
     /**
