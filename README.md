@@ -450,17 +450,84 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 #### Histórias Implementadas
 
-> *Adicionar aqui a descrição (formato POST-IT) das histórias implementadas nesta entrega.*
+As três histórias desta entrega fecham o fluxo da bolsa: o hemocentro consulta o estoque (HU02), reserva as bolsas compatíveis que vencem primeiro e calcula a rota (HU08) e o hospital confirma o recebimento (HU06). Todas leem e gravam no PostgreSQL.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ POST-IT 1 — HU02: Consultar estoque                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COMO: Profissional do hemocentro                                            │
+│ QUERO: Consultar o estoque por tipo sanguíneo, hemocomponente e validade    │
+│ PARA QUE: Saber quais bolsas estão disponíveis para atendimento             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
+│  • Só aparecem bolsas DISPONIVEL e dentro da validade.                      │
+│  • Resultado ordenado pela validade mais próxima (FilaFEFO).                │
+│  • Filtro sem resultado: HTTP 200, lista vazia e mensagem na tela.          │
+│  • Filtro opcional venceEmDias: só as que vencem em até N dias.             │
+│  • Tipo, componente ou venceEmDias inválido: HTTP 400.                      │
+│  • A tela mostra o resumo por tipo e marca as bolsas que vencem em breve.   │
+│ Módulos: EstoqueController (GET /api/v1/estoques/bolsas),                   │
+│             EstoqueService, IndiceEstoque, FilaFEFO,                        │
+│             hemocentro/estoque.html.                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ POST-IT 2 — HU08: Alocar bolsa compatível (ABO/Rh) por FEFO                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COMO: Profissional do hemocentro                                            │
+│ QUERO: Reservar bolsas compatíveis que vencem primeiro e calcular a rota    │
+│ PARA QUE: Atender o hospital no tempo certo e com menor descarte            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
+│  • Só reserva bolsas compatíveis com o receptor (matriz ABO/Rh 8x8).        │
+│  • Entre as compatíveis, reserva a que vence primeiro, mesmo de outro tipo. │
+│  • Bolsas vencidas são ignoradas.                                           │
+│  • Sem bolsa compatível ou sem rota até o hospital: HTTP 422.               │
+│  • Quantidade insuficiente: HTTP 409; nada é reservado (tudo ou nada).      │
+│  • Sucesso: requisição ALOCADA, bolsas RESERVADA, rota e custo (Dijkstra).  │
+│ Módulos: AlocacaoController (POST /api/v1/requisicoes/{id}/alocacao),       │
+│             AlocacaoService, MatrizCompatibilidade, RoteirizacaoService,    │
+│             GrafoRotas, alocar_bolsa.feature (6 cenários BDD).              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ POST-IT 3 — HU06: Confirmar entrega ao hospital                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COMO: Profissional responsável pela entrega                                 │
+│ QUERO: Confirmar que as bolsas reservadas chegaram ao hospital              │
+│ PARA QUE: Concluir a requisição e tirar as bolsas do estoque                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
+│  • Só confirma requisição já alocada (ALOCADA, APROVADA ou EM_ROTA).        │
+│  • Requisição pendente ou já entregue: HTTP 409, nada é alterado.           │
+│  • Requisição inexistente: HTTP 404.                                        │
+│  • Sucesso: requisição ENTREGUE e bolsas UTILIZADA, na mesma transação.     │
+│  • Botão Confirmar entrega na lista de requisições aprovadas.               │
+│ Módulos: RequisicaoController (PATCH /api/v1/requisicoes/{id}/entrega),     │
+│             RequisicaoService, confirmar_entrega.feature,                   │
+│             hemocentro/requisicoes.html.                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/historias_de_usuario.md). Testes de aceitação em Gherkin: [`alocar_bolsa.feature`](rotavital/src/test/resources/features/alocar_bolsa.feature) (HU08) e [`confirmar_entrega.feature`](rotavital/src/test/resources/features/confirmar_entrega.feature) (HU06).
 
 #### Artefatos
 
-- [ ] Implementação das **histórias restantes** (mínimo de 2)
-- [ ] Commits frequentes (mínimo semanais)
-- [ ] Issue/Bug Tracker atualizado
-  - *Print do Bug Tracker:* <!-- inserir screenshot -->
-- [ ] **Screencast do sistema** — Ênfase nas novas histórias (com áudio ou legenda)
+- [x] Mais **3 histórias implementadas** (**HU02**, **HU08** e **HU06**, lendo e gravando no banco)
+- [x] Commits frequentes (mínimo semanais)
+- [ ] **Issue/Bug Tracker atualizado (GitHub Issues)**
+  - *Print do Bug Tracker:*
+
+    ![GitHub Issues — Entrega 04](doc/img/github_issues_entrega04.png)
+
+- [ ] **Screencast do sistema** — HU02, HU08 e HU06 rodando, com legenda ou áudio ([roteiro](doc/apresentacao/roteiro-demo.md))
   - [Assistir no YouTube](#) <!-- inserir link -->
-- [ ] **Screencast do código** — Explicação do código das histórias implementadas (com áudio ou legenda)
+- [ ] **Screencast do código** — Explicação do código de HU02, HU08 e HU06, com legenda ou áudio
   - [Assistir no YouTube](#) <!-- inserir link -->
 
 ---
