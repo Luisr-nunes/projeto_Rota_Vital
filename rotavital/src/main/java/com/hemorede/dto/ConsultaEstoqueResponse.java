@@ -3,7 +3,7 @@ package com.hemorede.dto;
 import java.util.List;
 
 /**
- * Resposta de {@code GET /api/estoques/bolsas}: as bolsas disponíveis para o
+ * Resposta de {@code GET /api/v1/estoques/bolsas}: as bolsas disponíveis para o
  * filtro informado (tipo sanguíneo + hemocomponente), já ordenadas pela
  * validade mais próxima (FEFO).
  * <p>
