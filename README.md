@@ -450,7 +450,7 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 #### Histórias Implementadas
 
-As três histórias desta entrega fecham o fluxo da bolsa: o hemocentro consulta o estoque (HU02), reserva as bolsas compatíveis que vencem primeiro e calcula a rota (HU08) e o hospital confirma o recebimento (HU06). Todas leem e gravam no PostgreSQL.
+As três histórias desta entrega fecham o fluxo da bolsa: o hemocentro consulta o estoque (HU02), reserva as bolsas compatíveis que vencem primeiro e calcula a rota (HU08) e o hospital confirma o recebimento (HU06). Todas leem e gravam no PostgreSQL. O painel gerencial (HU07) acompanha essa operação com indicadores calculados a partir dos mesmos dados.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -514,11 +514,31 @@ As três histórias desta entrega fecham o fluxo da bolsa: o hemocentro consulta
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ POST-IT 4 — HU07: Visualizar painel gerencial                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COMO: Gestor da rede simulada                                               │
+│ QUERO: Ver indicadores de estoque, requisições e entregas                   │
+│ PARA QUE: Acompanhar a operação e decidir com base nos dados                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CRITÉRIOS DE ACEITE & REGRAS DE NEGÓCIO:                                    │
+│  • Indicadores calculados a partir dos dados armazenados no banco.          │
+│  • Estoque por tipo sanguíneo, requisições pendentes e entregas.            │
+│  • Estatística descritiva: média, mediana, mínimo, máximo e desvio.         │
+│  • Aviso visível de que os dados são sintéticos.                            │
+│  • Sem registros: estado vazio, sem valores fictícios.                      │
+│  • Análises da U2 no mesmo painel: risco e taxa de descarte.                │
+│ Módulos: IndicadoresController (GET /api/indicadores),                      │
+│             IndicadoresService, gestor/painel.html, js/gestor.js.           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/historias_de_usuario.md). Testes de aceitação em Gherkin: [`alocar_bolsa.feature`](rotavital/src/test/resources/features/alocar_bolsa.feature) (HU08) e [`confirmar_entrega.feature`](rotavital/src/test/resources/features/confirmar_entrega.feature) (HU06).
 
 #### Artefatos
 
-- [x] Mais **3 histórias implementadas** (**HU02**, **HU08** e **HU06**, lendo e gravando no banco)
+- [x] Mais **3 histórias implementadas** (**HU02**, **HU08** e **HU06**, lendo e gravando no banco), além do painel gerencial (**HU07**)
 - [x] Commits frequentes (mínimo semanais)
 - [x] **Issue/Bug Tracker atualizado (GitHub Issues)**
   - *Print do Bug Tracker:*
