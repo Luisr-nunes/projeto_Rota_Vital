@@ -552,6 +552,18 @@ Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/hi
 
 ---
 
+### Entrega U2
+
+**Fechamento integrado da Unidade 2 — Sprint W14e15 (02/11 a 13/11/2026)**
+
+#### Evidências por disciplina
+
+| Disciplina | Evidência |
+|------------|-----------|
+| **SO** | [Arquitetura em três cenários (baixo, moderado e alto) com diagramas, portas e orçamento](doc/so-u2-arquitetura-cenarios.md) (PI2-190), [agregador sincronizado e teste de condição de corrida](doc/so-u2-sincronizacao.md) e [pipeline com deploy contínuo](doc/pipeline-deploy.md) |
+
+---
+
 ### Apresentação Final
 
 **Data:** 09/11 a 13/11/2026 (dia da aula)
@@ -568,6 +580,13 @@ Resumo de até **8 minutos** abordando:
 | **Demonstração** | Demonstração rápida do produto funcionando |
 
 > **Todos os membros do grupo devem estar presentes na apresentação.**
+
+#### Material da apresentação
+
+- [x] **Roteiro com tempo e fala de cada integrante** — [`doc/apresentacao/roteiro-apresentacao-final.md`](doc/apresentacao/roteiro-apresentacao-final.md)
+- [x] **Slides** (12 slides, com notas de quem fala em cada um) — [PDF](doc/apresentacao/slides-apresentacao-final.pdf) · [PowerPoint](doc/apresentacao/slides-apresentacao-final.pptx)
+- [x] **Vídeo de demonstração** (HU03 → HU02 → HU08 → HU05 → HU06) — [roteiro](doc/apresentacao/roteiro-demo.md) · [Assistir no YouTube](https://www.youtube.com/watch?v=aqQ9OXByu1w)
+- [x] **Resumo da sprint W14e15** com entregas e burndown — [`doc/resumo-sprint-W14e15.md`](doc/resumo-sprint-W14e15.md)
 
 ---
 
