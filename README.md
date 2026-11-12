@@ -581,6 +581,13 @@ Resumo de até **8 minutos** abordando:
 
 > **Todos os membros do grupo devem estar presentes na apresentação.**
 
+#### Material da apresentação
+
+- [x] **Roteiro com tempo e fala de cada integrante** — [`doc/apresentacao/roteiro-apresentacao-final.md`](doc/apresentacao/roteiro-apresentacao-final.md)
+- [x] **Slides** (12 slides, com notas de quem fala em cada um) — [PDF](doc/apresentacao/slides-apresentacao-final.pdf) · [PowerPoint](doc/apresentacao/slides-apresentacao-final.pptx)
+- [x] **Vídeo de demonstração** (HU03 → HU02 → HU08 → HU05 → HU06) — [roteiro](doc/apresentacao/roteiro-demo.md) · [Assistir no YouTube](https://www.youtube.com/watch?v=aqQ9OXByu1w)
+- [x] **Resumo da sprint W14e15** com entregas e burndown — [`doc/resumo-sprint-W14e15.md`](doc/resumo-sprint-W14e15.md)
+
 ---
 
 ## Integrantes
