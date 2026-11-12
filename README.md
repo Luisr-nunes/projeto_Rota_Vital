@@ -552,6 +552,18 @@ Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/hi
 
 ---
 
+### Entrega U2
+
+**Fechamento integrado da Unidade 2 — Sprint W14e15 (02/11 a 13/11/2026)**
+
+#### Evidências por disciplina
+
+| Disciplina | Evidência |
+|------------|-----------|
+| **SO** | [Arquitetura em três cenários (baixo, moderado e alto) com diagramas, portas e orçamento](doc/so-u2-arquitetura-cenarios.md) (PI2-190), [agregador sincronizado e teste de condição de corrida](doc/so-u2-sincronizacao.md) e [pipeline com deploy contínuo](doc/pipeline-deploy.md) |
+
+---
+
 ### Apresentação Final
 
 **Data:** 09/11 a 13/11/2026 (dia da aula)
