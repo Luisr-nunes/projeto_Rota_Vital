@@ -22,6 +22,9 @@ Endpoints implementados no código (`rotavital/src/main/java/com/hemorede/contro
 | `GET` | `/api/rotas/proximas-requisicoes` | Lista as requisições prontas para roteirizar, por prioridade. | `List<Requisicao>` | `200` |
 | `GET` | `/api/rotas/veiculo-compativel/{requisicaoId}` | Seleciona o veículo com refrigeração compatível com a requisição. | `Veiculo` | `200`, `404`, `422` |
 | `GET` | `/api/indicadores?diasProximoVencimento=5` | Indicadores estatísticos de estoque, vencimento e requisições (HU07). | `IndicadoresResponse` | `200` |
+| `GET` | `/api/v1/indicadores/previsao-demanda?dias=7` | Prevê demanda diária por tipo usando a média móvel das solicitações de hemácias dos últimos sete dias; tipos sem histórico usam o lambda de referência da PI2-177. Horizonte aceito: 1 a 7 dias. | `PrevisaoDemandaResponse` | `200`, `400`, `503` |
+| `GET` | `/api/v1/indicadores/risco-desabastecimento?dias=3` | Calcula o risco de falta com a previsão média móvel como lambda diário; usa o parâmetro de referência da PI2-177 para tipos sem histórico recente. | `RiscoDesabastecimentoResponse` | `200`, `400`, `503` |
+| `GET` | `/api/v1/indicadores/descarte?dias=7` | Calcula a taxa observada de descarte por vencimento na janela informada. | `TaxaDescarteResponse` | `200`, `400` |
 | `GET` | `/api/v1/relatorios/historico?tamanho=&modo=&threads=` | Relatório histórico processado de forma sequencial ou paralela (entrega de SO). | `RelatorioHistoricoResponse` | `200`, `404` |
 | `GET` | `/actuator/health` | Verificação de saúde para o monitoramento do deploy. | `{"status":"UP"}` | `200`, `503` |
 | `GET` | `/api/telemetria/temperatura?veiculoId=` | Última leitura (simulada) de temperatura do veículo, com `status` `OK`/`ALERTA`. Contrato em `doc/telemetria.md`. | `{veiculoId, temperaturaC, timestamp, status}` | `200`, `400`, `404` |
@@ -54,6 +57,29 @@ Validações (Bean Validation): todos os campos obrigatórios; `dataColeta` no p
 ```
 
 `tempoEstimadoMinutos = distanciaTotalKm / velocidade média (60 km/h) × 60`.
+
+**`GET /api/v1/indicadores/previsao-demanda?dias=7`** — resposta resumida:
+
+```json
+{
+  "diasPrevistos": 7,
+  "janelaHistoricaDias": 7,
+  "inicioHistorico": "2026-11-07",
+  "fimHistorico": "2026-11-13",
+  "calculadaEm": "2026-11-13T12:00:00",
+  "previsoes": [
+    {
+      "tipoSanguineo": "O_POS",
+      "bolsasObservadasNaJanela": 3,
+      "lambdaDiario": 0.43,
+      "demandaPrevistaNoHorizonte": 3.0,
+      "origem": "MEDIA_MOVEL_7_DIAS"
+    }
+  ]
+}
+```
+
+`lambdaDiario` é a quantidade de bolsas de hemácias observadas no tipo dividida por sete, incluindo dias sem solicitação no denominador. `demandaPrevistaNoHorizonte` é `lambdaDiario × dias`. Se um tipo não tiver solicitações na janela, a resposta identifica o uso do lambda de referência PI2-177 em `origem`; isso evita interpretar ausência de histórico como demanda zero.
 
 ### 1.2 Formato de erro e códigos HTTP
 

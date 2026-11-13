@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import com.hemorede.dto.IndicadoresResponse;
+import com.hemorede.dto.PrevisaoDemandaResponse;
 import com.hemorede.dto.RiscoDesabastecimentoResponse;
 import com.hemorede.dto.TaxaDescarteResponse;
 import com.hemorede.service.IndicadoresService;
@@ -29,6 +30,12 @@ public class IndicadoresController {
     public TaxaDescarteResponse consultarTaxaDescarte(
             @RequestParam(defaultValue = "7") int dias) {
         return indicadoresService.calcularTaxaDescarte(dias);
+    }
+
+    @GetMapping("/previsao-demanda")
+    public PrevisaoDemandaResponse consultarPrevisaoDemanda(
+            @RequestParam(defaultValue = "7") int dias) {
+        return indicadoresService.calcularPrevisaoDemanda(dias);
     }
 
     @GetMapping("/risco-desabastecimento")
