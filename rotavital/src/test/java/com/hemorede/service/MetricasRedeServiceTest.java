@@ -35,7 +35,7 @@ class MetricasRedeServiceTest {
     @Test
     @DisplayName("Sem tráfego → total zero e latências nulas, sem inventar valores")
     void semTrafego() {
-        MetricasRedeResponse r = new MetricasRedeService(new SimpleMeterRegistry()).calcular();
+        MetricasRedeResponse r = new MetricasRedeService(new SimpleMeterRegistry(), new MetricasTelemetria()).calcular();
 
         assertEquals(0, r.totalRequisicoes());
         assertNull(r.latenciaP50Ms());
@@ -53,7 +53,7 @@ class MetricasRedeServiceTest {
         registrar(registry, "/api/hospitais/{id}", "404", 10, 5);
         registrar(registry, "/api/rotas", "500", 1000, 5);
 
-        MetricasRedeResponse r = new MetricasRedeService(registry).calcular();
+        MetricasRedeResponse r = new MetricasRedeService(registry, new MetricasTelemetria()).calcular();
 
         assertEquals(100, r.totalRequisicoes());
         assertEquals(5, r.erros4xx());
@@ -71,7 +71,7 @@ class MetricasRedeServiceTest {
         registrar(registry, "/api/estoque", "200", 10, 90);
         registrar(registry, "/api/rotas", "200", 1000, 10);
 
-        MetricasRedeResponse r = new MetricasRedeService(registry).calcular();
+        MetricasRedeResponse r = new MetricasRedeService(registry, new MetricasTelemetria()).calcular();
 
         assertEquals(10.0, r.latenciaP50Ms());
         assertEquals(1000.0, r.latenciaP95Ms());
@@ -83,7 +83,7 @@ class MetricasRedeServiceTest {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         registrar(registry, "/api/rotas", "200", 8000, 2);
 
-        assertEquals(8000.0, new MetricasRedeService(registry).calcular().latenciaP95Ms());
+        assertEquals(8000.0, new MetricasRedeService(registry, new MetricasTelemetria()).calcular().latenciaP95Ms());
     }
 
     @Test
@@ -94,7 +94,7 @@ class MetricasRedeServiceTest {
         registrar(registry, "/api/v1/metricas/rede", "200", 5, 50);
         registrar(registry, "/api/estoque", "200", 20, 3);
 
-        MetricasRedeResponse r = new MetricasRedeService(registry).calcular();
+        MetricasRedeResponse r = new MetricasRedeService(registry, new MetricasTelemetria()).calcular();
 
         assertEquals(3, r.totalRequisicoes());
     }

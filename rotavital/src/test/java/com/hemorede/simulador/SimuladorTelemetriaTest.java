@@ -1,6 +1,7 @@
 package com.hemorede.simulador;
 
 import com.hemorede.dto.TelemetriaLeituraDTO;
+import com.hemorede.service.MetricasTelemetria;
 import com.hemorede.service.TelemetriaIngestaoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ class SimuladorTelemetriaTest {
     private SimuladorTelemetria simulador(BlockingQueue<TelemetriaLeituraDTO> fila, int veiculos) {
         SimuladorProperties props = new SimuladorProperties(true, CenarioCarga.MODERADO,
                 Map.of(CenarioCarga.MODERADO, new SimuladorProperties.Cenario(veiculos, 1000)));
-        return new SimuladorTelemetria(props, new TelemetriaIngestaoService(fila), null);
+        return new SimuladorTelemetria(props, new TelemetriaIngestaoService(fila, new MetricasTelemetria()), null);
     }
 
     @Test

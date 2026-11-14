@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TelemetriaIngestaoServiceTest {
 
     private final BlockingQueue<TelemetriaLeituraDTO> fila = new LinkedBlockingQueue<>(1);
-    private final TelemetriaIngestaoService service = new TelemetriaIngestaoService(fila);
+    private final MetricasTelemetria metricas = new MetricasTelemetria();
+    private final TelemetriaIngestaoService service = new TelemetriaIngestaoService(fila, metricas);
 
     @Test
     @DisplayName("Enfileira a leitura recebida")
@@ -35,5 +36,16 @@ class TelemetriaIngestaoServiceTest {
 
         assertThrows(FilaTelemetriaCheiaException.class,
                 () -> service.receber(new TelemetriaLeituraDTO(2L, 5.0, null)));
+    }
+
+    @Test
+    @DisplayName("Leitura recusada por fila cheia é contada como perda no painel de rede (PI2-198)")
+    void deveContarDescarte() {
+        service.receber(new TelemetriaLeituraDTO(1L, 4.0, null));
+
+        assertThrows(FilaTelemetriaCheiaException.class,
+                () -> service.receber(new TelemetriaLeituraDTO(2L, 5.0, null)));
+
+        assertEquals(1, metricas.resumo().leiturasDescartadas());
     }
 }
