@@ -1,0 +1,13 @@
+Ambiente da medicao (PI2 L1, relatorio AED U2) - 14/11/2026
+
+Java: 21.0.12.1 (OpenJDK 64-Bit Server VM)
+SO/arquitetura: Linux / amd64
+Processadores logicos: 2 | heap maximo: 4096 MB
+Aquecimento: >= 8 execucoes e >= 400 ms | medicoes: 31 execucoes | mediana, p95 e minimo
+CPU: Intel(R) Xeon(R) Processor @ 2.10GHz
+Memoria: 8024 MB
+Kernel: Linux 6.18.44-fc-v470
+JVM: -Xms2g -Xmx4g (3 execucoes independentes, em sequencia, uma por vez)
+Argumentos do programa: aquecimento minimo=8 (e >=400 ms), medicoes=31
+
+Observacao: as classes foram compiladas com o javac do JDK 21 (sem --release 17) e as anotacoes JPA/Jackson foram substituidas por declaracoes vazias apenas para compilar fora do Maven. A logica medida e a dos arquivos .java da main.

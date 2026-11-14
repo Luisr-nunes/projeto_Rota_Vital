@@ -1,0 +1,9 @@
+Teste: o GC explica o crescimento do Dijkstra acima de V log V? (PI2 L1)
+Controle: -Xms4g -Xmx4g (12 pausas de GC, 2.287 ms no total na execucao inteira)
+Geracao jovem grande: -Xms6g -Xmx6g -Xmn5g (4 pausas de GC, 483 ms no total)
+Mediana por consulta (ms), destino inalcancavel (explora o grafo todo), E ~ 3V:
+  V=  1000: controle=   1.153  jovem grande=   0.971  razao=0.84
+  V= 10000: controle=  16.397  jovem grande=  20.508  razao=1.25
+  V=100000: controle= 374.539  jovem grande= 448.859  razao=1.20
+Conclusao: com ~4x menos pausas de GC o tempo nao caiu (em V=100.000 ficou 20% maior). GC descartado como causa principal.
+Observacao: uma unica execucao de cada configuracao; serve para descartar a hipotese, nao para estimar o ganho.
