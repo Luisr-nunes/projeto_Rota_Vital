@@ -26,10 +26,12 @@ import java.util.concurrent.TimeUnit;
 public class MetricasRedeService {
 
     private final MeterRegistry registry;
+    private final MetricasTelemetria telemetria;
     private final Instant inicio = Instant.now();
 
-    public MetricasRedeService(MeterRegistry registry) {
+    public MetricasRedeService(MeterRegistry registry, MetricasTelemetria telemetria) {
         this.registry = registry;
+        this.telemetria = telemetria;
     }
 
     public MetricasRedeResponse calcular() {
@@ -50,7 +52,8 @@ public class MetricasRedeService {
                 percentilMs(snapshots, total, 0.50),
                 percentilMs(snapshots, total, 0.95),
                 contarStatus(timers, '4'),
-                contarStatus(timers, '5'));
+                contarStatus(timers, '5'),
+                telemetria.resumo());
     }
 
     private static boolean trafegoDaApi(Timer timer) {
