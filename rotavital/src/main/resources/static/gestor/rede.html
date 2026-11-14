@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="../css/gestor.css">
 </head>
 <body class="bg-app">
-  <!-- Figma 5.7 · RSD · Painel de rede (PI2-175) -->
+  <!-- Figma 5.7 · RSD · Painel de rede (PI2-175) · telemetria dos veículos (PI2-198) -->
   <main class="content">
     <div class="page-head">
       <div class="page-titles">
@@ -26,6 +26,14 @@
 
     <section class="kpis" id="kpis" aria-label="Métricas de rede"></section>
     <div id="erro"></div>
+
+    <section class="card gap-14" aria-labelledby="t-tel">
+      <div class="card-head" style="flex-wrap:wrap">
+        <div><h2 class="card-title" id="t-tel">Telemetria dos veículos</h2><p class="card-sub" id="telSub">Leituras de temperatura recebidas em POST /api/v1/telemetria/leituras · janela dos últimos 10 s</p></div>
+      </div>
+      <div class="kpis" id="telKpis" aria-label="Métricas da telemetria"></div>
+      <div id="telAviso"></div>
+    </section>
 
     <div class="row stack-md">
       <section class="card grow gap-14" aria-labelledby="t-lat">
@@ -46,6 +54,7 @@
           <div class="hop"><span class="ic" data-ic="globe"></span><span class="name">Navegador → borda do Render</span><span class="proto">HTTPS/443</span></div>
           <div class="hop"><span class="ic" data-ic="server"></span><span class="name">Borda → API Spring Boot</span><span class="proto">HTTP/8080</span></div>
           <div class="hop"><span class="ic" data-ic="db"></span><span class="name">API → PostgreSQL</span><span class="proto">JDBC/5432</span></div>
+          <div class="hop"><span class="ic" data-ic="truck"></span><span class="name">Veículo → API (telemetria)</span><span class="proto">HTTPS/443</span></div>
         </section>
       </div>
     </div>
@@ -82,7 +91,7 @@
         } catch (e) {
           $('status').className = 'badge b-alerta'; $('status').textContent = 'Sem conexão';
           $('erro').innerHTML = ui.alertBox('error', 'Não foi possível ler as métricas', `${ui.erroMsg(e)} Nova tentativa em 10 s.`);
-          if (!ultima) { $('kpis').innerHTML = kpis(null); $('grafico').innerHTML = ui.empty('Sem leituras ainda', 'As métricas aparecem assim que a API responder.'); $('classes').innerHTML = ''; }
+          if (!ultima) { $('kpis').innerHTML = kpis(null); $('telKpis').innerHTML = kpisTelemetria(null); $('grafico').innerHTML = ui.empty('Sem leituras ainda', 'As métricas aparecem assim que a API responder.'); $('classes').innerHTML = ''; }
         } finally {
           $('atualizar').disabled = false;
           proxima = Date.now() + INTERVALO;
@@ -99,9 +108,28 @@
         ].join('');
       }
 
+      function kpisTelemetria(t) {
+        const perdaPct = t && (t.leiturasProcessadas + t.leiturasDescartadas)
+          ? t.leiturasDescartadas * 100 / (t.leiturasProcessadas + t.leiturasDescartadas) : 0;
+        return [
+          ui.kpi('Leituras por segundo', t ? `${RV.num(t.leiturasPorSegundo, 1)} leituras/s` : null, 'thermo', '#2F5E55', '#E6F2EF', t ? 'últimos 10 s' : ''),
+          ui.kpi('Atraso médio', t ? (t.atrasoMedioMs == null ? '—' : ms(t.atrasoMedioMs)) : null, 'clock', '#1E7A3A', '#E3F7E8', t ? (t.atrasoMedioMs == null ? 'nenhuma leitura com horário nos últimos 10 s' : 'do envio pelo veículo ao processamento') : '', 't-green'),
+          ui.kpi('Atraso máximo', t ? (t.atrasoMaximoMs == null ? '—' : ms(t.atrasoMaximoMs)) : null, 'clock', '#B7791F', '#FFF6DB', t ? 'pior leitura dos últimos 10 s' : ''),
+          ui.kpi('Leituras perdidas', t ? RV.num(t.leiturasDescartadas) : null, 'alert', '#E53935', '#FDECEC', t ? `${RV.num(perdaPct, perdaPct && perdaPct < 1 ? 2 : 0)}% · fila cheia, desde a subida` : '')
+        ].join('');
+      }
+
+      function renderTelemetria(t) {
+        $('telKpis').innerHTML = kpisTelemetria(t);
+        $('telSub').textContent = `Leituras de temperatura recebidas em POST /api/v1/telemetria/leituras · ${RV.num(t.leiturasProcessadas)} processadas desde a subida · janela dos últimos 10 s`;
+        $('telAviso').innerHTML = t.leiturasPorSegundo > 0 ? ''
+          : ui.alertBox('info', 'Nenhum veículo enviando agora', 'Os números voltam assim que chegar uma leitura. Para gerar carga, ligue o simulador: --hemorede.simulador.enabled=true.');
+      }
+
       function render(m) {
         $('sub').textContent = `Métricas HTTP da API coletadas pelo Actuator · atualizado às ${new Date(historico[historico.length - 1].t).toLocaleTimeString('pt-BR')}`;
         $('kpis').innerHTML = kpis(m);
+        if (m.telemetria) renderTelemetria(m.telemetria);
         renderGrafico();
         // Classes de resposta
         const tot = m.totalRequisicoes || 0;
@@ -155,6 +183,7 @@
 
       $('atualizar').addEventListener('click', ler);
       $('kpis').innerHTML = ui.skeletonRows(4, 104);
+      $('telKpis').innerHTML = ui.skeletonRows(4, 104);
       $('grafico').innerHTML = ui.skeletonRows(1, 330);
       ler();
     })();
