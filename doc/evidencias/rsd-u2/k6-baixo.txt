@@ -1,0 +1,190 @@
+﻿
+         /\      Grafana   /ÔÇ¥ÔÇ¥/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ÔÇ¥ÔÇ¥\ 
+  /          \   |   (  |  (ÔÇ¥)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: benchmark.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 1m30s max duration (incl. graceful stop):
+              * baixo: 10 looping VUs for 1m0s (gracefulStop: 30s)
+
+
+running (0m01.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+
+running (0m02.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+
+running (0m03.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+
+running (0m04.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+
+running (0m05.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+
+running (0m06.0s), 10/10 VUs, 6 complete and 0 interrupted iterations
+
+running (0m07.0s), 10/10 VUs, 6 complete and 0 interrupted iterations
+
+running (0m08.1s), 10/10 VUs, 10 complete and 0 interrupted iterations
+
+running (0m09.0s), 10/10 VUs, 12 complete and 0 interrupted iterations
+
+running (0m10.0s), 10/10 VUs, 16 complete and 0 interrupted iterations
+
+running (0m11.0s), 10/10 VUs, 23 complete and 0 interrupted iterations
+
+running (0m12.0s), 10/10 VUs, 27 complete and 0 interrupted iterations
+
+running (0m13.0s), 10/10 VUs, 33 complete and 0 interrupted iterations
+
+running (0m14.0s), 10/10 VUs, 37 complete and 0 interrupted iterations
+
+running (0m15.0s), 10/10 VUs, 45 complete and 0 interrupted iterations
+
+running (0m16.0s), 10/10 VUs, 50 complete and 0 interrupted iterations
+
+running (0m17.0s), 10/10 VUs, 58 complete and 0 interrupted iterations
+
+running (0m18.0s), 10/10 VUs, 63 complete and 0 interrupted iterations
+
+running (0m19.0s), 10/10 VUs, 70 complete and 0 interrupted iterations
+
+running (0m20.0s), 10/10 VUs, 78 complete and 0 interrupted iterations
+
+running (0m21.0s), 10/10 VUs, 85 complete and 0 interrupted iterations
+
+running (0m22.0s), 10/10 VUs, 91 complete and 0 interrupted iterations
+
+running (0m23.0s), 10/10 VUs, 98 complete and 0 interrupted iterations
+
+running (0m24.0s), 10/10 VUs, 106 complete and 0 interrupted iterations
+
+running (0m25.0s), 10/10 VUs, 113 complete and 0 interrupted iterations
+
+running (0m26.0s), 10/10 VUs, 119 complete and 0 interrupted iterations
+
+running (0m27.0s), 10/10 VUs, 128 complete and 0 interrupted iterations
+
+running (0m28.0s), 10/10 VUs, 134 complete and 0 interrupted iterations
+
+running (0m29.0s), 10/10 VUs, 141 complete and 0 interrupted iterations
+
+running (0m30.0s), 10/10 VUs, 149 complete and 0 interrupted iterations
+
+running (0m31.0s), 10/10 VUs, 156 complete and 0 interrupted iterations
+
+running (0m32.0s), 10/10 VUs, 163 complete and 0 interrupted iterations
+
+running (0m33.0s), 10/10 VUs, 171 complete and 0 interrupted iterations
+
+running (0m34.0s), 10/10 VUs, 177 complete and 0 interrupted iterations
+
+running (0m35.0s), 10/10 VUs, 185 complete and 0 interrupted iterations
+
+running (0m36.0s), 10/10 VUs, 192 complete and 0 interrupted iterations
+
+running (0m37.0s), 10/10 VUs, 197 complete and 0 interrupted iterations
+
+running (0m38.0s), 10/10 VUs, 206 complete and 0 interrupted iterations
+
+running (0m39.0s), 10/10 VUs, 214 complete and 0 interrupted iterations
+
+running (0m40.0s), 10/10 VUs, 219 complete and 0 interrupted iterations
+
+running (0m41.0s), 10/10 VUs, 227 complete and 0 interrupted iterations
+
+running (0m42.0s), 10/10 VUs, 236 complete and 0 interrupted iterations
+
+running (0m43.0s), 10/10 VUs, 242 complete and 0 interrupted iterations
+
+running (0m44.0s), 10/10 VUs, 249 complete and 0 interrupted iterations
+
+running (0m45.0s), 10/10 VUs, 257 complete and 0 interrupted iterations
+
+running (0m46.0s), 10/10 VUs, 265 complete and 0 interrupted iterations
+
+running (0m47.0s), 10/10 VUs, 271 complete and 0 interrupted iterations
+
+running (0m48.0s), 10/10 VUs, 278 complete and 0 interrupted iterations
+
+running (0m49.0s), 10/10 VUs, 287 complete and 0 interrupted iterations
+
+running (0m50.0s), 10/10 VUs, 295 complete and 0 interrupted iterations
+
+running (0m51.0s), 10/10 VUs, 301 complete and 0 interrupted iterations
+
+running (0m52.0s), 10/10 VUs, 308 complete and 0 interrupted iterations
+
+running (0m53.0s), 10/10 VUs, 317 complete and 0 interrupted iterations
+
+running (0m54.0s), 10/10 VUs, 323 complete and 0 interrupted iterations
+
+running (0m55.0s), 10/10 VUs, 331 complete and 0 interrupted iterations
+
+running (0m56.0s), 10/10 VUs, 338 complete and 0 interrupted iterations
+
+running (0m57.0s), 10/10 VUs, 348 complete and 0 interrupted iterations
+
+running (0m58.0s), 10/10 VUs, 353 complete and 0 interrupted iterations
+
+running (0m59.0s), 10/10 VUs, 361 complete and 0 interrupted iterations
+
+running (1m00.1s), 10/10 VUs, 369 complete and 0 interrupted iterations
+
+running (1m01.0s), 03/10 VUs, 376 complete and 0 interrupted iterations
+
+
+  Ôûê THRESHOLDS 
+
+    http_req_duration
+    Ô£ù 'p(95)<800' p(95)=1.12s
+
+    http_req_failed
+    Ô£ô 'rate<0.01' rate=0.00%
+
+    jitter_ms
+    Ô£ù 'p(95)<300' p(95)=581.75ms
+
+    perda
+    Ô£ô 'rate<0.01' rate=0.00%
+
+
+  Ôûê TOTAL RESULTS 
+
+    checks_total.......: 379     6.17805/s
+    checks_succeeded...: 100.00% 379 out of 379
+    checks_failed......: 0.00%   0 out of 379
+
+    Ô£ô status 200
+    Ô£ô telemetria 202
+
+    CUSTOM
+    jitter_ms......................: avg=265.63ms min=568.1┬Ás  med=84.28ms  p(90)=378.65ms p(95)=581.75ms max=9.03s 
+    latencia_telemetria_ms.........: avg=565.93ms min=260.69ms med=285.6ms  p(90)=410.65ms p(95)=804.31ms max=9.52s 
+    perda..........................: 0.00%  0 out of 379
+
+    HTTP
+    http_req_duration..............: avg=591.18ms min=260.69ms med=358.27ms p(90)=790ms    p(95)=1.12s    max=9.52s 
+      { expected_response:true }...: avg=591.18ms min=260.69ms med=358.27ms p(90)=790ms    p(95)=1.12s    max=9.52s 
+    http_req_failed................: 0.00%  0 out of 379
+    http_reqs......................: 379    6.17805/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.6s     min=1.26s    med=1.36s    p(90)=1.79s    p(95)=2.2s     max=10.76s
+    iterations.....................: 379    6.17805/s
+    vus............................: 3      min=3        max=10
+    vus_max........................: 10     min=10       max=10
+
+    NETWORK
+    data_received..................: 225 kB 3.7 kB/s
+    data_sent......................: 47 kB  769 B/s
+
+
+
+
+running (1m01.3s), 00/10 VUs, 379 complete and 0 interrupted iterations
+k6.exe : time="2026-11-12T09:57:28-03:00" level=error msg="thresholds on metrics 'http_req_duration, jitter_ms' have 
+been crossed"
+ 
