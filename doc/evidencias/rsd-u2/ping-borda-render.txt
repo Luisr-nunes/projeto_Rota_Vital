@@ -1,0 +1,58 @@
+﻿
+Disparando gcp-us-west1-1.origin.onrender.com.cdn.cloudflare.net [216.24.57.16] com 32 bytes de dados:
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=79ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=82ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=81ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=73ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=79ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=79ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=73ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=74ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=81ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=79ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=73ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=70ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=74ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=74ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=77ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=78ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=75ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=76ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=79ms TTL=54
+Resposta de 216.24.57.16: bytes=32 tempo=80ms TTL=54
+
+Estatísticas do Ping para 216.24.57.16:
+    Pacotes: Enviados = 50, Recebidos = 50, Perdidos = 0 (0% de
+             perda),
+Aproximar um número redondo de vezes em milissegundos:
+    Mínimo = 70ms, Máximo = 82ms, Média = 76ms

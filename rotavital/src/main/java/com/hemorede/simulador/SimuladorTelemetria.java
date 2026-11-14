@@ -52,8 +52,8 @@ public class SimuladorTelemetria implements ApplicationRunner {
         for (Long veiculoId : gerador.idsVeiculos(props.ativo().veiculos())) {
             LeituraTemperaturaResponse leitura = gerador.gerar(veiculoId);
             try {
-                ingestao.receber(new TelemetriaLeituraDTO(
-                        veiculoId, leitura.temperaturaC(), OffsetDateTime.parse(leitura.timestamp())));
+                // horário do envio em ms: o timestamp da leitura vem truncado em segundos e inflaria o atraso do painel
+                ingestao.receber(new TelemetriaLeituraDTO(veiculoId, leitura.temperaturaC(), OffsetDateTime.now()));
             } catch (FilaTelemetriaCheiaException e) {
                 log.warn("Simulador: {}", e.getMessage());
                 return;

@@ -24,14 +24,17 @@ public class ConsumidorTelemetria {
 
     private final BlockingQueue<TelemetriaLeituraDTO> fila;
     private final AgregadorTelemetria agregador;
+    private final MetricasTelemetria metricas;
     private final int threads;
     private ExecutorService executor;
 
     public ConsumidorTelemetria(BlockingQueue<TelemetriaLeituraDTO> fila,
                                 AgregadorTelemetria agregador,
+                                MetricasTelemetria metricas,
                                 @Value("${hemorede.telemetria.consumidores:2}") int threads) {
         this.fila = fila;
         this.agregador = agregador;
+        this.metricas = metricas;
         this.threads = threads;
     }
 
@@ -53,6 +56,7 @@ public class ConsumidorTelemetria {
             try {
                 TelemetriaLeituraDTO leitura = fila.take();
                 agregador.registrarLeitura(leitura.veiculoId(), leitura.temperaturaC());
+                metricas.registrarProcessada(leitura.timestamp());
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();   // encerrando
             } catch (RuntimeException e) {

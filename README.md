@@ -561,6 +561,8 @@ Histórias completas com cenários BDD em [`doc/historias_de_usuario.md`](doc/hi
 | Disciplina | Evidência |
 |------------|-----------|
 | **SO** | [Arquitetura em três cenários (baixo, moderado e alto) com diagramas, portas e orçamento](doc/so-u2-arquitetura-cenarios.md) (PI2-190), [agregador sincronizado e teste de condição de corrida](doc/so-u2-sincronizacao.md) e [pipeline com deploy contínuo](doc/pipeline-deploy.md) |
+| **RSD** | [Benchmarking final nos três cenários contra o Render, com latência, vazão, perda e jitter interpretados](doc/rsd-benchmarking.md) (PI2-199) e [painel de rede integrado à telemetria real](rotavital/src/main/resources/static/gestor/rede.html): leituras/s, atraso e leituras perdidas em `GET /api/v1/metricas/rede` (PI2-198, [print](doc/evidencias/painel-rede-telemetria.png)) |
+| **EST** | [Relatório final de achados](doc/est-u2-relatorio.md) com probabilidade de desabastecimento, taxa de descarte, previsão simples e estoque-alvo por tipo, calculados sobre a base de produção (PI2-196); [método probabilístico](doc/est-u2-probabilidade.md) |
 
 ---
 

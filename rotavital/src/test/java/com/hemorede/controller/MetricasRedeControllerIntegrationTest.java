@@ -5,9 +5,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.OffsetDateTime;
+
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,6 +39,27 @@ class MetricasRedeControllerIntegrationTest {
                 .andExpect(jsonPath("$.erros4xx").isNumber())
                 .andExpect(jsonPath("$.erros5xx").isNumber())
                 .andExpect(jsonPath("$.latenciaP50Ms").hasJsonPath())
-                .andExpect(jsonPath("$.latenciaP95Ms").hasJsonPath());
+                .andExpect(jsonPath("$.latenciaP95Ms").hasJsonPath())
+                .andExpect(jsonPath("$.telemetria.leiturasProcessadas").isNumber())
+                .andExpect(jsonPath("$.telemetria.leiturasDescartadas").isNumber())
+                .andExpect(jsonPath("$.telemetria.leiturasPorSegundo").isNumber())
+                .andExpect(jsonPath("$.telemetria.atrasoMedioMs").hasJsonPath())
+                .andExpect(jsonPath("$.telemetria.atrasoMaximoMs").hasJsonPath());
+    }
+
+    @Test
+    @DisplayName("Leitura enviada ao POST da telemetria aparece no painel com vazão e atraso (PI2-198)")
+    void leituraDaTelemetriaApareceNasMetricas() throws Exception {
+        String corpo = "{\"veiculoId\": 7, \"temperaturaC\": 4.2, \"timestamp\": \"%s\"}"
+                .formatted(OffsetDateTime.now().minusNanos(50_000_000));
+
+        mockMvc.perform(post("/api/v1/telemetria/leituras").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isAccepted());
+
+        // o consumidor processa a fila de forma assíncrona
+        await().atMost(java.time.Duration.ofSeconds(5)).untilAsserted(() ->
+                mockMvc.perform(get("/api/v1/metricas/rede"))
+                        .andExpect(jsonPath("$.telemetria.leiturasProcessadas", greaterThanOrEqualTo(1)))
+                        .andExpect(jsonPath("$.telemetria.atrasoMedioMs", greaterThanOrEqualTo(50.0))));
     }
 }
