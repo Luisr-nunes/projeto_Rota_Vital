@@ -71,8 +71,9 @@ Regras de uso:
 
 - **Janela:** últimos 7 dias, ou seja, λ̂_t = unidades solicitadas do tipo t nos últimos 7 dias ÷ 7.
 - **Dias sem requisição contam como zero** no denominador. Excluí-los inflaria λ.
-- **Sem histórico não é demanda zero:** se a base não tiver requisições registradas
-  na janela, mantém-se o parâmetro de referência da seção 3.2 em vez de estimar λ = 0.
+- **Sem histórico não é demanda zero:** se não houver requisições de um tipo na
+  janela, mantém-se o parâmetro de referência da seção 3.2 para aquele tipo, em
+  vez de estimar λ = 0. Isso também se aplica quando a janela inteira está vazia.
 
 ### 3.2 Parâmetros de referência adotados agora (cenário sintético)
 

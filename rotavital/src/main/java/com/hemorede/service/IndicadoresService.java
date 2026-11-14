@@ -9,6 +9,7 @@ import com.hemorede.dto.IndicadoresResponse;
 import com.hemorede.dto.RiscoDesabastecimentoResponse;
 import com.hemorede.dto.TaxaDescarteResponse;
 import com.hemorede.domain.enums.HemoComponente;
+import com.hemorede.dto.PrevisaoDemandaResponse;
 import com.hemorede.exception.DiasPrevisaoInvalidoException;
 import com.hemorede.exception.ModeloProbabilisticoIndisponivelException;
 import com.hemorede.indicadores.ModeloProbabilisticoDemanda;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,24 +41,36 @@ public class IndicadoresService {
 
     private final BolsaRepository bolsaRepository;
     private final RequisicaoRepository requisicaoRepository;
-    private final ModeloProbabilisticoDemanda modeloProbabilisticoDemanda;
+    private final PrevisaoDemandaService previsaoDemandaService;
 
     @Autowired
     public IndicadoresService(
             BolsaRepository bolsaRepository,
             RequisicaoRepository requisicaoRepository,
-            ModeloProbabilisticoDemanda modeloProbabilisticoDemanda) {
+            ModeloProbabilisticoDemanda modeloProbabilisticoDemanda,
+            PrevisaoDemandaService previsaoDemandaService) {
         this.bolsaRepository = bolsaRepository;
         this.requisicaoRepository = requisicaoRepository;
-        this.modeloProbabilisticoDemanda = modeloProbabilisticoDemanda;
+        this.previsaoDemandaService = previsaoDemandaService != null
+                ? previsaoDemandaService
+                : new PrevisaoDemandaService(requisicaoRepository, modeloProbabilisticoDemanda);
+    }
+
+    public IndicadoresService(
+            BolsaRepository bolsaRepository,
+            RequisicaoRepository requisicaoRepository,
+            ModeloProbabilisticoDemanda modeloProbabilisticoDemanda) {
+        this(bolsaRepository, requisicaoRepository, modeloProbabilisticoDemanda,
+                new PrevisaoDemandaService(requisicaoRepository, modeloProbabilisticoDemanda));
     }
 
     public IndicadoresService(BolsaRepository bolsaRepository, RequisicaoRepository requisicaoRepository) {
-        this(bolsaRepository, requisicaoRepository, null);
+        this(bolsaRepository, requisicaoRepository, null,
+                new PrevisaoDemandaService(requisicaoRepository, null));
     }
 
     public IndicadoresService() {
-        this(null, null, null);
+        this(null, null, null, new PrevisaoDemandaService(null, null));
     }
 
     /**
@@ -216,22 +230,27 @@ public class IndicadoresService {
         return new TaxaDescarteResponse(dias, inicio, fim, LocalDateTime.now(), taxas);
     }
 
+    public PrevisaoDemandaResponse calcularPrevisaoDemanda(int dias) {
+        return previsaoDemandaService.calcularPrevisaoDemanda(dias);
+    }
+
     /**
-     * Calcula o risco usando os lambdas configurados pelo modelo da PI2-177.
+     * Calcula o risco usando a média móvel da demanda recente, com os lambdas
+     * de referência da PI2-177 somente para tipos sem histórico na janela.
      */
     public RiscoDesabastecimentoResponse calcularRiscoDesabastecimento(int dias) {
         if (dias <= 0) {
             throw new DiasPrevisaoInvalidoException("O numero de dias deve ser maior que zero");
         }
-        if (bolsaRepository == null || modeloProbabilisticoDemanda == null) {
+        if (bolsaRepository == null) {
             throw new ModeloProbabilisticoIndisponivelException(
-                    "Modelo probabilistico ou repositorio de estoque nao configurado");
+                    "Repositorio de estoque nao configurado");
         }
 
         return calcularRiscoDesabastecimento(
                 dias,
                 bolsaRepository.findAll(),
-                modeloProbabilisticoDemanda.obterLambdasValidados());
+                previsaoDemandaService.estimarLambdasDiarios());
     }
 
     /**
