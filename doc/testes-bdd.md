@@ -52,6 +52,31 @@ Cobertura complementar em `ConfirmarEntregaIntegrationTest`.
 mvn -Dtest=AceitacaoBddTest -Dcucumber.filter.tags=@HU06 test
 ```
 
+## Compatibilidade ABO/Rh — L2
+
+`compatibilidade_sanguinea.feature` (tags `@HU08 @compatibilidade`) reune os cenarios de
+aceitacao e de borda da regra de compatibilidade, sem step novo. Sao 14 cenarios e
+29 execucoes (os esquemas rodam uma vez por linha da tabela):
+
+- `@rh_negativo`: receptor Rh- recusa Rh+ (inclusive O+); receptor Rh+ aceita Rh- do
+  mesmo grupo; AB- ignora AB+ mesmo que venca antes; empate de validade favorece o tipo
+  identico; validade mais proxima vence o tipo identico.
+- `@so_o_negativo`: estoque so com O- atende os 8 receptores; O- nao recebe O+; uma
+  bolsa O- nao atende dois pacientes (409) nem dois itens da mesma requisicao (422, com
+  reversao).
+- `@bolsa_vencida`: vencida nunca e reservada (ontem e ha um mes); vence hoje ainda vale;
+  vencida nao conta no 409; entre duas bolsas do mesmo tipo vale a valida.
+
+Todos conferem o HTTP e o estado gravado (requisicao, bolsas e associacoes), como os
+cenarios da HU08. As expectativas foram conferidas contra a `MatrizCompatibilidade` real
+e as regras de `AlocacaoService`.
+
+```bash
+mvn -Dtest=AceitacaoBddTest -Dcucumber.filter.tags=@compatibilidade test
+```
+
+Roteiro da demonstracao: [`doc/apresentacao/roteiro-demo-compatibilidade.md`](apresentacao/roteiro-demo-compatibilidade.md).
+
 ## Integracao da alocacao — PI2-164
 
 Endpoint canonico: `POST /api/v1/requisicoes/{id}/alocacao`.
