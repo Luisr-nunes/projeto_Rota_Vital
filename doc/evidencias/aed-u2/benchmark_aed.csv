@@ -1,0 +1,66 @@
+grupo,operacao,n,ops_por_execucao,mediana_ms,p95_ms,minimo_ms,ns_por_op,variacao_entre_execucoes,execucoes_jvm
+Matriz ABO/Rh 8x8,construir a matriz (uma vez),8,1,0.002940,0.004176,0.002230,2940.00,2.09,3
+Matriz ABO/Rh 8x8,"compativel(doador, receptor), n chamadas (so a matriz)",1000,1000,0.005961,0.006105,0.005955,5.96,1.00,3
+Matriz ABO/Rh 8x8,compativel sobre List<Bolsa> (inclui ler o tipo da bolsa),1000,1000,0.001504,0.001655,0.001486,1.50,1.37,3
+Matriz ABO/Rh 8x8,"matching(receptor), n chamadas",1000,1000,0.008593,0.012509,0.008584,8.59,1.04,3
+FilaFEFO (min-heap),inserir n (ordem aleatoria),1000,1000,0.057066,0.085442,0.042401,57.07,2.59,3
+FilaFEFO (min-heap),inserir n (melhor caso: ja em ordem FEFO),1000,1000,0.020539,0.031995,0.019003,20.54,1.24,3
+FilaFEFO (min-heap),inserir n (pior caso: ordem FEFO inversa),1000,1000,0.247709,0.283271,0.218930,247.71,1.35,3
+FilaFEFO (min-heap),alocar n (esvaziar a fila),1000,1000,0.343994,0.367087,0.324603,343.99,1.62,3
+FilaFEFO (min-heap),"peek() encadeado em 8 filas, n chamadas",1000,1000,0.010645,0.017614,0.010632,10.64,1.02,3
+FilaFEFO (min-heap),disponiveisOrdenadas(),1000,1000,0.122013,0.145138,0.097945,122.01,1.12,3
+FilaFEFO (min-heap),proximasAoVencimento(7),1000,1000,0.015193,0.038635,0.014629,15.19,1.03,3
+IndiceEstoque (8 filas FEFO),"adicionarBolsa, n bolsas",1000,1000,0.061936,0.094000,0.040474,61.94,1.67,3
+IndiceEstoque (8 filas FEFO),"totalDisponivelPorTipo(tipo), n chamadas",1000,1000,0.008907,0.008944,0.008893,8.91,1.00,3
+IndiceEstoque (8 filas FEFO),"consultarEstoque(tipo), n chamadas",1000,1000,0.008908,0.009091,0.008891,8.91,1.01,3
+Matching/alocacao HU08 (sem banco),1. filtrar validade + compatibilidade (N bolsas),1000,1000,0.022376,0.029677,0.021113,22.38,1.33,3
+Matching/alocacao HU08 (sem banco),2. indexar as candidatas no IndiceEstoque,1000,491,0.020683,0.032633,0.019365,42.12,1.10,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10,1000,10,0.002400,0.004260,0.002118,240.00,1.07,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10",1000,10,0.046634,0.080984,0.045094,4663.40,1.07,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10% das candidatas,1000,49,0.011591,0.030354,0.010853,236.55,1.35,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10% das candidatas",1000,49,0.060390,0.090168,0.054565,1232.45,1.23,3
+Matriz ABO/Rh 8x8,"compativel(doador, receptor), n chamadas (so a matriz)",10000,10000,0.061669,0.078399,0.059151,6.17,1.06,3
+Matriz ABO/Rh 8x8,compativel sobre List<Bolsa> (inclui ler o tipo da bolsa),10000,10000,0.014225,0.020278,0.014197,1.42,1.00,3
+Matriz ABO/Rh 8x8,"matching(receptor), n chamadas",10000,10000,0.085491,0.100646,0.085461,8.55,1.00,3
+FilaFEFO (min-heap),inserir n (ordem aleatoria),10000,10000,0.655069,0.748168,0.537783,65.51,1.19,3
+FilaFEFO (min-heap),inserir n (melhor caso: ja em ordem FEFO),10000,10000,0.448711,0.516824,0.259924,44.87,3.17,3
+FilaFEFO (min-heap),inserir n (pior caso: ordem FEFO inversa),10000,10000,4.051506,4.273184,3.709573,405.15,1.09,3
+FilaFEFO (min-heap),alocar n (esvaziar a fila),10000,10000,5.815686,8.259212,5.401918,581.57,1.66,3
+FilaFEFO (min-heap),"peek() encadeado em 8 filas, n chamadas",10000,10000,0.109237,0.139043,0.106091,10.92,1.08,3
+FilaFEFO (min-heap),disponiveisOrdenadas(),10000,10000,1.980654,2.293776,1.681646,198.07,1.17,3
+FilaFEFO (min-heap),proximasAoVencimento(7),10000,10000,0.326243,0.369275,0.276487,32.62,1.19,3
+IndiceEstoque (8 filas FEFO),"adicionarBolsa, n bolsas",10000,10000,0.701590,0.781502,0.616232,70.16,1.27,3
+IndiceEstoque (8 filas FEFO),"totalDisponivelPorTipo(tipo), n chamadas",10000,10000,0.088812,0.113677,0.088735,8.88,1.02,3
+IndiceEstoque (8 filas FEFO),"consultarEstoque(tipo), n chamadas",10000,10000,0.088809,0.104476,0.088738,8.88,1.02,3
+Matching/alocacao HU08 (sem banco),1. filtrar validade + compatibilidade (N bolsas),10000,10000,0.314456,0.381740,0.276573,31.45,1.46,3
+Matching/alocacao HU08 (sem banco),2. indexar as candidatas no IndiceEstoque,10000,5045,0.333808,0.386093,0.306671,66.17,1.10,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10,10000,10,0.005139,0.008506,0.004250,513.90,1.30,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10",10000,10,0.670702,0.703187,0.621711,67070.20,1.37,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10% das candidatas,10000,504,0.228007,0.256472,0.212849,452.39,1.07,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10% das candidatas",10000,504,0.878688,0.935960,0.823450,1743.43,1.16,3
+Matriz ABO/Rh 8x8,"compativel(doador, receptor), n chamadas (so a matriz)",100000,100000,0.608952,0.628325,0.591459,6.09,1.07,3
+Matriz ABO/Rh 8x8,compativel sobre List<Bolsa> (inclui ler o tipo da bolsa),100000,100000,0.723426,0.784484,0.613469,7.23,1.08,3
+Matriz ABO/Rh 8x8,"matching(receptor), n chamadas",100000,100000,0.874347,0.906763,0.857428,8.74,1.01,3
+FilaFEFO (min-heap),inserir n (ordem aleatoria),100000,100000,6.982657,7.644122,6.554113,69.83,1.02,3
+FilaFEFO (min-heap),inserir n (melhor caso: ja em ordem FEFO),100000,100000,7.572061,8.033584,5.826877,75.72,1.36,3
+FilaFEFO (min-heap),inserir n (pior caso: ordem FEFO inversa),100000,100000,62.238608,83.749496,56.450334,622.39,1.16,3
+FilaFEFO (min-heap),alocar n (esvaziar a fila),100000,100000,138.742322,174.907070,108.804035,1387.42,1.03,3
+FilaFEFO (min-heap),"peek() encadeado em 8 filas, n chamadas",100000,100000,1.116547,1.179375,1.076881,11.17,1.04,3
+FilaFEFO (min-heap),disponiveisOrdenadas(),100000,100000,26.785157,37.558093,23.330344,267.85,1.09,3
+FilaFEFO (min-heap),proximasAoVencimento(7),100000,100000,6.196197,7.340631,4.932677,61.96,1.22,3
+IndiceEstoque (8 filas FEFO),"adicionarBolsa, n bolsas",100000,100000,11.822644,12.226758,10.990025,118.23,1.19,3
+IndiceEstoque (8 filas FEFO),"totalDisponivelPorTipo(tipo), n chamadas",100000,100000,0.907637,0.929003,0.887615,9.08,1.03,3
+IndiceEstoque (8 filas FEFO),"consultarEstoque(tipo), n chamadas",100000,100000,0.905592,0.968024,0.887640,9.06,1.02,3
+Matching/alocacao HU08 (sem banco),1. filtrar validade + compatibilidade (N bolsas),100000,100000,3.418774,4.014228,3.311055,34.19,1.04,3
+Matching/alocacao HU08 (sem banco),2. indexar as candidatas no IndiceEstoque,100000,50100,7.581259,9.154043,6.079987,151.32,1.15,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10,100000,10,0.026376,0.034323,0.022765,2637.60,1.03,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10",100000,10,10.351772,10.721375,8.905731,1035177.20,1.11,3
+Matching/alocacao HU08 (sem banco),3. alocar q = 10% das candidatas,100000,5010,6.649408,6.898161,5.562222,1327.23,1.10,3
+Matching/alocacao HU08 (sem banco),"total (1+2+3), q = 10% das candidatas",100000,5010,17.177231,20.578119,14.669712,3428.59,1.16,3
+Dijkstra (GrafoRotas),"rede real V=6, E=15: N0 -> N4",6,1,0.000493,0.001219,0.000455,493.00,1.03,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino alcancavel,1000,1,0.110725,0.119108,0.097163,110725.00,1.11,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino inalcancavel (explora tudo),1000,1,0.774499,0.867170,0.723919,774499.00,1.04,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino alcancavel,10000,1,8.521616,9.185359,7.961106,8521616.00,1.18,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino inalcancavel (explora tudo),10000,1,19.485946,23.977229,16.978050,19485946.00,1.14,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino alcancavel,100000,1,218.863130,351.841412,189.374909,218863130.00,1.03,3
+Dijkstra (GrafoRotas),grafo esparso (E ~ 3V): destino inalcancavel (explora tudo),100000,1,422.235532,622.030824,361.778914,422235532.00,1.07,3
