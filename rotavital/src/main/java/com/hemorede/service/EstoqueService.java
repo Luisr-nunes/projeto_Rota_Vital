@@ -13,7 +13,9 @@ import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.exception.FiltroValidadeInvalidoException;
+import com.hemorede.domain.model.Estoque;
 import com.hemorede.repository.BolsaRepository;
+import com.hemorede.repository.EstoqueRepository;
 
 /**
  * Regra de negócio 7: estoque mínimo de segurança.
@@ -24,9 +26,15 @@ import com.hemorede.repository.BolsaRepository;
 public class EstoqueService {
 
     private final BolsaRepository bolsaRepository;
+    private final EstoqueRepository estoqueRepository;
 
-    public EstoqueService(BolsaRepository bolsaRepository) {
+    public EstoqueService(BolsaRepository bolsaRepository, EstoqueRepository estoqueRepository) {
         this.bolsaRepository = bolsaRepository;
+        this.estoqueRepository = estoqueRepository;
+    }
+
+    public List<Estoque> listarEstoques() {
+        return estoqueRepository.findAll();
     }
 
     @Value("${hemorede.estoque.limite-minimo-padrao:5}")

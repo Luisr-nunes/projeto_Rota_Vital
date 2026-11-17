@@ -2,7 +2,6 @@ package com.hemorede.controller;
 
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.dto.RequisicaoRequest;
-import com.hemorede.repository.RequisicaoRepository;
 import com.hemorede.service.RequisicaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +15,15 @@ import java.util.List;
 @RequestMapping({"/api/v1/requisicoes", "/api/requisicoes"})
 public class RequisicaoController {
 
-    private final RequisicaoRepository requisicaoRepository;
     private final RequisicaoService requisicaoService;
 
-    public RequisicaoController(RequisicaoRepository requisicaoRepository, RequisicaoService requisicaoService) {
-        this.requisicaoRepository = requisicaoRepository;
+    public RequisicaoController(RequisicaoService requisicaoService) {
         this.requisicaoService = requisicaoService;
     }
 
     @GetMapping
     public List<Requisicao> listar() {
-        return requisicaoRepository.findAll();
+        return requisicaoService.listar();
     }
 
     /**

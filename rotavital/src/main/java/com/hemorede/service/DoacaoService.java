@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Regra de negócio 4: intervalo mínimo entre doações.
@@ -33,6 +34,11 @@ public class DoacaoService {
 
     @Value("${hemorede.doacao.intervalo-minimo-dias-homem:60}")
     private int intervaloMinimoDias;
+
+    /** HU01 - Doadores para o formulário de registro de doação. */
+    public List<Doador> listarDoadores() {
+        return doadorRepository.findAll();
+    }
 
     public void registrarDoacao(Long doadorId, LocalDate dataDoacao) {
         Doador doador = buscarDoador(doadorId);

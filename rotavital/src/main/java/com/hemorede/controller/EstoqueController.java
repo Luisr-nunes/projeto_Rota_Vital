@@ -6,7 +6,6 @@ import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Estoque;
 import com.hemorede.dto.BolsaDisponivelResponse;
 import com.hemorede.dto.ConsultaEstoqueResponse;
-import com.hemorede.repository.EstoqueRepository;
 import com.hemorede.service.EstoqueService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,17 +17,15 @@ import java.util.Map;
 @RequestMapping({"/api/v1/estoques", "/api/estoques"})
 public class EstoqueController {
 
-    private final EstoqueRepository estoqueRepository;
     private final EstoqueService estoqueService;
 
-    public EstoqueController(EstoqueRepository estoqueRepository, EstoqueService estoqueService) {
-        this.estoqueRepository = estoqueRepository;
+    public EstoqueController(EstoqueService estoqueService) {
         this.estoqueService = estoqueService;
     }
 
     @GetMapping
     public List<Estoque> listar() {
-        return estoqueRepository.findAll();
+        return estoqueService.listarEstoques();
     }
 
     @GetMapping("/{id}/alerta")
