@@ -1,7 +1,7 @@
 package com.hemorede.controller;
 
 import com.hemorede.domain.model.Hospital;
-import com.hemorede.repository.HospitalRepository;
+import com.hemorede.service.HospitalService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,27 +11,27 @@ import java.util.List;
 @RequestMapping("/api/hospitais")
 public class HospitalController {
 
-    private final HospitalRepository hospitalRepository;
+    private final HospitalService hospitalService;
 
-    public HospitalController(HospitalRepository hospitalRepository) {
-        this.hospitalRepository = hospitalRepository;
+    public HospitalController(HospitalService hospitalService) {
+        this.hospitalService = hospitalService;
     }
 
     @GetMapping
     public List<Hospital> listar() {
-        return hospitalRepository.findAll();
+        return hospitalService.listar();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Hospital> buscarPorId(@PathVariable Long id) {
-        return hospitalRepository.findById(id)
+        return hospitalService.buscarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<Hospital> criar(@RequestBody Hospital hospital) {
-        Hospital salvo = hospitalRepository.save(hospital);
+        Hospital salvo = hospitalService.criar(hospital);
         return ResponseEntity.ok(salvo);
     }
 }

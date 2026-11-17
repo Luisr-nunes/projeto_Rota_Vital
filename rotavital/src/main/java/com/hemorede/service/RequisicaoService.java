@@ -49,6 +49,16 @@ public class RequisicaoService {
         this.alocacaoService = alocacaoService;
     }
 
+    public List<Requisicao> listar() {
+        return requisicaoRepository.findAll();
+    }
+
+    /** @throws IllegalArgumentException se a requisição não existir (404) */
+    public Requisicao buscarPorId(Long id) {
+        return requisicaoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + id));
+    }
+
     /**
      * HU03 - Registrar requisição hospitalar. Monta a requisição a partir do
      * DTO validado, vinculada a um hospital existente, sempre com status

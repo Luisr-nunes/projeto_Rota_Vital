@@ -5,7 +5,7 @@ import com.hemorede.domain.model.Requisicao;
 import com.hemorede.domain.model.Veiculo;
 import com.hemorede.dto.CalcularRotaRequest;
 import com.hemorede.dto.RotaCalculadaResponse;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.service.RequisicaoService;
 import com.hemorede.service.RoteirizacaoService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +18,14 @@ import java.util.List;
 public class RotaController {
 
     private final RoteirizacaoService roteirizacaoService;
-    private final RequisicaoRepository requisicaoRepository;
+    private final RequisicaoService requisicaoService;
 
     @Value("${hemorede.rota.velocidade-media-kmh:60}")
     private double velocidadeMediaKmH;
 
-    public RotaController(RoteirizacaoService roteirizacaoService, RequisicaoRepository requisicaoRepository) {
+    public RotaController(RoteirizacaoService roteirizacaoService, RequisicaoService requisicaoService) {
         this.roteirizacaoService = roteirizacaoService;
-        this.requisicaoRepository = requisicaoRepository;
+        this.requisicaoService = requisicaoService;
     }
 
     @GetMapping("/proximas-requisicoes")
@@ -35,8 +35,7 @@ public class RotaController {
 
     @GetMapping("/veiculo-compativel/{requisicaoId}")
     public Veiculo veiculoCompativel(@PathVariable Long requisicaoId) {
-        Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
-                .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + requisicaoId));
+        Requisicao requisicao = requisicaoService.buscarPorId(requisicaoId);
         return roteirizacaoService.selecionarVeiculoCompativel(requisicao);
     }
 
@@ -56,9 +55,7 @@ public class RotaController {
      */
     @PostMapping("/calcular")
     public ResponseEntity<RotaCalculadaResponse> calcular(@RequestBody CalcularRotaRequest requestBody) {
-        Requisicao requisicao = requisicaoRepository.findById(requestBody.requisicaoId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Requisição não encontrada: " + requestBody.requisicaoId()));
+        Requisicao requisicao = requisicaoService.buscarPorId(requestBody.requisicaoId());
 
         GrafoRotas.ResultadoRota resultado = roteirizacaoService.calcularRotaMinima(requisicao);
         double tempoEstimadoMinutos = (resultado.custoTotal() / velocidadeMediaKmH) * 60.0;
