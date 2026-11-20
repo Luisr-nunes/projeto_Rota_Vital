@@ -9,6 +9,8 @@ import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
+import com.hemorede.domain.regras.RegraFEFO;
+import com.hemorede.domain.regras.RegraTransicaoRequisicao;
 import com.hemorede.dto.AlocacaoResponse;
 import com.hemorede.exception.EstoqueCompativelInsuficienteException;
 import com.hemorede.exception.NenhumaBolsaCompativelException;
@@ -58,7 +60,7 @@ public class AlocacaoService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Requisicao nao encontrada: " + requisicaoId));
 
-        if (requisicao.getStatus() != StatusRequisicao.PENDENTE) {
+        if (!RegraTransicaoRequisicao.permitida(requisicao.getStatus(), StatusRequisicao.ALOCADA)) {
             throw new IllegalStateException(
                     "A requisicao deve estar PENDENTE para ser alocada: " + requisicaoId);
         }
@@ -121,12 +123,21 @@ public class AlocacaoService {
 
         List<Bolsa> selecionadas = new ArrayList<>();
         for (int i = 0; i < necessario; i++) {
-            Bolsa bolsa = alocarProximaCompativel(indice, tiposCompativeis);
+            Bolsa bolsa = alocarProximaCompativel(indice, tiposCompativeis, item.getTipoSanguineo());
             if (bolsa == null) {
                 throw new EstoqueCompativelInsuficienteException(necessario, selecionadas.size());
             }
             bolsa.setStatus(StatusBolsa.RESERVADA);
             selecionadas.add(bolsa);
+        }
+
+        // Auditoria da saída (RN-02): nenhuma bolsa que ficou no estoque pode vencer antes das que saíram.
+        List<LocalDate> ficaram = candidatasCompativeis.stream()
+                .filter(b -> !selecionadas.contains(b))
+                .map(Bolsa::getDataValidade)
+                .toList();
+        if (!RegraFEFO.respeitaFEFO(selecionadas.stream().map(Bolsa::getDataValidade).toList(), ficaram)) {
+            throw new IllegalStateException("Seleção de bolsas violaria o FEFO; alocação abortada");
         }
 
         bolsaRepository.saveAll(selecionadas);
@@ -159,17 +170,24 @@ public class AlocacaoService {
         return indice;
     }
 
+    /**
+     * Compara o topo FEFO de cada fila compatível (no máximo 8) e retira a melhor bolsa segundo
+     * {@link RegraFEFO#comparar}: validade mais próxima, depois tipo idêntico ao pedido, depois coleta.
+     */
     private Bolsa alocarProximaCompativel(
             IndiceEstoque indice,
-            List<TipoSanguineo> tiposCompativeis) {
+            List<TipoSanguineo> tiposCompativeis,
+            TipoSanguineo pedido) {
         TipoSanguineo melhorTipo = null;
         Bolsa melhorBolsa = null;
 
         for (TipoSanguineo doador : tiposCompativeis) {
             FilaFEFO fila = indice.consultarEstoque(doador);
             Bolsa topo = fila.peek();
-            if (topo != null && (melhorBolsa == null
-                    || topo.getDataValidade().isBefore(melhorBolsa.getDataValidade()))) {
+            if (topo != null && (melhorBolsa == null || RegraFEFO.comparar(
+                    topo.getDataValidade(), topo.getTipoSanguineo(), topo.getDataColeta(),
+                    melhorBolsa.getDataValidade(), melhorBolsa.getTipoSanguineo(), melhorBolsa.getDataColeta(),
+                    pedido) < 0)) {
                 melhorBolsa = topo;
                 melhorTipo = doador;
             }
