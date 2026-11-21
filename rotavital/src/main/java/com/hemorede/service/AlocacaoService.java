@@ -132,8 +132,11 @@ public class AlocacaoService {
         }
 
         // Auditoria da saída (RN-02): nenhuma bolsa que ficou no estoque pode vencer antes das que saíram.
+        // conjunto por identidade: O(n) no total, em vez de List.contains (O(n*q))
+        java.util.Set<Bolsa> saiu = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        saiu.addAll(selecionadas);
         List<LocalDate> ficaram = candidatasCompativeis.stream()
-                .filter(b -> !selecionadas.contains(b))
+                .filter(b -> !saiu.contains(b))
                 .map(Bolsa::getDataValidade)
                 .toList();
         if (!RegraFEFO.respeitaFEFO(selecionadas.stream().map(Bolsa::getDataValidade).toList(), ficaram)) {
