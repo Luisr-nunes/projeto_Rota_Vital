@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Vital - Operação & Roteirização</title>
+    <title>Operação e roteirização (área técnica) · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
     <style>
         :root {
             color-scheme: light;
@@ -29,7 +34,7 @@
 
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
             background: var(--fundo);
             color: var(--texto);
             line-height: 1.5;
@@ -505,6 +510,9 @@
         }
         .toast-success { background: var(--verde-claro); color: var(--verde); border: 1px solid #86efac; }
         .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    
+        .area-tecnica { margin: .5rem 0 0; font-size: .85rem; opacity: .9; }
+        .area-tecnica a { color: inherit; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -512,11 +520,12 @@
 <header>
     <div class="header-content">
         <div class="header-brand">
-            <h1> Rota Vital</h1>
-            <p>Gestão e Distribuição de Hemocomponentes na Hemorrede</p>
+            <h1>Rota Vital</h1>
+            <p>Gestão e distribuição de hemocomponentes na hemorrede</p>
+            <p class="area-tecnica">Área técnica: demonstração dos algoritmos das entregas acadêmicas (HU01 a HU07). A operação do dia a dia fica no <a href="/login.html">sistema</a>.</p>
         </div>
         <nav class="nav-links">
-            <a href="/operacao.html" class="active">Operação (HU04 & HU05)</a>
+            <a href="/operacao.html" class="active" aria-current="page">Operação (HU04 e HU05)</a>
             <a href="/indicadores.html">Painel de Indicadores</a>
             <a href="/h2-console" target="_blank" title="JDBC URL: jdbc:h2:mem:hemorede | Usuário: sa">Console H2 ↗</a>
         </nav>
@@ -878,7 +887,7 @@
             const resp = await RV.authFetch(`/api/requisicoes/${requisicaoId}/aprovar`, { method: 'POST' });
             if (!resp.ok) {
                 const erroData = await resp.json().catch(() => ({}));
-                throw new Error(erroData.message || `Erro HTTP ${resp.status} ao aprovar requisição.`);
+                throw new Error(erroData.mensagem || erroData.message || `Não foi possível aprovar a requisição (erro ${resp.status}).`);
             }
             showToast(` <b>HU04 Executada com Sucesso!</b> Bolsas compatíveis alocadas e ordenadas por validade mais próxima via <b>FilaFEFO (Min-Heap)</b>.`);
             await carregarRequisicoes();
@@ -902,7 +911,7 @@
 
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({}));
-                throw new Error(err.message || `Erro ${resp.status} ao calcular rota.`);
+                throw new Error(err.mensagem || err.message || `Não foi possível calcular a rota (erro ${resp.status}).`);
             }
 
             const rota = await resp.json();
@@ -1059,7 +1068,7 @@
         if (errData.erros && typeof errData.erros === 'object') {
             return Object.entries(errData.erros).map(([campo, msg]) => `${campo}: ${msg}`).join(' | ');
         }
-        return errData.mensagem || errData.message || `Erro HTTP ${status}`;
+        return errData.mensagem || errData.message || `Não foi possível concluir (erro ${status}).`;
     }
 
     // HU01 - doadores sintéticos e registro da doação
