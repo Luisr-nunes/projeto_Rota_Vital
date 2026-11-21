@@ -182,7 +182,7 @@
         try { d = await RV.api(`/api/estatistica/descritiva?variavel=${encodeURIComponent(id)}`); }
         catch (e) { ['hist', 'box', 'forma', 'freq', 'memDesc'].forEach((k) => { $(k).innerHTML = ''; }); erro('descKpis', 'Não foi possível calcular', e); return; }
         const N = d.variavel.n;
-        const moda = d.modas.length ? d.modas.slice(0, 3).map((m) => n(m, 1)).join(' · ') + (d.modas.length > 3 ? ' …' : '') : 'amodal';
+        const moda = d.modas.length ? d.modas.slice(0, 3).map((m) => n(m, m % 1 ? 1 : 0)).join(' · ') + (d.modas.length > 3 ? ' …' : '') : 'amodal';
         $('descKpis').innerHTML = [
           ui.kpi('Média', n(d.media, 2), 'sigma', '#48726A', '#E7F0EE', v.unidade),
           ui.kpi('Mediana', n(d.mediana, 2), 'chart', '#00A3C4', '#E0F6FB', v.unidade),
@@ -197,7 +197,7 @@
           ui.checkItem(Math.abs(d.assimetria || 0) < 0.5, `Assimetria ${n(d.assimetria, 2)}`, d.leituraAssimetria),
           ui.checkItem(Math.abs(d.curtose || 0) < 0.5, `Curtose ${n(d.curtose, 2)}`, d.leituraCurtose),
           ui.checkItem(d.outliers === 0, `${d.outliers} ${d.outliers === 1 ? 'valor atípico' : 'valores atípicos'}`, `fora da faixa de ${n(d.limiteInferiorOutlier, 2)} a ${n(d.limiteSuperiorOutlier, 2)}`),
-          `<p class="valores">${esc(frase)}.${Math.abs(d.assimetria || 0) >= 0.5 || d.outliers ? ' Para resumir o valor típico, a mediana representa melhor que a média.' : ''}</p>`
+          `<p class="valores">${esc(frase)}.${Math.abs(d.assimetria || 0) >= 0.5 ? ' Para resumir o valor típico, a mediana representa melhor que a média.' : ''}</p>`
         ].join('');
         let acum = 0;
         const linhas = d.histograma.map((c, i) => {
@@ -265,7 +265,7 @@
         const s = p.somatorios, N = p.n;
         $('memCorr').innerHTML = E.tabela(['x', 'y', 'x − x̄', 'y − ȳ', '(x − x̄)(y − ȳ)', '(x − x̄)²', '(y − ȳ)²'],
           p.memoria.map((l) => [n(l.x, 2), n(l.y, 2), f4(l.dx), f4(l.dy), f4(l.dxdy), f4(l.dx2), f4(l.dy2)]),
-          ['Σ', n(s.sx, 2) + ' (x)', n(s.sy, 2) + ' (y)', '0', f4(s.sdxdy), f4(s.sdx2), f4(s.sdy2)]);
+          ['Σ ' + n(s.sx, 2), n(s.sy, 2), '0', '0', f4(s.sdxdy), f4(s.sdx2), f4(s.sdy2)]);
         $('formCorr').innerHTML = [
           formula('r pela fórmula dos desvios', 'r = Σ(x − x̄)(y − ȳ) ÷ √[Σ(x − x̄)² · Σ(y − ȳ)²]', `= ${f4(s.sdxdy)} ÷ √(${f4(s.sdx2)} · ${f4(s.sdy2)})`, n(p.r, 4)),
           formula('r pela fórmula dos somatórios', 'r = [nΣxy − ΣxΣy] ÷ √{[nΣx² − (Σx)²] · [nΣy² − (Σy)²]}',
