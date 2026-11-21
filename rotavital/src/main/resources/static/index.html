@@ -16,6 +16,13 @@
     .equipe li:last-child { border-bottom: 0; }
     .equipe-nome { font-weight: 600; }
     .equipe-funcao { color: var(--muted); font-size: 13px; }
+    .perfis-home { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .perfis-home div { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, .55); border: 1px solid rgba(0, 0, 0, .06); font-size: 13px; }
+    .perfis-home b { font-size: 14px; }
+    .disciplinas { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 14px; }
+    .disciplinas li { display: grid; grid-template-columns: 210px 1fr; gap: 12px; }
+    @media (max-width: 640px) { .disciplinas li { grid-template-columns: 1fr; gap: 0; } }
+    @media (max-width: 900px) { .perfis-home { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { .equipe li { grid-template-columns: 1fr; gap: 2px; } }
   </style>
 </head>
@@ -52,13 +59,36 @@
     <section class="home-section">
       <article class="glass" id="sobre">
         <h2>Quem somos</h2>
-        <p>O Rota Vital é o Projeto Integrador do 3º semestre de Análise e Desenvolvimento de Sistemas da CESAR School (2026.2). A aplicação apoia a rede de sangue na gestão e distribuição de hemocomponentes, inspirada no fluxo da Hemorrede/SUS.</p>
+        <p>O Rota Vital é o Projeto Integrador do 3º semestre de Análise e Desenvolvimento de Sistemas da CESAR School (2026.2). A aplicação apoia a rede de sangue na gestão e distribuição de hemocomponentes, inspirada no fluxo da Hemorrede/SUS: coleta e doação, processamento no hemocentro, estoque e entrega aos hospitais.</p>
+
+        <h3 class="equipe-titulo">O problema</h3>
+        <p>A rede de sangue precisa garantir o componente certo (compatível e dentro da validade), no lugar certo, no tempo certo e na temperatura certa. Quando isso falha, há desabastecimento, descarte de bolsas vencidas e risco direto ao paciente.</p>
+
+        <h3 class="equipe-titulo">O que o sistema faz</h3>
         <ul>
-          <li>Doação e cadastro de bolsas no estoque do hemocentro</li>
-          <li>Requisições dos hospitais e alocação compatível por FEFO</li>
-          <li>Roteirização da entrega e confirmação no hospital</li>
-          <li>Indicadores da rede, sempre com dados 100% sintéticos</li>
+          <li>Doação e cadastro de bolsas no estoque, conferindo a elegibilidade do doador</li>
+          <li>Requisições dos hospitais e alocação compatível (ABO/Rh) pela validade mais próxima (FEFO)</li>
+          <li>Rota de menor custo até o hospital (Dijkstra) e acompanhamento da entrega no mapa</li>
+          <li>Monitoramento da temperatura no transporte e indicadores da rede</li>
         </ul>
+
+        <h3 class="equipe-titulo">Para quem</h3>
+        <div class="perfis-home">
+          <div><b>Doador</b><span>Informa o tipo sanguíneo e os dados para doar e sabe quando pode doar de novo.</span></div>
+          <div><b>Hospital</b><span>Solicita bolsas e acompanha a entrega até a chegada.</span></div>
+          <div><b>Hemocentro</b><span>Controla estoque, alocação, despacho, rede e indicadores.</span></div>
+        </div>
+
+        <h3 class="equipe-titulo">Disciplinas integradas</h3>
+        <ul class="disciplinas">
+          <li><b>POO</b><span>núcleo da aplicação em Java/Spring Boot</span></li>
+          <li><b>AED</b><span>rotas (Dijkstra), compatibilidade ABO/Rh e FEFO</span></li>
+          <li><b>Estatística</b><span>indicadores e análise probabilística de demanda</span></li>
+          <li><b>Infraestrutura de Software</b><span>CI/CD, deploy em nuvem e concorrência</span></li>
+          <li><b>Infraestrutura de Comunicação</b><span>arquitetura de rede, telemetria e monitoramento</span></li>
+          <li><b>Projeto 3</b><span>gestão do processo, integração e apresentação</span></li>
+        </ul>
+        <p style="font-size:13px;color:var(--muted)">Todos os dados exibidos são sintéticos: nenhuma informação pessoal real é usada.</p>
       </article>
       <article class="glass" id="contato">
         <h2>Entrar em contato</h2>
