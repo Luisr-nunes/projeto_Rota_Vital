@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Estatística · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <link rel="stylesheet" href="../css/gestor.css">
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Estatística</h1>
+        <p class="page-sub">Estatística descritiva, correlação e previsão sobre os dados da rede, com a conta passo a passo</p>
+      </div>
+      <div class="page-actions"><span class="badge b-info">Dados reais e histórico sintético</span></div>
+    </div>
+
+    <div class="seg estat-tabs" role="tablist" aria-label="Seções" id="abas">
+      <button type="button" role="tab" data-aba="descritiva">Descritiva</button>
+      <button type="button" role="tab" data-aba="correlacao">Correlação</button>
+      <button type="button" role="tab" data-aba="previsao">Previsão</button>
+    </div>
+
+    <!-- ===== Descritiva ===== -->
+    <div class="estat-painel" id="p-descritiva" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-var">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-var">Variável analisada</h2><p class="card-sub" id="varInfo">&nbsp;</p></div>
+          <label class="field" style="min-width:min(100%,340px)"><span class="field-label">Variável</span><span class="input"><select id="varDesc"></select></span></label>
+        </div>
+        <div class="kpis" id="descKpis"></div>
+      </section>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-hist">
+          <div class="card-head" style="flex-wrap:wrap">
+            <div><h2 class="card-title" id="t-hist">Histograma</h2><p class="card-sub" id="histSub">&nbsp;</p></div>
+            <div class="legend"><span><i class="line" style="--c:var(--red)"></i>Média</span><span><i class="line" style="--c:var(--cyan)"></i>Mediana</span></div>
+          </div>
+          <div id="hist"></div>
+        </section>
+        <section class="card col-420 gap-12" aria-labelledby="t-box">
+          <div><h2 class="card-title" id="t-box">Forma da distribuição</h2><p class="card-sub">Boxplot, assimetria e curtose</p></div>
+          <div id="box"></div>
+          <div id="forma" class="list"></div>
+        </section>
+      </div>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-freq">
+          <div><h2 class="card-title" id="t-freq">Tabela de frequência</h2><p class="card-sub">Classes pela regra de Sturges: k = 1 + log₂(n)</p></div>
+          <div id="freq"></div>
+        </section>
+        <section class="card grow gap-12" aria-labelledby="t-memd">
+          <div><h2 class="card-title" id="t-memd">Memória de cálculo</h2><p class="card-sub">As fórmulas com os números desta variável</p></div>
+          <div id="memDesc" class="formulas"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===== Correlação ===== -->
+    <div class="estat-painel" id="p-correlacao" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-mat">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-mat">Matriz de correlação de Pearson</h2><p class="card-sub" id="matSub">&nbsp;</p></div>
+          <div class="chips" role="group" aria-label="Conjunto de dados" id="conjuntos">
+            <button type="button" class="chip" data-conj="diario">Histórico diário</button>
+            <button type="button" class="chip" data-conj="entregas">Entregas</button>
+          </div>
+        </div>
+        <div class="legend"><span><i style="--c:rgba(229,57,53,.85)"></i>positiva</span><span><i style="--c:rgba(0,163,196,.85)"></i>negativa</span><span>quanto mais forte a cor, mais perto de ±1 · toque numa célula para ver o par</span></div>
+        <div id="matriz"></div>
+      </section>
+      <section class="card gap-12" aria-labelledby="t-par">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-par">Par de variáveis</h2><p class="card-sub">x no eixo horizontal, y no vertical</p></div>
+          <div class="pares">
+            <label class="field"><span class="field-label">x</span><span class="input"><select id="parX"></select></span></label>
+            <label class="field"><span class="field-label">y</span><span class="input"><select id="parY"></select></span></label>
+          </div>
+        </div>
+        <div class="kpis" id="parKpis"></div>
+      </section>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-disp">
+          <div class="card-head" style="flex-wrap:wrap">
+            <div><h2 class="card-title" id="t-disp">Diagrama de dispersão</h2><p class="card-sub" id="dispSub">&nbsp;</p></div>
+            <div class="legend"><span><i style="--c:var(--teal)"></i>Observação</span><span><i class="line" style="--c:var(--red)"></i>Reta de regressão</span></div>
+          </div>
+          <div id="disp"></div>
+        </section>
+        <section class="card col-420 gap-12" aria-labelledby="t-leit">
+          <div><h2 class="card-title" id="t-leit">Leitura</h2><p class="card-sub">O que o número diz e o que ele não diz</p></div>
+          <div id="leitura" class="list"></div>
+        </section>
+      </div>
+      <section class="card gap-12" aria-labelledby="t-memc">
+        <div><h2 class="card-title" id="t-memc">Memória de cálculo</h2><p class="card-sub" id="memcSub">&nbsp;</p></div>
+        <div id="memCorr"></div>
+        <div id="formCorr" class="formulas"></div>
+      </section>
+    </div>
+
+    <!-- ===== Previsão ===== -->
+    <div class="estat-painel" id="p-previsao" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-sel">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-sel">Seleção de features</h2><p class="card-sub">Quais variáveis ajudam a prever o target? Critério: |r| a partir de 0,3 com o target</p></div>
+          <label class="field" style="min-width:min(100%,300px)"><span class="field-label">Target (o que prever)</span><span class="input"><select id="alvo"></select></span></label>
+        </div>
+        <div id="features"></div>
+        <div id="redund"></div>
+      </section>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-reta">
+          <div><h2 class="card-title" id="t-reta">Reta com a melhor feature</h2><p class="card-sub" id="retaSub">&nbsp;</p></div>
+          <div id="dispPrev"></div>
+        </section>
+        <section class="card col-420 gap-12" aria-labelledby="t-prev">
+          <div><h2 class="card-title" id="t-prev">Prever</h2><p class="card-sub">ŷ = a·x + b</p></div>
+          <div id="equacao"></div>
+          <label class="field"><span class="field-label" id="xLabel">x</span><span class="input"><input type="number" id="xPrev" step="any" inputmode="decimal"></span></label>
+          <div id="yPrev"></div>
+          <div id="memPrev" class="formulas"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/estatistica.js"></script>
+  <script>
+    (async function () {
+      const { ui, esc } = RV;
+      if (!ui.shell('gestor', 'Estatística')) return;
+      const $ = (id) => document.getElementById(id);
+      const E = RV.estat, n = E.n;
+      const CURTO = {
+        'diario.requisicoes': 'Requisições', 'diario.acidentes': 'Acidentes', 'diario.cirurgias': 'Cirurgias', 'diario.doacoes': 'Doações',
+        'diario.temperatura': 'Temperatura', 'diario.feriado': 'Feriado', 'diario.fimDeSemana': 'Fim de semana', 'diario.diaDoMes': 'Dia do mês',
+        'entregas.tempo': 'Tempo', 'entregas.distancia': 'Distância', 'entregas.transito': 'Trânsito', 'entregas.temperaturaCaixa': 'Temp. caixa'
+      };
+      const curto = (v) => CURTO[v.id] || v.nome;
+      const rotulo = (v) => `${v.nome} (${v.unidade})`;
+      const st = { vars: [], conj: 'entregas', x: 'entregas.distancia', y: 'entregas.tempo', alvo: 'diario.requisicoes', prev: null };
+      const erro = (el, titulo, e) => { $(el).innerHTML = ui.alertBox('error', titulo, ui.erroMsg(e)); };
+      const formula = (nome, expr, conta, res, leitura) => `<div class="formula"><span class="nome">${nome}</span><code>${expr}</code>${conta ? `<span>${conta}</span>` : ''}<b>= ${res}</b>${leitura ? `<span class="leitura">${leitura}</span>` : ''}</div>`;
+
+      // ---------- abas ----------
+      function abrir(aba) {
+        if (!['descritiva', 'correlacao', 'previsao'].includes(aba)) aba = 'descritiva';
+        document.querySelectorAll('#abas [data-aba]').forEach((b) => { const on = b.dataset.aba === aba; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
+        ['descritiva', 'correlacao', 'previsao'].forEach((a) => { $('p-' + a).hidden = a !== aba; });
+        if (location.hash !== '#' + aba) history.replaceState(null, '', '#' + aba);
+        if (aba === 'correlacao' && !st.matrizCarregada) { st.matrizCarregada = true; carregarMatriz().then(carregarPar); }
+        if (aba === 'previsao' && !st.prevCarregada) { st.prevCarregada = true; carregarPrevisao(); }
+      }
+      $('abas').addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (b) abrir(b.dataset.aba); });
+
+      // ---------- variáveis ----------
+      try { st.vars = await RV.api('/api/estatistica/variaveis'); }
+      catch (e) { document.querySelector('.content').insertAdjacentHTML('beforeend', ui.alertBox('error', 'Não foi possível carregar as variáveis', ui.erroMsg(e))); return; }
+      const porId = Object.fromEntries(st.vars.map((v) => [v.id, v]));
+      const GRUPOS = [['real', 'Dados do sistema (reais)'], ['diario', 'Histórico diário (sintético)'], ['entregas', 'Entregas (sintético)']];
+      const opcoes = (filtro, sel) => GRUPOS.map(([c, nome]) => {
+        const vs = st.vars.filter((v) => v.conjunto === c && filtro(v));
+        return vs.length ? `<optgroup label="${esc(nome)}">${vs.map((v) => `<option value="${esc(v.id)}" ${v.id === sel ? 'selected' : ''}>${esc(v.nome)} · n = ${v.n}</option>`).join('')}</optgroup>` : '';
+      }).join('');
+
+      // ---------- Descritiva ----------
+      $('varDesc').innerHTML = opcoes(() => true, 'diario.requisicoes');
+      async function carregarDescritiva() {
+        const id = $('varDesc').value; const v = porId[id];
+        $('varInfo').textContent = `${v.tipo} · ${v.unidade} · fonte ${v.fonte === 'real' ? 'real (banco do sistema)' : 'sintética (semente fixa)'} · n = ${v.n}`;
+        $('descKpis').innerHTML = ui.skeletonRows(1, 84);
+        let d;
+        try { d = await RV.api(`/api/estatistica/descritiva?variavel=${encodeURIComponent(id)}`); }
+        catch (e) { ['hist', 'box', 'forma', 'freq', 'memDesc'].forEach((k) => { $(k).innerHTML = ''; }); erro('descKpis', 'Não foi possível calcular', e); return; }
+        const N = d.variavel.n;
+        const moda = d.modas.length ? d.modas.slice(0, 3).map((m) => n(m, 1)).join(' · ') + (d.modas.length > 3 ? ' …' : '') : 'amodal';
+        $('descKpis').innerHTML = [
+          ui.kpi('Média', n(d.media, 2), 'sigma', '#48726A', '#E7F0EE', v.unidade),
+          ui.kpi('Mediana', n(d.mediana, 2), 'chart', '#00A3C4', '#E0F6FB', v.unidade),
+          ui.kpi('Moda', moda, 'drop', '#E53935', '#FDECEC'),
+          ui.kpi('Desvio padrão', n(d.desvioPadrao, 2), 'risk', '#B7791F', '#FFF4DB', d.coeficienteVariacao == null ? '' : `CV ${n(d.coeficienteVariacao, 1)}%`)
+        ].join('');
+        $('histSub').textContent = `${d.histograma.length} classes · quantas observações caem em cada faixa`;
+        $('hist').innerHTML = E.histograma(d.histograma, d.media, d.mediana);
+        $('box').innerHTML = E.boxplot(d);
+        const frase = d.relacaoMediaMediana.charAt(0).toUpperCase() + d.relacaoMediaMediana.slice(1);
+        $('forma').innerHTML = [
+          ui.checkItem(Math.abs(d.assimetria || 0) < 0.5, `Assimetria ${n(d.assimetria, 2)}`, d.leituraAssimetria),
+          ui.checkItem(Math.abs(d.curtose || 0) < 0.5, `Curtose ${n(d.curtose, 2)}`, d.leituraCurtose),
+          ui.checkItem(d.outliers === 0, `${d.outliers} ${d.outliers === 1 ? 'valor atípico' : 'valores atípicos'}`, `fora da faixa de ${n(d.limiteInferiorOutlier, 2)} a ${n(d.limiteSuperiorOutlier, 2)}`),
+          `<p class="valores">${esc(frase)}.${Math.abs(d.assimetria || 0) >= 0.5 || d.outliers ? ' Para resumir o valor típico, a mediana representa melhor que a média.' : ''}</p>`
+        ].join('');
+        let acum = 0;
+        const linhas = d.histograma.map((c, i) => {
+          acum += c.frequencia;
+          return [`[${n(c.inicio, 2)}; ${n(c.fim, 2)}${i === d.histograma.length - 1 ? ']' : ')'}`, n((c.inicio + c.fim) / 2, 2), c.frequencia, n(c.frequencia / N * 100, 1) + '%', acum];
+        });
+        $('freq').innerHTML = E.tabela(['Classe', 'Ponto médio', 'f', 'fr', 'F acumulada'], linhas, ['Total', '', N, '100%', '']);
+        const cvLeitura = d.coeficienteVariacao == null ? '' : d.coeficienteVariacao < 15 ? 'Baixa dispersão (até 15%).' : d.coeficienteVariacao <= 30 ? 'Dispersão média (15% a 30%).' : 'Alta dispersão (acima de 30%).';
+        $('memDesc').innerHTML = [
+          formula('Média', 'x̄ = Σx ÷ n', `= ${n(d.soma, 2)} ÷ ${N}`, n(d.media, 4)),
+          formula('Mediana', 'valor central dos dados ordenados', `posição (n + 1) ÷ 2 = ${n((N + 1) / 2, 1)}`, n(d.mediana, 4)),
+          formula('Moda', 'valor mais frequente', d.classeModal ? `classe modal [${n(d.classeModal.inicio, 2)}; ${n(d.classeModal.fim, 2)}) com f = ${d.classeModal.frequencia}` : '', esc(moda)),
+          formula('Média ponderada (dados agrupados)', 'Σ(f · ponto médio) ÷ Σf', '', n(d.mediaPonderadaAgrupada, 4), `Perto da média real (${n(d.media, 4)}): cada classe é representada pelo seu ponto médio.`),
+          formula('Amplitude', 'máx − mín', `= ${n(d.maximo, 2)} − ${n(d.minimo, 2)}`, n(d.amplitude, 2)),
+          formula('Variância amostral', 's² = Σ(x − x̄)² ÷ (n − 1)', `populacional σ² = ${n(d.varianciaPopulacional, 4)} (divide por n)`, n(d.variancia, 4)),
+          formula('Desvio padrão', 's = √s²', `= √${n(d.variancia, 4)}`, n(d.desvioPadrao, 4)),
+          formula('Coeficiente de variação', 'CV = s ÷ x̄ · 100', `= ${n(d.desvioPadrao, 4)} ÷ ${n(d.media, 4)} · 100`, d.coeficienteVariacao == null ? '—' : n(d.coeficienteVariacao, 2) + '%', cvLeitura),
+          formula('Quartis e valores atípicos', 'IQR = Q3 − Q1; faixa normal de Q1 − 1,5·IQR a Q3 + 1,5·IQR', `Q1 = ${n(d.q1, 2)}, Q3 = ${n(d.q3, 2)}, IQR = ${n(d.iqr, 2)}`, `${n(d.limiteInferiorOutlier, 2)} a ${n(d.limiteSuperiorOutlier, 2)}`),
+          formula('Assimetria (G1)', 'm₃ ÷ m₂^1,5, ajustada por √(n(n − 1)) ÷ (n − 2)', '', n(d.assimetria, 4), esc(d.leituraAssimetria) + '. Zero é simétrica.'),
+          formula('Curtose em excesso (G2)', 'm₄ ÷ m₂² − 3, ajustada pelo tamanho da amostra', '', n(d.curtose, 4), esc(d.leituraCurtose) + '. Zero é igual à normal.'),
+          `<p class="valores">Primeiros valores: ${d.primeirosValores.map((x) => n(x, 1)).join('; ')}${N > d.primeirosValores.length ? '; …' : ''}<br>No Colab, <code>df.describe()</code>, <code>df.skew()</code> e <code>df.kurt()</code> dão os mesmos números.</p>`
+        ].join('');
+      }
+      $('varDesc').addEventListener('change', carregarDescritiva);
+
+      // ---------- Correlação ----------
+      function preencherPar() {
+        const vs = st.vars.filter((v) => v.conjunto === st.conj);
+        if (!vs.some((v) => v.id === st.x)) st.x = vs[1].id;
+        if (!vs.some((v) => v.id === st.y)) st.y = vs[0].id;
+        const op = (sel) => vs.map((v) => `<option value="${esc(v.id)}" ${v.id === sel ? 'selected' : ''}>${esc(v.nome)}</option>`).join('');
+        $('parX').innerHTML = op(st.x); $('parY').innerHTML = op(st.y);
+        document.querySelectorAll('#conjuntos [data-conj]').forEach((b) => { const on = b.dataset.conj === st.conj; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+      }
+      async function carregarMatriz() {
+        preencherPar();
+        $('matriz').innerHTML = ui.skeletonRows(1, 240);
+        try { st.matriz = await RV.api(`/api/estatistica/correlacao?conjunto=${st.conj}`); }
+        catch (e) { erro('matriz', 'Não foi possível montar a matriz', e); return; }
+        $('matSub').textContent = `${st.matriz.descricao} · r de cada par de variáveis`;
+        $('matriz').innerHTML = E.heatmap(st.matriz, curto);
+      }
+      async function carregarPar() {
+        $('parKpis').innerHTML = ui.skeletonRows(1, 84);
+        let p;
+        try { p = await RV.api(`/api/estatistica/correlacao/par?x=${encodeURIComponent(st.x)}&y=${encodeURIComponent(st.y)}`); }
+        catch (e) { ['disp', 'leitura', 'memCorr', 'formCorr'].forEach((k) => { $(k).innerHTML = ''; }); erro('parKpis', 'Não foi possível calcular o par', e); return; }
+        $('parKpis').innerHTML = [
+          ui.kpi('r de Pearson', n(p.r, 4), 'sigma', '#48726A', '#E7F0EE', p.forca),
+          ui.kpi('r²', n(p.r2, 4), 'chart', '#00A3C4', '#E0F6FB', p.r2 == null ? '' : `${n(p.r2 * 100, 1)}% da variação`),
+          ui.kpi('Covariância', n(p.covariancia, 3), 'net', '#B7791F', '#FFF4DB', 'amostral'),
+          ui.kpi('Direção', p.direcao, 'risk', '#E53935', '#FDECEC', `n = ${p.n}`)
+        ].join('');
+        $('dispSub').textContent = `${p.y.nome} por ${p.x.nome} · ${p.n} observações`;
+        $('disp').innerHTML = E.dispersao(p.pontos, p.reta, rotulo(p.x), rotulo(p.y));
+        const qual = [p.x, p.y].some((v) => v.tipo.startsWith('qualitativa'));
+        const yNome = curto(p.y).toLowerCase(), xNome = curto(p.x).toLowerCase();
+        $('leitura').innerHTML = [
+          `<p class="leitura-r">r = <b>${n(p.r, 2)}</b>: correlação ${esc(p.direcao)} ${esc(p.forca)}.${p.r2 == null ? '' : ` r² = ${n(p.r2, 2)}: a reta acompanha ${n(p.r2 * 100, 0)}% da variação de ${esc(yNome)}.`}${p.reta ? ` Cada 1 ${esc(p.x.unidade)} a mais em ${esc(xNome)} muda ${esc(yNome)} em ${n(p.reta.a, 2)} ${esc(p.y.unidade)}, em média.` : ''}</p>`,
+          ui.alertBox('warn', 'Correlação não é causa', 'Duas variáveis podem andar juntas por acaso, por causa reversa ou por uma terceira variável que influencia as duas.'),
+          qual ? ui.alertBox('info', 'Variável qualitativa codificada', 'Com 0 e 1, o r mede a diferença entre os dois grupos; a reta só tem sentido nos valores 0 e 1.') : ''
+        ].join('');
+        $('memcSub').textContent = `Primeiras ${p.memoria.length} das ${p.n} linhas; a linha Σ soma as ${p.n}. x̄ = ${n(p.mediaX, 4)}, ȳ = ${n(p.mediaY, 4)}`;
+        const f4 = (v) => n(v, 4);
+        const s = p.somatorios, N = p.n;
+        $('memCorr').innerHTML = E.tabela(['x', 'y', 'x − x̄', 'y − ȳ', '(x − x̄)(y − ȳ)', '(x − x̄)²', '(y − ȳ)²'],
+          p.memoria.map((l) => [n(l.x, 2), n(l.y, 2), f4(l.dx), f4(l.dy), f4(l.dxdy), f4(l.dx2), f4(l.dy2)]),
+          ['Σ', n(s.sx, 2) + ' (x)', n(s.sy, 2) + ' (y)', '0', f4(s.sdxdy), f4(s.sdx2), f4(s.sdy2)]);
+        $('formCorr').innerHTML = [
+          formula('r pela fórmula dos desvios', 'r = Σ(x − x̄)(y − ȳ) ÷ √[Σ(x − x̄)² · Σ(y − ȳ)²]', `= ${f4(s.sdxdy)} ÷ √(${f4(s.sdx2)} · ${f4(s.sdy2)})`, n(p.r, 4)),
+          formula('r pela fórmula dos somatórios', 'r = [nΣxy − ΣxΣy] ÷ √{[nΣx² − (Σx)²] · [nΣy² − (Σy)²]}',
+            `n = ${N}, Σx = ${n(s.sx, 2)}, Σy = ${n(s.sy, 2)}, Σxy = ${n(s.sxy, 2)}, Σx² = ${n(s.sx2, 2)}, Σy² = ${n(s.sy2, 2)}`, n(p.rPorSomatorios, 4), 'As duas fórmulas são a mesma conta reorganizada.'),
+          formula('Covariância e r', 'Cov = Σ(x − x̄)(y − ȳ) ÷ (n − 1);  r = Cov ÷ (sₓ · s_y)', `= ${f4(s.sdxdy)} ÷ ${N - 1};  ${n(p.covariancia, 4)} ÷ (${f4(p.desvioX)} · ${f4(p.desvioY)})`, `${n(p.covariancia, 4)};  r = ${n(p.r, 4)}`),
+          formula('Coeficiente de determinação', 'r² = r · r', `= ${n(p.r, 4)}²`, n(p.r2, 4))
+        ].join('');
+      }
+      $('conjuntos').addEventListener('click', (e) => { const b = e.target.closest('[data-conj]'); if (!b || b.dataset.conj === st.conj) return; st.conj = b.dataset.conj; st.x = st.y = null; carregarMatriz().then(carregarPar); });
+      $('matriz').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-par]'); if (!b) return;
+        const [i, j] = b.dataset.par.split(',').map(Number); if (i === j) return;
+        st.y = st.matriz.variaveis[i].id; st.x = st.matriz.variaveis[j].id; preencherPar(); carregarPar();
+        $('t-par').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      $('parX').addEventListener('change', () => { st.x = $('parX').value; carregarPar(); });
+      $('parY').addEventListener('change', () => { st.y = $('parY').value; carregarPar(); });
+
+      // ---------- Previsão ----------
+      $('alvo').innerHTML = opcoes((v) => v.correlacionavel, st.alvo);
+      async function carregarPrevisao(soX) {
+        const x = $('xPrev').value;
+        let pr;
+        try { pr = await RV.api(`/api/estatistica/previsao?alvo=${encodeURIComponent(st.alvo)}${soX && x !== '' ? '&x=' + encodeURIComponent(x) : ''}`); }
+        catch (e) { erro(soX ? 'yPrev' : 'features', 'Não foi possível calcular a previsão', e); return; }
+        if (soX) { mostrarY(pr); return; }
+        st.prev = pr;
+        $('features').innerHTML = E.tabela(['Feature', 'r', 'r²', 'Força', 'Decisão', 'Motivo'], pr.features.map((f) => [
+          esc(f.variavel.nome), n(f.r, 3), n(f.r2, 3), esc(f.forca),
+          f.selecionada ? '<span class="badge b-ok">Selecionada</span>' : '<span class="badge b-inativo">Descartada</span>',
+          esc(f.motivo)]));
+        $('features').querySelectorAll('tbody td:last-child').forEach((td) => td.classList.add('wrap'));
+        $('redund').innerHTML = pr.redundantes.length
+          ? ui.alertBox('warn', 'Features redundantes', pr.redundantes.map(([a, b]) => `${porId[a].nome} e ${porId[b].nome}`).join('; ') + ': com |r| a partir de 0,8 entre si, trazem quase a mesma informação. Num modelo, mantenha só uma de cada par.')
+          : '';
+        if (!pr.reta) { $('dispPrev').innerHTML = ui.empty('Sem reta', 'Nenhuma feature varia junto com o target.'); return; }
+        const mf = pr.melhorFeature;
+        $('retaSub').textContent = `${mf.nome} explica ${n(pr.r2 * 100, 0)}% da variação de ${pr.alvo.nome.toLowerCase()} (r² = ${n(pr.r2, 3)})`;
+        $('xLabel').textContent = `${mf.nome} (${mf.unidade})`;
+        $('equacao').innerHTML = `<div class="formula"><span class="nome">Equação</span><b class="fs-lg">ŷ = ${n(pr.reta.a, 4)} · x ${pr.reta.b < 0 ? '−' : '+'} ${n(Math.abs(pr.reta.b), 4)}</b><span class="leitura">x = ${esc(mf.nome.toLowerCase())}; ŷ = ${esc(pr.alvo.nome.toLowerCase())} estimado</span></div>`;
+        try {
+          const p = await RV.api(`/api/estatistica/correlacao/par?x=${encodeURIComponent(mf.id)}&y=${encodeURIComponent(pr.alvo.id)}`);
+          $('dispPrev').innerHTML = E.dispersao(p.pontos, p.reta, rotulo(mf), rotulo(pr.alvo));
+          if ($('xPrev').value === '') $('xPrev').value = Math.round(p.mediaX);
+          const s = p.somatorios;
+          $('memPrev').innerHTML = [
+            formula('Inclinação', 'a = Σ(x − x̄)(y − ȳ) ÷ Σ(x − x̄)²', `= ${n(s.sdxdy, 4)} ÷ ${n(s.sdx2, 4)}`, n(p.reta.a, 4)),
+            formula('Intercepto', 'b = ȳ − a · x̄', `= ${n(p.mediaY, 4)} − ${n(p.reta.a, 4)} · ${n(p.mediaX, 4)}`, n(p.reta.b, 4))
+          ].join('');
+        } catch (e) { erro('dispPrev', 'Não foi possível desenhar a reta', e); }
+        carregarPrevisao(true);
+      }
+      function mostrarY(pr) {
+        if (pr.yPrevisto == null) { $('yPrev').innerHTML = ''; return; }
+        const r2 = st.prev ? st.prev.r2 : pr.r2;
+        $('yPrev').innerHTML = `<div class="formula"><span class="nome">Previsão</span><code>ŷ = ${n(pr.reta.a, 4)} · ${n(pr.x, 2)} ${pr.reta.b < 0 ? '−' : '+'} ${n(Math.abs(pr.reta.b), 4)}</code><b class="fs-lg">${n(pr.yPrevisto, 1)} ${esc(pr.alvo.unidade)}</b>
+          <span class="leitura">${r2 < 0.5 ? 'Com r² abaixo de 0,5 a reta deixa boa parte da variação sem explicação: use como ordem de grandeza, não como valor exato.' : 'Estimativa pela reta; os valores reais variam em torno dela.'}</span></div>`;
+      }
+      $('alvo').addEventListener('change', () => { st.alvo = $('alvo').value; $('xPrev').value = ''; carregarPrevisao(); });
+      let tx;
+      $('xPrev').addEventListener('input', () => { clearTimeout(tx); tx = setTimeout(() => carregarPrevisao(true), 300); });
+
+      abrir(location.hash.slice(1));
+      carregarDescritiva();
+    })();
+  </script>
+</body>
+</html>
