@@ -9,7 +9,7 @@
     document.querySelectorAll('[data-drop-lg]').forEach((el) => { el.innerHTML = ui.drop(el.classList.contains('lg') ? 28 : 26, false); });
     document.querySelectorAll('[data-ic]').forEach((el) => el.insertAdjacentHTML('afterbegin', ui.icon(el.dataset.ic, 18, '#5B6B68')));
     document.querySelectorAll('[data-icr]').forEach((el) => el.insertAdjacentHTML('beforeend', ui.icon(el.dataset.icr, 18, '#5B6B68')));
-    document.querySelectorAll('[data-check]').forEach((el) => { el.innerHTML = ui.icon('check', 12, '#fff', 3.2); });
+    document.querySelectorAll('[data-check]').forEach((el) => { el.innerHTML = ui.icon('check', 12, '#fff', 2); });
     document.querySelectorAll('[data-toggle]').forEach((btn) => {
       const input = btn.parentElement.querySelector('input');
       const paint = () => {

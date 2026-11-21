@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel gerencial · Rota Vital</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +13,6 @@
   <link rel="stylesheet" href="../css/gestor.css">
 </head>
 <body class="bg-app">
-  <!-- Figma 5.1 · HU07 · Painel gerencial e 5.2 · Painel sem dados (PI2-197) -->
   <main class="content">
     <div class="page-head">
       <div class="page-titles">
@@ -216,7 +217,7 @@
       const G = RV.gestor;
       const u2 = { comp: 'HEMACIAS', descarte: null };
       document.getElementById('verMais').insertAdjacentHTML('beforeend', ui.icon('arrowR', 18, '#2F5E55', 2));
-      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2.2);
+      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2);
       if (vazio) {
         document.querySelectorAll('[data-u2]').forEach((el) => { el.hidden = true; });
         $('u2').outerHTML = `<section class="card">${ui.empty('Sem dados para as análises', 'Risco e descarte aparecem quando houver bolsas e vencimentos registrados. Nenhum valor é exibido para não apresentar números fictícios.')}</section>`;

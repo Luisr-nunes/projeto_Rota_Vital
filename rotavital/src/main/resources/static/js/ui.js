@@ -51,7 +51,7 @@
     db: '<ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/>',
     building: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h2M14 7h2M8 11h2M14 11h2"/>'
   };
-  function icon(name, size = 20, color = 'currentColor', sw = 1.8) {
+  function icon(name, size = 20, color = 'currentColor', sw = 2) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
   }
   let dropSeq = 0;
@@ -78,7 +78,7 @@
     return `<div class="check-item ${ok ? 'ok' : 'err'}"><span class="dot-ic">${icon(ok ? 'check' : 'x', 14, ok ? '#34C759' : '#E53935', 2.6)}</span><div><b>${esc(title)}</b><span class="sub">${esc(detail)}</span></div></div>`;
   }
   function empty(title, msg, actionHtml = '') {
-    return `<div class="empty"><span class="ic-circle">${icon('search', 32, '#00A3C4', 2.4)}</span><h3>${esc(title)}</h3><p>${esc(msg)}</p>${actionHtml}</div>`;
+    return `<div class="empty"><span class="ic-circle">${icon('search', 32, '#00A3C4', 2)}</span><h3>${esc(title)}</h3><p>${esc(msg)}</p>${actionHtml}</div>`;
   }
   function kpi(label, value, ic, color, bg, note = '', noteCls = '') {
     const isEmpty = value === null || value === undefined || value === '—';
@@ -133,7 +133,7 @@
     doador: {
       perfil: 'DOADOR',
       busca: null,
-      itens: [['Meu painel', 'drop', 'doador/painel.html']]
+      itens: [['Meu painel', 'drop', 'doador/painel.html'], ['Antes de doar', 'info', 'doador/orientacoes.html']]
     }
   };
   /* Sessão obrigatória e do perfil certo; senão vai para o login ou para a home do próprio perfil. */
@@ -155,8 +155,7 @@
     const M = MENUS[menu];
     const item = (n, ic, href) => {
       const a = n === active;
-      const tag = href ? `a href="${url(href)}"` : `button type="button" data-soon="${esc(n)}"`;
-      return `<${tag} class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></${href ? 'a' : 'button'}>`;
+      return `<a href="${url(href)}" class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></a>`;
     };
     const top = document.createElement('header');
     top.className = 'topbar';
@@ -174,7 +173,6 @@
     document.body.prepend(side);
     document.body.prepend(top);
     side.querySelector('[data-sair]').onclick = () => { RV.sessao.sair(); location.href = url('login.html'); };
-    [...top.querySelectorAll('[data-soon]'), ...side.querySelectorAll('[data-soon]')].forEach((b) => b.addEventListener('click', () => toast('info', `${b.dataset.soon}: em breve`, 'Esta tela faz parte de outra jornada e ainda vai ser implementada.')));
     const busca = top.querySelector('[data-busca]');
     if (busca) busca.addEventListener('submit', (e) => {
       e.preventDefault();

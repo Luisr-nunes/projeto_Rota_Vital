@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota Vital - Indicadores</title>
+    <title>Indicadores (área técnica) · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
     <style>
         :root {
             color-scheme: light;
@@ -21,7 +26,7 @@
 
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
             background: var(--fundo);
             color: var(--texto);
         }
@@ -248,12 +253,16 @@
             .grade { grid-template-columns: 1fr; }
             .controles { align-items: stretch; flex-direction: column; }
         }
+    
+        .area-tecnica { margin: .5rem 0 0; font-size: .85rem; opacity: .9; }
+        .area-tecnica a { color: inherit; text-decoration: underline; }
     </style>
 </head>
 <body>
 <header>
     <h1>Rota Vital</h1>
     <p>Painel de indicadores de estoque e distribuição</p>
+    <p class="area-tecnica">Área técnica: demonstração dos algoritmos das entregas acadêmicas (HU01 a HU07). A operação do dia a dia fica no <a href="/login.html">sistema</a>.</p> <a href="/operacao.html" style="color:inherit">Operação</a>
 </header>
 
 <main>
@@ -377,7 +386,7 @@
 
         try {
             const resposta = await RV.authFetch(`/api/indicadores?diasProximoVencimento=${janela}`);
-            if (!resposta.ok) throw new Error(`A API respondeu com status ${resposta.status}`);
+            if (!resposta.ok) throw new Error(`Não foi possível carregar os indicadores (erro ${resposta.status}).`);
             const dados = await resposta.json();
 
             const semDados = dados.estoque.totalDisponivel === 0 && dados.requisicoes.total === 0;
@@ -467,7 +476,7 @@
         const r = await RV.authFetch(url);
         const corpo = await r.json().catch(() => null);
         if (!r.ok) {
-            const e = new Error((corpo && corpo.mensagem) || `A API respondeu com status ${r.status}`);
+            const e = new Error((corpo && corpo.mensagem) || `Não foi possível carregar (erro ${r.status}).`);
             e.status = r.status;
             throw e;
         }
