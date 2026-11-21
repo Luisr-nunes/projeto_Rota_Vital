@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /index.html
+Allow: /login.html
+Allow: /criar-conta.html
+Disallow: /
