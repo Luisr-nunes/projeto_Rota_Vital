@@ -29,7 +29,7 @@ public class ModeloProbabilisticoDemanda {
             Double lambda = lambdaDiario.get(tipo);
             if (lambda == null || !Double.isFinite(lambda) || lambda < 0.0) {
                 throw new ModeloProbabilisticoIndisponivelException(
-                        "Modelo de demanda pendente: lambda diario ausente ou invalido para " + tipo);
+                        "Modelo de demanda pendente: lambda diário ausente ou inválido para " + tipo);
             }
             copia.put(tipo, lambda);
         }

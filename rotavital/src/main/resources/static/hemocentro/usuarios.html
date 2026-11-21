@@ -75,8 +75,7 @@
           f.nome.value = ''; f.email.value = ''; f.senha.value = '';
           carregar();
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível criar', campos || ui.erroMsg(err));
+          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível criar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
       carregar();
