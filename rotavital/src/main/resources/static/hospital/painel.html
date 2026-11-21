@@ -93,7 +93,7 @@
         const b = $('enviar'); b.disabled = true;
         try {
           const r = await RV.api('/api/hospital/requisicoes', { method: 'POST', body: { prioridade: e.target.prioridade.value, itens } });
-          ui.toast('success', `Requisição #${r.id} enviada`, 'O hemocentro já pode alocar as bolsas. Acompanhe o status na lista.');
+          ui.toast('success', `Requisição #${r.id} enviada`, 'O hemocentro já pode alocar as bolsas. Use Ver rota na lista para ver o trajeto previsto.');
           $('itens').innerHTML = ''; novaLinha(); e.target.prioridade.value = 'NORMAL';
           carregar();
         } catch (err) {
@@ -117,10 +117,10 @@
         if (!lista.length) { $('lista').innerHTML = ui.empty('Nenhuma requisição ainda', 'Use o formulário ao lado para pedir bolsas ao hemocentro.'); return; }
         $('lista').innerHTML = `<div class="table reqs"><div class="tr thead"><span>Nº</span><span>Data</span><span>Itens</span><span>Prioridade</span><span>Status</span><span></span></div>` +
           lista.map((r) => {
-            const acompanhar = ['ALOCADA', 'APROVADA', 'EM_ROTA', 'ENTREGUE'].includes(r.status);
+            const acompanhar = r.status !== 'CANCELADA';
             return `<div class="tr"><span class="td-strong">#${r.id}</span><span>${RV.fmtDate(r.dataSolicitacao)} ${RV.fmtTime(r.dataSolicitacao)}</span>
               <span>${esc(itensTexto(r))}</span><span>${ui.prioridade(r.prioridade)}</span><span>${ui.badgeReq(r.status)}</span>
-              <span class="acoes-linha">${acompanhar ? `<a class="btn btn-secondary sm" href="../rastreamento.html?id=${r.id}">${ui.icon('route', 16, '#1F2D2A', 2)}Acompanhar</a>` : ''}
+              <span class="acoes-linha">${acompanhar ? `<a class="btn btn-secondary sm" href="../rastreamento.html?id=${r.id}">${ui.icon('route', 16, '#1F2D2A', 2)}${r.status === 'EM_ROTA' || r.status === 'ENTREGUE' ? 'Acompanhar' : 'Ver rota'}</a>` : ''}
               ${r.status === 'EM_ROTA' ? `<button type="button" class="btn btn-primary sm" data-receber="${r.id}">Confirmar recebimento</button>` : ''}</span></div>`;
           }).join('') + '</div>';
         document.querySelectorAll('[data-receber]').forEach((b) => b.onclick = async () => {

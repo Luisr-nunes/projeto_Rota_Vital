@@ -65,7 +65,7 @@
 
     RV.TIPOS.forEach((t) => form.tipoSanguineo.insertAdjacentHTML('beforeend', `<option value="${t}">${RV.tipoLabel(t)}</option>`));
     form.querySelectorAll('select').forEach((s) => s.addEventListener('change', () => s.classList.toggle('ph', !s.value)));
-    form.dataNascimento.max = new Date().toISOString().slice(0, 10);
+    form.dataNascimento.max = RV.hojeISO();
 
     // Máscara de CPF
     form.cpf.addEventListener('input', (e) => {

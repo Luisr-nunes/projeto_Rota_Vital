@@ -71,7 +71,8 @@
       document.title = `Requisição #${req.id} · Rota Vital`;
       $('titulo').textContent = `Requisição #${req.id}`;
       $('sub').textContent = `${hemo.hospitalNome(req)} · solicitada em ${RV.fmtDate(req.dataSolicitacao)} às ${RV.fmtTime(req.dataSolicitacao)}`;
-      $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq(req.status);
+      $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq(req.status)
+        + (req.status !== 'CANCELADA' ? `<a class="btn btn-secondary sm" href="../rastreamento.html?id=${req.id}">${ui.icon('route', 16, '#1F2D2A', 2)}${['PENDENTE', 'ALOCADA', 'APROVADA'].includes(req.status) ? 'Ver rota prevista' : 'Acompanhar entrega'}</a>` : '');
 
       // Itens solicitados
       $('itens').innerHTML = (req.itens || []).map((i) => `<div class="item-row">${ui.blood(i.tipoSanguineo, 52)}
@@ -192,12 +193,10 @@
             bolsas.map((b, i) => `<div class="tr"><span style="font-weight:500">${i + 1}º</span><span class="td-strong">${RV.codigoBolsa(b)}</span><span>${ui.blood(b.tipoSanguineo, 32)}</span><span>${RV.fmtDate(b.dataValidade)}</span><span>${ui.badgeBolsa(b.status || 'RESERVADA')}</span></div>`).join('') + '</div>'
           : '<p class="sub">Nenhuma bolsa associada a esta requisição.</p>';
         const podeDespachar = ['ALOCADA', 'APROVADA'].includes(req.status);
-        const temEntrega = ['ALOCADA', 'APROVADA', 'EM_ROTA', 'ENTREGUE'].includes(req.status);
         $('resumo').innerHTML = `<h2 class="card-title">Situação</h2>
           <div class="kv"><div><span class="k">Status</span>${ui.badgeReq(req.status)}</div><div><span class="k">Bolsas reservadas</span><span class="v">${bolsas.length}</span></div><div><span class="k">Hospital</span><span class="v">${esc(hemo.hospitalNome(req))}</span></div></div>
           ${podeDespachar ? `<div class="muted-box"><b>Despacho</b><p>Escolhe o veículo com a refrigeração do componente, calcula a menor rota e passa as bolsas para Em trânsito.</p></div>
           <button type="button" class="btn btn-primary lg block" id="despachar">${ui.icon('truck', 18, '#fff', 2)}Despachar para entrega</button>` : ''}
-          ${temEntrega ? `<a class="btn btn-secondary block" href="../rastreamento.html?id=${req.id}">${ui.icon('route', 18, '#1F2D2A', 2)}Acompanhar entrega</a>` : ''}
           <a class="btn btn-ghost block" href="requisicoes.html">Voltar à fila</a>`;
         const d = $('despachar');
         if (d) d.onclick = async () => {

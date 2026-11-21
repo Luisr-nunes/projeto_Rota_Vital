@@ -103,7 +103,7 @@
           if (camadaTrajeto) camadaTrajeto.remove();
           if (camadaPercorrida) camadaPercorrida.remove();
           camadaTrajeto = L.layerGroup().addTo(mapa);
-          L.polyline(pontos, { color: COR_ROTA, weight: 5, opacity: .45, dashArray: emRota || entregue ? null : '8 8' }).addTo(camadaTrajeto);
+          L.polyline(pontos, { color: COR_ROTA, weight: 6, opacity: emRota || entregue ? .45 : .9, dashArray: emRota || entregue ? null : '10 8' }).addTo(camadaTrajeto);
           r.trajeto.forEach((p, i) => {
             const fim = i === r.trajeto.length - 1;
             L.circleMarker([p.lat, p.lng], { radius: i === 0 || fim ? 9 : 6, color: '#fff', weight: 2, fillColor: fim ? COR_ATIVA : COR_ROTA, fillOpacity: 1 })
@@ -135,7 +135,7 @@
         const temp = r.temperaturaC == null ? 'sem leitura'
           : `${RV.num(r.temperaturaC, 1)} °C · ${r.statusTemperatura === 'OK' ? 'na faixa' : 'fora da faixa'}`;
         const trecho = emRota && r.trajeto[atual + 1] ? `${r.trajeto[atual].nome} → ${r.trajeto[atual + 1].nome}` : '—';
-        const situacao = entregue ? 'Entregue ao hospital' : emRota ? 'Em trânsito' : ['ALOCADA', 'APROVADA'].includes(r.status) ? 'Bolsas reservadas, aguardando despacho' : 'Aguardando alocação';
+        const situacao = entregue ? 'Entregue ao hospital' : emRota ? 'Em trânsito' : ['ALOCADA', 'APROVADA'].includes(r.status) ? 'Bolsas reservadas, aguardando despacho' : 'Rota prevista · aguardando alocação das bolsas';
         $('resumo').innerHTML = `
           <h2 class="card-title">${esc(situacao)}</h2>
           <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted" style="font-size:13px;font-weight:500">Trajeto concluído</span><b style="font-size:13px;color:var(--ink)">${RV.num(pct, 0)}%</b></div>

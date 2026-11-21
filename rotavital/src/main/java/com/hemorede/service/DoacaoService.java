@@ -109,7 +109,27 @@ public class DoacaoService {
                         + ChronoUnit.DAYS.between(data, proxima) + " dia(s)");
             }
         }
+        // Limite anual atingido: só volta a doar quando a doação mais antiga que estoura o limite sair da janela de 12 meses.
+        int maximo = RegraElegibilidadeDoador.maximoDoacoesPorAno(doador.getSexo());
+        if (doador.getId() != null && doacoesNosUltimos12Meses(doador, data) >= maximo) {
+            List<LocalDate> coletas = bolsaRepository.findByDoadorIdOrderByDataColetaDesc(doador.getId()).stream()
+                    .map(Bolsa::getDataColeta)
+                    .filter(c -> c != null && c.isAfter(data.minusYears(1)))
+                    .toList();
+            if (coletas.size() >= maximo) {
+                LocalDate liberaAnual = coletas.get(maximo - 1).plusYears(1);
+                if (liberaAnual.isAfter(proxima)) {
+                    proxima = liberaAnual;
+                }
+            }
+        }
         return new RegraElegibilidadeDoador.Resultado(motivos.isEmpty(), List.copyOf(motivos), proxima);
+    }
+
+    /** Elegibilidade de um doador hoje, pelo id (tela de doação do hemocentro). */
+    @Transactional(readOnly = true)
+    public RegraElegibilidadeDoador.Resultado elegibilidade(Long doadorId) {
+        return elegibilidade(buscarDoador(doadorId), LocalDate.now());
     }
 
     private Doador buscarDoador(Long doadorId) {

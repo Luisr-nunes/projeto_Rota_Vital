@@ -1081,7 +1081,7 @@
     function iniciarDatasDoacao() {
         const hoje = new Date();
         const validade = new Date(hoje.getTime() + 35 * 24 * 60 * 60 * 1000);
-        document.getElementById('doacao-coleta').value = hoje.toISOString().slice(0, 10);
+        document.getElementById('doacao-coleta').value = RV.hojeISO();
         document.getElementById('doacao-validade').value = validade.toISOString().slice(0, 10);
     }
 

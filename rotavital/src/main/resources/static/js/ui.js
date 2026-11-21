@@ -115,19 +115,15 @@
   }
 
   /* ---------- Shell autenticado (topbar + sidebar de vidro por perfil) ---------- */
+  /* Um menu por perfil. As telas de gestão (gestor/*) usam o mesmo menu do hemocentro,
+     para a navegação não mudar ao entrar nos indicadores. */
+  const ITENS_HEMOCENTRO = [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'],
+    ['Doações', 'drop', 'hemocentro/doacao.html'], ['Requisições', 'inbox', 'hemocentro/requisicoes.html'],
+    ['Gestão', 'risk', 'gestor/painel.html'], ['Indicadores', 'thermo', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'],
+    ['Contas', 'building', 'hemocentro/usuarios.html']];
   const MENUS = {
-    hemocentro: {
-      perfil: 'HEMOCENTRO',
-      busca: 'Buscar bolsa, doador ou requisição…',
-      itens: [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'], ['Doações', 'drop', 'operacao.html'],
-        ['Requisições', 'inbox', 'hemocentro/requisicoes.html'], ['Contas', 'building', 'hemocentro/usuarios.html'], ['Gestão', 'risk', 'gestor/painel.html']]
-    },
-    gestor: {
-      perfil: 'HEMOCENTRO',
-      busca: null,
-      itens: [['Painel', 'chart', 'gestor/painel.html'], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'],
-        ['Hospitais', 'building', 'hemocentro/usuarios.html'], ['Hemocentro', 'home', 'hemocentro/painel.html']]
-    },
+    hemocentro: { perfil: 'HEMOCENTRO', busca: 'Buscar bolsa, doador ou requisição…', itens: ITENS_HEMOCENTRO },
+    gestor: { perfil: 'HEMOCENTRO', busca: 'Buscar bolsa, doador ou requisição…', itens: ITENS_HEMOCENTRO },
     hospital: {
       perfil: 'HOSPITAL',
       busca: null,
@@ -167,7 +163,6 @@
       <a class="brand" href="${url(perfil.home || 'login.html')}">${drop(26)}<span class="brand-name">Rota Vital</span><span class="sep"></span><span class="unit">${esc(s.unidade || perfil.unidade)}</span></a>
       <div class="topbar-actions">
         ${M.busca ? `<form class="topbar-search" role="search" data-busca>${icon('search', 18, '#fff')}<input type="search" placeholder="${esc(M.busca)}" aria-label="Buscar"></form>` : ''}
-        <button type="button" class="icon-square" aria-label="Notificações" data-soon="Notificações">${icon('bell', 20, '#fff')}<span class="dot"></span></button>
         <div class="user"><span class="avatar">${esc(RV.iniciais(s.nome))}</span><div><div class="user-name">${esc(s.nome)}</div><div class="user-role">${esc(perfil.label)}</div></div></div>
       </div>`;
     const side = document.createElement('nav');
