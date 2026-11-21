@@ -132,7 +132,7 @@
     doador: {
       perfil: 'DOADOR',
       busca: null,
-      itens: [['Meu painel', 'drop', 'doador/painel.html']]
+      itens: [['Meu painel', 'drop', 'doador/painel.html'], ['Antes de doar', 'info', 'doador/orientacoes.html']]
     }
   };
   /* Sessão obrigatória e do perfil certo; senão vai para o login ou para a home do próprio perfil. */
