@@ -169,6 +169,9 @@
       };
       const CASO = { diario: ['dia', 'dias'], entregas: ['entrega', 'entregas'], 'real.diasAteVencimento': ['bolsa', 'bolsas'], 'real.estoquePorTipo': ['tipo', 'tipos'], 'real.bolsasPorRequisicao': ['requisição', 'requisições'] };
       const caso = (v, k) => { const c = CASO[v.id] || CASO[v.conjunto] || ['caso', 'casos']; return k === 1 ? c[0] : c[1]; };
+      const FEM = new Set(['entrega', 'requisição', 'bolsa']);
+      const gen = (v) => { const fem = FEM.has(caso(v, 1)); return { um: fem ? 'uma' : 'um', num: fem ? 'numa' : 'num', os: fem ? 'as' : 'os', dos: fem ? 'das' : 'dos', todos: fem ? 'todas' : 'todos', outro: fem ? 'outra' : 'outro', tipico: fem ? 'típica' : 'típico' }; };
+      const deUmParaOutro = (v) => { const g = gen(v); return `de ${g.um} ${caso(v, 1)} para ${g.outro}`; };
       const curto = (v) => CURTO[v.id] || v.nome;
       const nomeMin = (v) => (CURTO[v.id] || v.nome).toLowerCase();
       const rotulo = (v) => `${v.nome} (${v.unidade})`;
@@ -216,7 +219,7 @@
 
         if (qualitativa(v)) {
           $('descKpis').innerHTML = ui.kpi('Frequência de "sim"', n(d.media * 100, 1) + '%', 'sigma', '#48726A', '#E7F0EE', `${n(d.soma, 0)} de ${N} ${caso(v, N)}`);
-          $('leituraDesc').innerHTML = frase(true, `${curto(v)} em ${n(d.media * 100, 0)}% dos ${caso(v, 2)}`, 'É uma informação de sim ou não (variável qualitativa codificada como 0 e 1). Média, desvio e forma da curva não têm leitura útil aqui; ela serve para comparar grupos na aba O que anda junto.');
+          $('leituraDesc').innerHTML = frase(true, `${curto(v)} em ${n(d.media * 100, 0)}% ${gen(v).dos} ${caso(v, 2)}`, 'É uma informação de sim ou não (variável qualitativa codificada como 0 e 1). Média, desvio e forma da curva não têm leitura útil aqui; ela serve para comparar grupos na aba O que anda junto.');
         } else {
           $('descKpis').innerHTML = [
             ui.kpi('Valor típico', val(d.mediana, v), 'sigma', '#48726A', '#E7F0EE', 'mediana'),
@@ -225,19 +228,19 @@
             ui.kpi('Variação', `± ${val(d.desvioPadrao, v)}`, 'risk', '#B7791F', '#FFF4DB', cv == null ? 'desvio padrão' : `desvio padrão · ${n(cv, 0)}% da média`)
           ].join('');
           const L = [];
-          L.push(frase(true, `Num ${caso(v, 1)} típico: ${val(d.mediana, v)}`, `Metade dos ${caso(v, 2)} fica abaixo disso e metade acima. Na metade do meio, o valor fica entre ${val(d.q1, v)} e ${val(d.q3, v)}.`));
+          L.push(frase(true, `${gen(v).num.charAt(0).toUpperCase() + gen(v).num.slice(1)} ${caso(v, 1)} ${gen(v).tipico}: ${val(d.mediana, v)}`, `Metade ${gen(v).dos} ${caso(v, 2)} fica abaixo disso e metade acima. Na metade do meio, o valor fica entre ${val(d.q1, v)} e ${val(d.q3, v)}.`));
           if (cv != null) {
-            if (cv < 15) L.push(frase(true, 'Varia pouco', `De um ${caso(v, 1)} para outro a diferença é pequena (cerca de ${val(d.desvioPadrao, v)}). Dá para planejar pela média com segurança.`));
+            if (cv < 15) L.push(frase(true, 'Varia pouco', `${deUmParaOutro(v).charAt(0).toUpperCase() + deUmParaOutro(v).slice(1)} a diferença é pequena (cerca de ${val(d.desvioPadrao, v)}). Dá para planejar pela média com segurança.`));
             else if (cv <= 30) L.push(frase(true, 'Varia de forma moderada', `Planeje pela média, mas com uma margem de cerca de ${val(d.desvioPadrao, v)} para mais ou para menos.`));
-            else L.push(frase(false, 'Varia muito', `A média sozinha engana: os valores mudam bastante de um ${caso(v, 1)} para outro. Planeje pela faixa de ${val(d.q1, v)} a ${val(d.q3, v)} e acompanhe os extremos.`));
+            else L.push(frase(false, 'Varia muito', `A média sozinha engana: os valores mudam bastante ${deUmParaOutro(v)}. Planeje pela faixa de ${val(d.q1, v)} a ${val(d.q3, v)} e acompanhe os extremos.`));
           }
           if (Math.abs(d.assimetria || 0) >= 0.5) {
             L.push(frase(false, d.assimetria > 0 ? 'Alguns valores muito altos puxam a média para cima' : 'Alguns valores muito baixos puxam a média para baixo',
-              `Por isso a média (${val(d.media, v)}) se afasta do valor típico (${val(d.mediana, v)}). Para descrever o ${caso(v, 1)} comum, use o valor típico.`));
+              `Por isso a média (${val(d.media, v)}) se afasta do valor típico (${val(d.mediana, v)}). Para descrever o caso comum, use o valor típico.`));
           }
           L.push(d.outliers
             ? frase(false, `${d.outliers} ${d.outliers === 1 ? caso(v, 1) + ' fora do comum' : caso(v, 2) + ' fora do comum'}`, `Valores abaixo de ${val(d.limiteInferiorOutlier, v)} ou acima de ${val(d.limiteSuperiorOutlier, v)}. Vale ver o que aconteceu ${d.outliers === 1 ? 'nesse caso' : 'nesses casos'}.`)
-            : frase(true, 'Nenhum valor fora do comum', `Todos os ${caso(v, 2)} ficaram entre ${val(d.limiteInferiorOutlier, v)} e ${val(d.limiteSuperiorOutlier, v)}.`));
+            : frase(true, 'Nenhum valor fora do comum', `${gen(v).todos.charAt(0).toUpperCase() + gen(v).todos.slice(1)} ${gen(v).os} ${caso(v, 2)} ficaram entre ${val(d.limiteInferiorOutlier, v)} e ${val(d.limiteSuperiorOutlier, v)}.`));
           $('leituraDesc').innerHTML = L.join('');
         }
 
@@ -275,7 +278,8 @@
       function relacao(r, x, y) {
         const X = nomeMin(x), Y = nomeMin(y);
         if (r == null || Math.abs(r) < 0.1) return `${curto(x)} e ${Y} não andam juntos: saber um não ajuda a prever o outro.`;
-        return r > 0 ? `Quando ${X} aumenta, ${Y} também tende a aumentar.` : `Quando ${X} aumenta, ${Y} tende a diminuir.`;
+        if (qualitativa(x)) return `Em ${X}, ${Y} costuma ser ${r > 0 ? 'maior' : 'menor'}.`;
+        return `Quanto mais ${X}, ${r > 0 ? 'mais' : 'menos'} ${Y}.`;
       }
       function preencherPar() {
         const vs = st.vars.filter((v) => v.conjunto === st.conj);
@@ -299,7 +303,7 @@
         try { p = await RV.api(`/api/estatistica/correlacao/par?x=${encodeURIComponent(st.x)}&y=${encodeURIComponent(st.y)}`); }
         catch (e) { ['disp', 'leitura', 'memCorr', 'formCorr'].forEach((k) => { $(k).innerHTML = ''; }); erro('parKpis', 'Não foi possível comparar', e); return; }
         const fraca = p.r == null || Math.abs(p.r) < 0.3;
-        const L = [frase(!fraca, relacao(p.r, p.x, p.y), p.r2 == null ? '' : `Relação ${p.forca}: ${n(p.r2 * 100, 0)}% das diferenças de ${nomeMin(p.y)} entre um ${caso(p.y, 1)} e outro acompanham ${nomeMin(p.x)}; o resto vem de outros fatores.`)];
+        const L = [frase(!fraca, relacao(p.r, p.x, p.y), p.r2 == null ? '' : `Relação ${p.forca}: ${n(p.r2 * 100, 0)}% das diferenças de ${nomeMin(p.y)} ${deUmParaOutro(p.y)} acompanham ${nomeMin(p.x)}; o resto vem de outros fatores.`)];
         if (p.reta && !fraca && !qualitativa(p.x)) L.push(frase(true, `Cada 1 ${p.x.unidade} a mais em ${nomeMin(p.x)}: ${n(Math.abs(p.reta.a), 2)} ${p.y.unidade} ${p.reta.a > 0 ? 'a mais' : 'a menos'} em ${nomeMin(p.y)}, em média`, 'É a inclinação da linha vermelha do gráfico.'));
         if (qualitativa(p.x) && p.reta) L.push(frase(true, `Com ${nomeMin(p.x)}: ${n(Math.abs(p.reta.a), 1)} ${p.y.unidade} ${p.reta.a > 0 ? 'a mais' : 'a menos'} em ${nomeMin(p.y)}, em média`, 'Comparação entre os dois grupos (sim e não).'));
         L.push(ui.alertBox('warn', 'Andar junto não quer dizer causar', 'Duas coisas podem subir juntas por coincidência ou porque uma terceira influencia as duas. Exemplo: o calor e a queda nas doações andam juntos, mas quem decide doar são as pessoas.'));
@@ -350,7 +354,7 @@
           esc(f.variavel.nome),
           f.selecionada ? '<span class="badge b-ok">Sim</span>' : '<span class="badge b-inativo">Não</span>',
           `${esc(f.forca)} (${n(f.r, 2)})`,
-          f.selecionada ? esc(`Quando ${nomeMin(f.variavel)} aumenta, ${A} tende a ${f.r > 0 ? 'aumentar' : 'diminuir'}.`)
+          f.selecionada ? esc(relacao(f.r, f.variavel, pr.alvo))
             : esc(f.r == null || Math.abs(f.r) < 0.1 ? 'Não tem relação com o que se quer prever.' : 'A relação é fraca demais para ajudar.')]));
         $('features').querySelectorAll('tbody td:last-child').forEach((td) => td.classList.add('wrap'));
         $('redund').innerHTML = pr.redundantes.length
@@ -383,7 +387,7 @@
         const conf = r2 >= 0.7 ? ['success', 'Estimativa confiável', `${mf.nome} explica a maior parte das diferenças.`]
           : r2 >= 0.3 ? ['info', 'Estimativa razoável', 'Use como referência e combine com a experiência da equipe.']
           : ['warn', 'Estimativa fraca', `${mf.nome} explica só ${n(r2 * 100, 0)}% das diferenças. Use como ordem de grandeza e acompanhe as outras informações que ajudam a prever.`];
-        $('yPrev').innerHTML = `<div class="resultado"><span>Com ${n(pr.x, 1)} ${esc(mf.unidade)} de ${esc(nomeMin(mf))}, espere cerca de</span><b>${n(pr.yPrevisto, 0)} ${esc(u)}</b>${margem != null ? `<span>Na maioria dos casos, entre ${n(Math.max(0, pr.yPrevisto - margem), 0)} e ${n(pr.yPrevisto + margem, 0)} ${esc(u)}.</span>` : ''}</div>`
+        $('yPrev').innerHTML = `<div class="resultado"><span>Com ${n(pr.x, dec(mf))} ${esc(mf.unidade)} de ${esc(nomeMin(mf))}, espere cerca de</span><b>${n(pr.yPrevisto, 0)} ${esc(u)}</b>${margem != null ? `<span>Na maioria dos casos, entre ${n(Math.max(0, pr.yPrevisto - margem), 0)} e ${n(pr.yPrevisto + margem, 0)} ${esc(u)}.</span>` : ''}</div>`
           + ui.alertBox(conf[0], conf[1], conf[2]);
       }
       $('alvo').addEventListener('change', () => { st.alvo = $('alvo').value; $('xPrev').value = ''; carregarPrevisao(); });
