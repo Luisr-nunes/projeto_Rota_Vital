@@ -79,3 +79,45 @@
 .estoque-plot .lbl { position: absolute; bottom: -32px; font-size: 14px; font-weight: 700; color: var(--ink); }
 .status-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line-3); }
 .status-bar span { display: block; height: 100%; }
+
+/* ---------- Estatística (gestor/estatistica.html) ---------- */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chart-svg .ax { font: 500 12px var(--font); fill: var(--muted); }
+.chart-svg .ax.lbl { font-weight: 600; fill: var(--text-3); }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tbl th { padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--surface-3); white-space: nowrap; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line-3); color: var(--text); white-space: nowrap; }
+.tbl tfoot td { font-weight: 700; color: var(--ink); border-bottom: 0; background: var(--surface-2); }
+.tbl td.wrap { white-space: normal; text-align: left; min-width: 220px; color: var(--muted); }
+.heat { border-collapse: separate; border-spacing: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.heat th { padding: 4px 6px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
+.heat thead th { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; height: 96px; }
+.heat tbody th { text-align: right; }
+.heat td button { width: 58px; height: 40px; border: 0; border-radius: 8px; font: 600 12px var(--font); cursor: pointer; }
+.heat td button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.heat td.na { width: 58px; text-align: center; color: var(--faint); }
+.formulas { display: flex; flex-direction: column; gap: 10px; }
+.formula { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.formula .nome { flex-basis: 100%; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.formula code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; color: var(--text-3); }
+.formula b { color: var(--ink); }
+.formula .leitura { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.valores { font-size: 12px; color: var(--muted); line-height: 18px; word-break: break-word; }
+.estat-tabs { align-self: flex-start; }
+.estat-painel { display: flex; flex-direction: column; gap: 20px; }
+.estat-painel[hidden] { display: none; }
+.pares { display: grid; grid-template-columns: repeat(2, minmax(180px, 240px)); gap: 12px; }
+.leitura-r { margin: 0; font-size: 14px; line-height: 21px; color: var(--text); }
+.formula .fs-lg { font-size: 16px; }
+@media (max-width: 760px) { .pares { grid-template-columns: 1fr; width: 100%; } }
+.porque { padding: 12px 14px; border-radius: 12px; background: var(--teal-tint); font-size: 14px; line-height: 21px; color: var(--text); }
+.estat-painel details > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 3px; padding-right: 28px; position: relative; }
+.estat-painel details > summary::-webkit-details-marker { display: none; }
+.estat-painel details > summary::after { content: ""; position: absolute; right: 4px; top: 6px; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.estat-painel details[open] > summary::after { transform: rotate(-135deg); top: 10px; }
+.estat-painel details > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; border-radius: 6px; }
+.estat-painel details.det-sm > summary { font-size: 13px; font-weight: 600; color: var(--teal-link); }
+.estat-painel details.det-sm > summary::after { top: 3px; width: 7px; height: 7px; }
+.resultado { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; color: var(--text-3); }
+.resultado b { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
