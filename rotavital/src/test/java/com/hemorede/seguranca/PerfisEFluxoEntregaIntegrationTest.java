@@ -109,6 +109,19 @@ class PerfisEFluxoEntregaIntegrationTest {
     }
 
     @Test
+    @DisplayName("Cinco falhas seguidas bloqueiam o e-mail com 429")
+    void bloqueioPorTentativas() throws Exception {
+        String corpo = "{\"email\":\"forca-bruta@teste.dev\",\"senha\":\"errada-123\"}";
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                    .andExpect(status().isUnauthorized());
+        }
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.erro").value("MuitasTentativasException"));
+    }
+
+    @Test
     @DisplayName("Token adulterado é recusado com 401")
     void tokenAdulterado() throws Exception {
         String t = token("op@teste.dev");

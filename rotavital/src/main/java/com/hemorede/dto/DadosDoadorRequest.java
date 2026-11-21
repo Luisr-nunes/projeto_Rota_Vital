@@ -8,11 +8,11 @@ import java.time.LocalDate;
 
 /** Atualização dos dados básicos pelo próprio doador. */
 public record DadosDoadorRequest(
-        @NotBlank(message = "informe o nome") @Size(max = 120) String nome,
+        @NotBlank(message = "informe o nome") @Size(max = 120, message = "o nome deve ter até 120 caracteres") String nome,
         @NotNull(message = "informe o tipo sanguíneo") TipoSanguineo tipoSanguineo,
         @NotNull(message = "informe o sexo") Sexo sexo,
         @NotNull(message = "informe a data de nascimento") @Past(message = "a data de nascimento deve estar no passado") LocalDate dataNascimento,
         @NotNull(message = "informe o peso") @DecimalMin(value = "1.0", message = "peso inválido") @DecimalMax(value = "400.0", message = "peso inválido") Double pesoKg,
-        @Size(max = 20) String telefone
+        @Size(max = 20, message = "o telefone deve ter até 20 caracteres") String telefone
 ) {
 }
