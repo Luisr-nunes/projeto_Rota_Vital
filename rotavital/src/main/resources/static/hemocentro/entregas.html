@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entregas · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    .entregas { --cols: 80px minmax(160px, 1fr) minmax(150px, 1fr) 190px 110px 150px; }
+    .barra { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+    .acoes { display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Entregas</h1>
+        <p class="page-sub" id="sub">Bolsas em trânsito, aguardando despacho e entregues · atualiza a cada 15 s</p>
+      </div>
+      <div class="page-actions"><button type="button" class="btn btn-secondary" id="atualizar">Atualizar</button></div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="Resumo das entregas"></section>
+
+    <section class="card gap-12" aria-labelledby="t-rota">
+      <div><h2 class="card-title" id="t-rota">Em trânsito</h2><p class="card-sub">Posição estimada sobre a menor rota · clique em Acompanhar para ver o mapa</p></div>
+      <div id="emRota"></div>
+    </section>
+
+    <div class="row stack-md">
+      <section class="card grow gap-12" aria-labelledby="t-desp">
+        <div><h2 class="card-title" id="t-desp">Aguardando despacho</h2><p class="card-sub">Bolsas já reservadas por FEFO · urgentes primeiro</p></div>
+        <div id="aguardando"></div>
+      </section>
+      <section class="card grow gap-12" aria-labelledby="t-ent">
+        <div><h2 class="card-title" id="t-ent">Entregues</h2><p class="card-sub">Mais recentes primeiro</p></div>
+        <div id="entregues"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/hemocentro.js"></script>
+  <script>
+    (function () {
+      const { ui, hemo, esc } = RV;
+      if (!ui.shell('hemocentro', 'Entregas')) return;
+      const $ = (id) => document.getElementById(id);
+      const rota = (id) => `../rastreamento.html?id=${id}`;
+
+      function linhaSimples(r, acao) {
+        return `<div class="tr" style="--cols:70px minmax(140px,1fr) minmax(130px,1fr) 170px">
+          <span class="td-strong">#${r.id}</span><span style="font-weight:500">${esc(hemo.hospitalNome(r))}</span>
+          <span>${esc(hemo.itensTexto(r))}</span><span class="acoes">${acao}</span></div>`;
+      }
+
+      async function carregar() {
+        let reqs;
+        try { reqs = await hemo.requisicoes(); }
+        catch (e) { $('emRota').innerHTML = ui.alertBox('error', 'Não foi possível carregar as entregas', ui.erroMsg(e)); return; }
+
+        const emRota = reqs.filter((r) => r.status === 'EM_ROTA');
+        const aguardando = reqs.filter((r) => r.status === 'ALOCADA' || r.status === 'APROVADA');
+        const entregues = reqs.filter((r) => r.status === 'ENTREGUE')
+          .sort((a, b) => (b.dataSolicitacao || '').localeCompare(a.dataSolicitacao || ''));
+
+        $('kpis').innerHTML =
+          ui.kpi('Em trânsito', emRota.length, 'truck', '#E53935', '#FDECEC') +
+          ui.kpi('Aguardando despacho', aguardando.length, 'bag', '#00A3C4', '#E3F6FA') +
+          ui.kpi('Entregues', entregues.length, 'check', '#34C759', '#E6F8EB') +
+          ui.kpi('Pendentes de alocação', reqs.filter((r) => r.status === 'PENDENTE').length, 'clock', '#E0A100', '#FFF6DB');
+
+        // Em trânsito: progresso, previsão e temperatura de cada entrega
+        if (!emRota.length) {
+          $('emRota').innerHTML = ui.empty('Nenhuma entrega em trânsito', 'Despache uma requisição com bolsas reservadas para acompanhar aqui.');
+        } else {
+          const rast = await Promise.all(emRota.map((r) => RV.api(`/api/v1/requisicoes/${r.id}/rastreamento`).catch(() => null)));
+          $('emRota').innerHTML = `<div class="table entregas"><div class="tr thead"><span>Nº</span><span>Hospital</span><span>Trecho atual</span><span>Progresso</span><span>Temperatura</span><span></span></div>` +
+            emRota.map((r, i) => {
+              const t = rast[i];
+              if (!t) return `<div class="tr"><span class="td-strong">#${r.id}</span><span>${esc(hemo.hospitalNome(r))}</span><span class="t-muted">sem dados de rota</span><span></span><span></span><span class="acoes"><a class="btn btn-secondary sm" href="${rota(r.id)}">Acompanhar</a></span></div>`;
+              const a = t.trechoAtual ?? 0;
+              const trecho = t.trajeto[a + 1] ? `${t.trajeto[a].nome} → ${t.trajeto[a + 1].nome}` : t.trajeto[t.trajeto.length - 1].nome;
+              const pct = Math.round(t.percentual || 0);
+              const temp = t.temperaturaC == null ? '<span class="t-muted">sem leitura</span>'
+                : `<span class="${t.statusTemperatura === 'ALERTA' ? 't-red' : ''}" style="font-weight:600">${RV.num(t.temperaturaC, 1)} °C</span>`;
+              return `<div class="tr"><span class="td-strong">#${r.id}</span><span style="font-weight:500">${esc(t.hospital || hemo.hospitalNome(r))}</span>
+                <span>${esc(trecho)}</span>
+                <span class="barra"><div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>${pct >= 100 ? 'Chegou · aguardando confirmação do recebimento' : `${pct}% · chega ${t.previsaoChegada ? RV.fmtTime(t.previsaoChegada) : '—'}`}</span>
+                <span>${temp}</span>
+                <span class="acoes"><a class="btn btn-primary sm" href="${rota(r.id)}">${ui.icon('route', 16, '#fff', 2)}Acompanhar</a></span></div>`;
+            }).join('') + '</div>';
+        }
+
+        $('aguardando').innerHTML = aguardando.length
+          ? aguardando.map((r) => linhaSimples(r, `<a class="btn btn-ghost sm" href="${rota(r.id)}">Rota</a><a class="btn btn-primary sm" href="requisicao.html?id=${r.id}">${ui.icon('truck', 16, '#fff', 2)}Despachar</a>`)).join('')
+          : ui.empty('Nada aguardando despacho', 'As requisições alocadas aparecem aqui.');
+        $('entregues').innerHTML = entregues.length
+          ? entregues.slice(0, 8).map((r) => linhaSimples(r, `<a class="btn btn-secondary sm" href="${rota(r.id)}">Ver trajeto</a>`)).join('')
+          : ui.empty('Nenhuma entrega concluída', 'As entregas confirmadas aparecem aqui.');
+        $('sub').textContent = `Bolsas em trânsito, aguardando despacho e entregues · atualizado às ${RV.fmtTime(new Date().toISOString())}`;
+      }
+
+      $('kpis').innerHTML = ui.skeletonRows(1, 90);
+      $('emRota').innerHTML = ui.skeletonRows(3, 52);
+      $('atualizar').onclick = carregar;
+      carregar();
+      setInterval(() => { if (!document.hidden) carregar(); }, 15000);
+    })();
+  </script>
+</body>
+</html>
