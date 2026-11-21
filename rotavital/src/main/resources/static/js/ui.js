@@ -154,8 +154,7 @@
     const M = MENUS[menu];
     const item = (n, ic, href) => {
       const a = n === active;
-      const tag = href ? `a href="${url(href)}"` : `button type="button" data-soon="${esc(n)}"`;
-      return `<${tag} class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></${href ? 'a' : 'button'}>`;
+      return `<a href="${url(href)}" class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></a>`;
     };
     const top = document.createElement('header');
     top.className = 'topbar';
@@ -173,7 +172,6 @@
     document.body.prepend(side);
     document.body.prepend(top);
     side.querySelector('[data-sair]').onclick = () => { RV.sessao.sair(); location.href = url('login.html'); };
-    [...top.querySelectorAll('[data-soon]'), ...side.querySelectorAll('[data-soon]')].forEach((b) => b.addEventListener('click', () => toast('info', `${b.dataset.soon}: em breve`, 'Esta tela faz parte de outra jornada e ainda vai ser implementada.')));
     const busca = top.querySelector('[data-busca]');
     if (busca) busca.addEventListener('submit', (e) => {
       e.preventDefault();
