@@ -111,3 +111,13 @@
 .leitura-r { margin: 0; font-size: 14px; line-height: 21px; color: var(--text); }
 .formula .fs-lg { font-size: 16px; }
 @media (max-width: 760px) { .pares { grid-template-columns: 1fr; width: 100%; } }
+.porque { padding: 12px 14px; border-radius: 12px; background: var(--teal-tint); font-size: 14px; line-height: 21px; color: var(--text); }
+.estat-painel details > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 3px; padding-right: 28px; position: relative; }
+.estat-painel details > summary::-webkit-details-marker { display: none; }
+.estat-painel details > summary::after { content: ""; position: absolute; right: 4px; top: 6px; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+.estat-painel details[open] > summary::after { transform: rotate(-135deg); top: 10px; }
+.estat-painel details > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; border-radius: 6px; }
+.estat-painel details.det-sm > summary { font-size: 13px; font-weight: 600; color: var(--teal-link); }
+.estat-painel details.det-sm > summary::after { top: 3px; width: 7px; height: 7px; }
+.resultado { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; color: var(--text-3); }
+.resultado b { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
