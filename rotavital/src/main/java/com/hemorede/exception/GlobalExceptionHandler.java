@@ -69,6 +69,11 @@ public class GlobalExceptionHandler {
         return corpoErro(HttpStatus.UNAUTHORIZED, ex);
     }
 
+    @ExceptionHandler(MuitasTentativasException.class)
+    public ResponseEntity<Map<String, Object>> handleMuitasTentativas(MuitasTentativasException ex) {
+        return corpoErro(HttpStatus.TOO_MANY_REQUESTS, ex);
+    }
+
     @ExceptionHandler(DadosBolsaInvalidosException.class)
     public ResponseEntity<Map<String, Object>> handleDadosBolsa(DadosBolsaInvalidosException ex) {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
