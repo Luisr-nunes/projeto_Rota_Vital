@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contas de acesso · Rota Vital</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -30,7 +32,7 @@
           <label class="field"><span class="field-label">Perfil</span><span class="input"><select name="perfil"><option value="HOSPITAL">Hospital</option><option value="HEMOCENTRO">Hemocentro</option></select></span></label>
           <label class="field" id="campoHospital"><span class="field-label">Hospital</span><span class="input"><select name="hospitalId"></select></span></label>
           <label class="field"><span class="field-label">Nome do responsável</span><span class="input"><input name="nome" maxlength="120" required></span></label>
-          <label class="field"><span class="field-label">E-mail</span><span class="input"><input type="email" name="email" autocomplete="off" required></span></label>
+          <label class="field"><span class="field-label">E-mail</span><span class="input"><input type="email" name="email" maxlength="254" autocomplete="off" required></span></label>
           <label class="field"><span class="field-label">Senha inicial</span><span class="input"><input type="password" name="senha" autocomplete="new-password" minlength="8" maxlength="72" required></span>
             <span class="field-help">Mínimo de 8 caracteres. Repasse por um canal seguro.</span></label>
           <button type="submit" class="btn btn-primary block" id="criar">Criar conta</button>
@@ -75,8 +77,7 @@
           f.nome.value = ''; f.email.value = ''; f.senha.value = '';
           carregar();
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível criar', campos || ui.erroMsg(err));
+          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível criar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
       carregar();
