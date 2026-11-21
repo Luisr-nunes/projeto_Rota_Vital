@@ -114,4 +114,5 @@ Sem GPS real no escopo, a posição é estimada pelo tempo decorrido sobre o tra
 
 - Envio de e-mail: a recuperação de senha é feita pela equipe do hemocentro.
 - GPS real do veículo e trânsito em tempo real dentro do app: o botão abre a rota no Google Maps.
-- Limite de tentativas de login: recomendado antes de usar dados reais (ver [`big-o.md`](big-o.md), seção 4).
+- Limite de tentativas de login: 5 falhas seguidas bloqueiam o e-mail por 15 min (429), em memória por instância.
+- Melhorias de produto, UI/UX e código e as decisões tomadas: [`auditoria-produto-ux.md`](auditoria-produto-ux.md).

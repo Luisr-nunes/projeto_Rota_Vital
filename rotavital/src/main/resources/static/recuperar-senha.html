@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recuperar senha · Rota Vital</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Saiba como redefinir a senha da sua conta no Rota Vital.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Rota Vital">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Recuperar senha · Rota Vital">
+  <meta property="og:description" content="Saiba como redefinir a senha da sua conta no Rota Vital.">
+  <meta property="og:url" content="https://rota-vital-jnmx.onrender.com/recuperar-senha.html">
+  <meta property="og:image" content="https://rota-vital-jnmx.onrender.com/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,7 +32,6 @@
   </header>
 
   <main class="auth-main">
-    <!-- 0.4 · Recuperar senha -->
     <form class="auth-card glass" id="form" novalidate>
       <span class="icon-tile" data-lock></span>
       <div class="auth-head">
@@ -36,10 +47,9 @@
       <a class="auth-foot link" href="login.html" style="gap:6px;align-items:center" data-back>Voltar para o login</a>
     </form>
 
-    <!-- 0.5 · Link enviado -->
     <section class="auth-card glass center" id="enviado" hidden aria-live="polite">
       <span class="status-circle" data-ok></span>
-      <h1 class="auth-title sm">Como redefinir sua senha</h1>
+      <h2 class="auth-title sm">Como redefinir sua senha</h2>
       <p class="auth-sub" style="opacity:1;max-width:340px">Fale com a equipe do hemocentro informando o e-mail <b id="para"></b>. Por segurança, a senha só é redefinida depois da confirmação da sua identidade.</p>
       <a class="btn btn-primary xl block" href="login.html">Voltar para o login</a>
     </section>

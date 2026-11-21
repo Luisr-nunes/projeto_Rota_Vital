@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Requisições · Rota Vital</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -86,7 +88,8 @@
 
         const vs = visiveis();
         if (!vs.length) {
-          lista.innerHTML = ui.empty('Nenhuma requisição aqui', 'Não há requisições para o filtro selecionado.');
+          lista.innerHTML = ui.empty('Nenhuma requisição aqui', st.prio ? 'Não há requisições com esta prioridade nesta aba.' : 'Não há requisições nesta aba. Veja as outras abas ou aguarde novos pedidos dos hospitais.', st.prio ? '<button type="button" class="btn btn-secondary" id="limparPrio">Mostrar todas as prioridades</button>' : '');
+          const lp = document.getElementById('limparPrio'); if (lp) lp.onclick = () => { st.prio = ''; st.pagina = 0; render(); };
           rodape.hidden = true; return;
         }
         rodape.hidden = false;

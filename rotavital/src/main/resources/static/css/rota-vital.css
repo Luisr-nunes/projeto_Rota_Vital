@@ -334,6 +334,7 @@ svg { flex-shrink: 0; display: block; }
   transition: background .15s;
 }
 .nav-item:hover { background: rgba(255, 255, 255, .45); }
+.nav-item span { text-align: center; line-height: 1.2; } /* rótulos de duas palavras quebram centralizados */
 .nav-item.active { background: rgba(255, 255, 255, .92); box-shadow: 0 6px 16px rgba(15, 31, 28, .14); color: var(--ink); font-weight: 600; }
 
 .content {
@@ -607,6 +608,41 @@ a.req-row:hover { border-color: #C3D3CF; background: var(--surface-2); }
   .row.stack-md { flex-direction: column; }
   .row.stack-md > .col-380, .row.stack-md > .col-420 { width: 100%; }
 }
+/* Celular (até 760 px): o menu lateral vira barra inferior, o conteúdo usa a largura toda
+   e as linhas de tabela viram cartões de duas colunas. */
+@media (max-width: 760px) {
+  .topbar { padding: 0 12px; }
+  .topbar .sep, .topbar .unit { display: none; }
+  .sidebar {
+    top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: 68px; padding: 6px;
+    flex-direction: row; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; border-radius: 20px;
+  }
+  .sidebar .grow { display: none; }
+  .nav-item { width: 64px; height: 56px; flex: none; gap: 3px; border-radius: 14px; font-size: 10px; }
+  .nav-item svg { width: 20px; height: 20px; }
+  .content { margin-left: 0; padding: 80px 12px 96px; }
+  .page-title { font-size: 24px; }
+  .page-head { align-items: flex-start; }
+  .card { padding: 16px; border-radius: 16px; }
+  .row { flex-direction: column; align-items: stretch; }
+  .row > *, .col-380, .col-420 { width: 100%; }
+  .col-400 { width: 100% !important; } /* gestor/painel.html fixa 400 px inline */
+  .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tr .acoes, .tr .acoes-linha { grid-column: 1 / -1; justify-content: flex-start; flex-wrap: wrap; }
+  .tr .btn-ghost { margin-left: 0; }
+  .seg button { flex: none; }
+  .kpi { padding: 14px; }
+  .thead { display: none; }
+  .tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 12px;
+    border: 1px solid var(--line-3); border-radius: 12px; margin-bottom: 8px;
+  }
+  .tr > * { min-width: 0; overflow-wrap: anywhere; }
+  .type-summary { grid-template-columns: repeat(2, 1fr); }
+  .modal, .drawer { padding: 20px; }
+  .toasts { top: 72px; right: 8px; left: 8px; }
+  .toast { width: auto; }
+}
 @media (max-width: 900px) {
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .topbar-search, .user > div { display: none; }
@@ -615,6 +651,14 @@ a.req-row:hover { border-color: #C3D3CF; background: var(--surface-2); }
   .tagline { display: none; }
   .auth-grid { grid-template-columns: 1fr; }
 }
+
+/* Estado vazio dentro de um cartão: em linha (ícone à esquerda), para não ocupar a tela com "nada". */
+.card .empty { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 2px; align-items: center; padding: 8px 0; text-align: left; }
+.card .empty .ic-circle { grid-row: span 2; width: 44px; height: 44px; }
+.card .empty .ic-circle svg { width: 22px; height: 22px; }
+.card .empty h3 { font-size: 15px; align-self: end; }
+.card .empty p { max-width: none; align-self: start; }
+.card .empty > :nth-child(n+4) { grid-column: 2; justify-self: start; margin-top: 8px; }
 
 html { scroll-behavior: smooth; }
 #sobre, #contato { scroll-margin-top: 88px; }

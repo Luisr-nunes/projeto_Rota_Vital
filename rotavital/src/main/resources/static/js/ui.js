@@ -17,6 +17,7 @@
     check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     arrowR: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     arrowL: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    sigma: '<path d="M18 5H6l6 7-6 7h12"/>',
     chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     home: '<path d="M3 11 12 3.5 21 11"/><path d="M5.5 9.5V20h13V9.5"/>',
     drop: '<path d="M12 3C15 7 18 10.5 18 14a6 6 0 0 1-12 0c0-3.5 3-7 6-11Z"/>',
@@ -119,7 +120,7 @@
      para a navegação não mudar ao entrar nos indicadores. */
   const ITENS_HEMOCENTRO = [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'],
     ['Doações', 'drop', 'hemocentro/doacao.html'], ['Requisições', 'inbox', 'hemocentro/requisicoes.html'], ['Entregas', 'truck', 'hemocentro/entregas.html'],
-    ['Gestão', 'risk', 'gestor/painel.html'], ['Indicadores', 'thermo', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'],
+    ['Gestão', 'risk', 'gestor/painel.html'], ['Indicadores', 'thermo', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'], ['Estatística', 'sigma', 'gestor/estatistica.html'],
     ['Contas', 'building', 'hemocentro/usuarios.html']];
   const MENUS = {
     hemocentro: { perfil: 'HEMOCENTRO', busca: 'Buscar bolsa, doador ou requisição…', itens: ITENS_HEMOCENTRO },
@@ -132,7 +133,7 @@
     doador: {
       perfil: 'DOADOR',
       busca: null,
-      itens: [['Meu painel', 'drop', 'doador/painel.html']]
+      itens: [['Meu painel', 'drop', 'doador/painel.html'], ['Antes de doar', 'info', 'doador/orientacoes.html']]
     }
   };
   /* Sessão obrigatória e do perfil certo; senão vai para o login ou para a home do próprio perfil. */
@@ -154,8 +155,7 @@
     const M = MENUS[menu];
     const item = (n, ic, href) => {
       const a = n === active;
-      const tag = href ? `a href="${url(href)}"` : `button type="button" data-soon="${esc(n)}"`;
-      return `<${tag} class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></${href ? 'a' : 'button'}>`;
+      return `<a href="${url(href)}" class="nav-item${a ? ' active' : ''}"${a ? ' aria-current="page"' : ''}>${icon(ic, 24, a ? '#E53935' : '#2E403C', a ? 2 : 1.8)}<span>${esc(n)}</span></a>`;
     };
     const top = document.createElement('header');
     top.className = 'topbar';
@@ -173,7 +173,6 @@
     document.body.prepend(side);
     document.body.prepend(top);
     side.querySelector('[data-sair]').onclick = () => { RV.sessao.sair(); location.href = url('login.html'); };
-    [...top.querySelectorAll('[data-soon]'), ...side.querySelectorAll('[data-soon]')].forEach((b) => b.addEventListener('click', () => toast('info', `${b.dataset.soon}: em breve`, 'Esta tela faz parte de outra jornada e ainda vai ser implementada.')));
     const busca = top.querySelector('[data-busca]');
     if (busca) busca.addEventListener('submit', (e) => {
       e.preventDefault();
