@@ -41,8 +41,9 @@
 
       <div class="col col-400" style="width:400px;flex-shrink:0">
         <section class="card gap-14" aria-labelledby="t-desc">
-          <div><h2 class="card-title" id="t-desc">Estatística descritiva</h2><p class="card-sub">Nível de estoque por tipo (8 tipos)</p></div>
-          <div class="kv-lines" id="estatisticas"></div>
+          <div><h2 class="card-title" id="t-desc">Equilíbrio do estoque</h2><p class="card-sub">Se algum tipo sanguíneo está muito abaixo dos outros</p></div>
+          <div class="list" id="estatisticas"></div>
+          <a class="btn btn-ghost" href="estatistica.html#descritiva" style="align-self:flex-start">Ver análise completa</a>
         </section>
         <section class="card gap-14" aria-labelledby="t-st">
           <div><h2 class="card-title" id="t-st">Requisições por status</h2><p class="card-sub" id="stSub">&nbsp;</p></div>
@@ -50,42 +51,18 @@
         </section>
       </div>
     </div>
-    <!-- Análises da U2 (risco e descarte, componentes da tela 5.6) -->
-    <div class="page-head" style="margin-top:8px">
-      <div class="page-titles">
-        <h2 class="page-title" style="font-size:22px">Análises da U2</h2>
-        <p class="page-sub">Risco de desabastecimento nos próximos 3 dias e descarte por vencimento nos últimos 7 dias</p>
-      </div>
-      <a class="btn btn-ghost" href="indicadores.html" id="verMais">Ver análise completa</a>
-    </div>
-    <div id="u2"></div>
-    <section class="card" aria-labelledby="t-risco" data-u2>
+    <section class="card gap-14" aria-labelledby="t-alertas">
       <div class="card-head" style="flex-wrap:wrap">
-        <div><h2 class="card-title" id="t-risco">Risco de desabastecimento por tipo</h2><p class="card-sub">Probabilidade de a demanda (Poisson) superar o estoque disponível no horizonte</p></div>
-        <div class="legend"><span><i style="--c:#34C759"></i>&lt; 10% rotina</span><span><i style="--c:#E0A100"></i>10–50% priorizar coleta</span><span><i style="--c:#E53935"></i>&gt; 50% campanha de doação</span></div>
+        <div><h2 class="card-title" id="t-alertas">Alertas dos indicadores</h2><p class="card-sub">Risco de faltar sangue nos próximos 3 dias e bolsas perdidas por vencimento nos últimos 7 dias</p></div>
+        <a class="btn btn-secondary sm" href="indicadores.html">Abrir Indicadores</a>
       </div>
-      <div id="riscos"></div>
+      <div class="list" id="alertas"></div>
     </section>
-    <div class="row stack-md" data-u2>
-      <section class="card grow gap-14" aria-labelledby="t-descarte">
-        <div class="card-head" style="flex-wrap:wrap">
-          <div><h2 class="card-title" id="t-descarte">Taxa de descarte por vencimento</h2><p class="card-sub" id="descSub">Bolsas descartadas ÷ bolsas que venceram no período · últimos 7 dias</p></div>
-          <div class="chips" role="group" aria-label="Hemocomponente do descarte" id="compsDesc"></div>
-        </div>
-        <div id="descarte"></div>
-      </section>
-      <section class="card col-380 gap-14" aria-labelledby="t-res">
-        <div><h2 class="card-title" id="t-res">Resumo do período</h2><p class="card-sub" id="periodo">&nbsp;</p></div>
-        <div id="resumoDesc"></div>
-        <div class="alert a-info" role="note"><span data-info></span><div class="txt"><b>Como o descarte é medido</b><p>Inferido por status Descartada com validade dentro da janela. Grupos sem vencimentos no período não aparecem.</p></div></div>
-      </section>
-    </div>
   </main>
 
   <script src="../js/core.js"></script>
   <script src="../js/ui.js"></script>
   <script src="../js/hemocentro.js"></script>
-  <script src="../js/gestor.js"></script>
   <script>
     (async function () {
       const { ui, hemo, esc } = RV;
@@ -107,7 +84,7 @@
 
       $('kpis').innerHTML = ui.skeletonRows(4, 104);
       $('grafico').innerHTML = ui.skeletonRows(1, 520);
-      $('estatisticas').innerHTML = ui.skeletonRows(6, 28);
+      $('estatisticas').innerHTML = ui.skeletonRows(3, 44);
 
       try {
         const [ind, bolsas, reqs, estoques] = await Promise.all([
@@ -152,10 +129,17 @@
         [`Próximas do vencimento (≤ ${venc.janelaEmDias} dias)`, `${RV.num(venc.quantidadeProximaDoVencimento)} bolsas · ${RV.num(venc.percentualProximoDoVencimento, 1)}%`]
       ];
       function renderEstatisticas() {
-        $('estatisticas').innerHTML = linhasEst.map(([k, v]) => {
-          const crit = k === 'Mínimo' && minT && st.criticos.has(minT);
-          return `<div><span class="k">${esc(k)}</span><span class="v${crit ? ' t-red' : ''}"${v ? '' : ' style="color:#B5C0BD"'}>${esc(v || '—')}</span></div>`;
-        }).join('');
+        if (vazio) { $('estatisticas').innerHTML = ui.empty('Sem bolsas registradas', 'O equilíbrio aparece quando houver estoque.'); return; }
+        const cv = est.mediaPorTipo ? est.desvioPadraoPorTipo / est.mediaPorTipo * 100 : 0;
+        const desigual = cv > 30;
+        const critico = minT && st.criticos.has(minT);
+        $('estatisticas').innerHTML = [
+          ui.checkItem(!desigual, desigual ? 'Estoque desigual entre os tipos' : 'Estoque equilibrado entre os tipos',
+            `${minT ? RV.tipoLabel(minT) : 'O tipo mais baixo'} tem ${RV.num(est.minimoPorTipo)} ${est.minimoPorTipo === 1 ? 'bolsa' : 'bolsas'} e ${maxT ? RV.tipoLabel(maxT) : 'o mais alto'} tem ${RV.num(est.maximoPorTipo)}. Em média, ${RV.num(est.mediaPorTipo, 0)} bolsas por tipo.`),
+          critico ? ui.checkItem(false, `${RV.tipoLabel(minT)} abaixo do mínimo`, 'Priorize a coleta deste tipo ou peça reforço à rede.') : '',
+          ui.checkItem(!venc.quantidadeProximaDoVencimento, `${RV.num(venc.quantidadeProximaDoVencimento || 0)} ${venc.quantidadeProximaDoVencimento === 1 ? 'bolsa vence' : 'bolsas vencem'} em até ${venc.janelaEmDias || JANELA} dias`,
+            venc.quantidadeProximaDoVencimento ? `${RV.num(venc.percentualProximoDoVencimento, 1)}% do estoque. Use estas primeiro nas próximas requisições.` : 'Nenhuma bolsa perto de vencer.')
+        ].join('');
       }
 
       // ---------- Requisições por status ----------
@@ -212,38 +196,39 @@
       renderGrafico(); renderEstatisticas();
 
 
-      // ---------- Análises da U2 (mesmos componentes da tela 5.6) ----------
-      const G = RV.gestor;
-      const u2 = { comp: 'HEMACIAS', descarte: null };
-      document.getElementById('verMais').insertAdjacentHTML('beforeend', ui.icon('arrowR', 18, '#2F5E55', 2));
-      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2.2);
-      if (vazio) {
-        document.querySelectorAll('[data-u2]').forEach((el) => { el.hidden = true; });
-        $('u2').outerHTML = `<section class="card">${ui.empty('Sem dados para as análises', 'Risco e descarte aparecem quando houver bolsas e vencimentos registrados. Nenhum valor é exibido para não apresentar números fictícios.')}</section>`;
-      } else {
-        $('u2').remove();
-        $('riscos').innerHTML = `<div class="risk-grid">${ui.skeletonRows(8, 112)}</div>`;
-        $('descarte').innerHTML = ui.skeletonRows(1, 250);
-        $('compsDesc').innerHTML = G.chipsHTML(u2.comp);
+      // ---------- Alertas dos indicadores (detalhe na tela Indicadores) ----------
+      async function carregarAlertas() {
+        if (vazio) { $('alertas').innerHTML = ui.empty('Sem dados para os alertas', 'Risco e descarte aparecem quando houver bolsas e vencimentos registrados.'); return; }
+        $('alertas').innerHTML = ui.skeletonRows(2, 44);
         const [risco, descarte] = await Promise.allSettled([
           RV.api('/api/indicadores/risco-desabastecimento?dias=3'),
           RV.api('/api/indicadores/descarte?dias=7')
         ]);
-        $('riscos').innerHTML = risco.status === 'fulfilled' ? G.riscoHTML(risco.value) : G.riscoErroHTML(risco.reason);
-        if (descarte.status === 'fulfilled') {
-          u2.descarte = descarte.value;
-          $('periodo').textContent = `${RV.fmtDate(u2.descarte.inicioPeriodo)} a ${RV.fmtDate(u2.descarte.fimPeriodo)}`;
-          $('descSub').textContent = `Bolsas descartadas ÷ bolsas que venceram no período · últimos ${u2.descarte.diasAnalisados} dias`;
-          $('descarte').innerHTML = G.descarteHTML(u2.descarte, u2.comp);
-          $('resumoDesc').innerHTML = G.resumoDescarteHTML(u2.descarte);
+        const L = [];
+        if (risco.status === 'fulfilled') {
+          const rs = risco.value.riscos || [];
+          const nomes = (lista) => lista.map((r) => RV.tipoLabel(r.tipoSanguineo)).join(', ');
+          const alto = rs.filter((r) => r.probabilidadeDesabastecimento > 0.5);
+          const medio = rs.filter((r) => r.probabilidadeDesabastecimento >= 0.1 && r.probabilidadeDesabastecimento <= 0.5);
+          L.push(alto.length
+            ? ui.checkItem(false, `Pode faltar ${nomes(alto)} nos próximos 3 dias`, 'Mais de 50% de chance de a procura passar do estoque. Hora de campanha de doação para estes tipos.')
+            : ui.checkItem(true, 'Nenhum tipo com risco alto de faltar', 'Nos próximos 3 dias, a procura esperada cabe no estoque de todos os tipos.'));
+          if (medio.length) L.push(ui.checkItem(false, `Atenção a ${nomes(medio)}`, 'Entre 10% e 50% de chance de faltar: priorize a coleta destes tipos.'));
         } else {
-          $('descarte').innerHTML = ui.alertBox('error', 'Não foi possível calcular o descarte', ui.erroMsg(descarte.reason));
+          L.push(ui.alertBox('error', 'Não foi possível calcular o risco', ui.erroMsg(risco.reason)));
         }
-        $('compsDesc').addEventListener('click', (e) => {
-          const b = e.target.closest('[data-c]'); if (!b || !u2.descarte) return;
-          u2.comp = b.dataset.c; $('compsDesc').innerHTML = G.chipsHTML(u2.comp); $('descarte').innerHTML = G.descarteHTML(u2.descarte, u2.comp);
-        });
+        if (descarte.status === 'fulfilled') {
+          const tx = descarte.value.taxas || [];
+          const venc7 = tx.reduce((a, x) => a + x.bolsasVencidasNoPeriodo, 0), desc7 = tx.reduce((a, x) => a + x.bolsasDescartadas, 0);
+          L.push(venc7
+            ? ui.checkItem(desc7 === 0, `${RV.num(desc7)} de ${RV.num(venc7)} ${venc7 === 1 ? 'bolsa vencida foi descartada' : 'bolsas vencidas foram descartadas'} em 7 dias`, `${RV.num(desc7 * 100 / venc7, 0)}% de perda por vencimento. O detalhe por tipo está em Indicadores.`)
+            : ui.checkItem(true, 'Nenhuma bolsa venceu nos últimos 7 dias', 'Sem perda por vencimento no período.'));
+        } else {
+          L.push(ui.alertBox('error', 'Não foi possível calcular o descarte', ui.erroMsg(descarte.reason)));
+        }
+        $('alertas').innerHTML = L.join('');
       }
+      carregarAlertas();
 
       $('comps').addEventListener('click', async (e) => {
         const b = e.target.closest('[data-c]'); if (!b || b.dataset.c === st.comp) return;
