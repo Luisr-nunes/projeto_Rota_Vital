@@ -1,5 +1,6 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hemorede.domain.enums.StatusRota;
 import jakarta.persistence.*;
@@ -8,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// proxies lazy do Hibernate serializados em JSON sem os campos internos
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "rota")
 public class Rota {

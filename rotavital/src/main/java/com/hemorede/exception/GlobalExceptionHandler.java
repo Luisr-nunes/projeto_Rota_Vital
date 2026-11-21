@@ -49,6 +49,16 @@ public class GlobalExceptionHandler {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
     }
 
+    @ExceptionHandler(ConflitoCadastroException.class)
+    public ResponseEntity<Map<String, Object>> handleConflitoCadastro(ConflitoCadastroException ex) {
+        return corpoErro(HttpStatus.CONFLICT, ex);
+    }
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<Map<String, Object>> handleCredenciais(CredenciaisInvalidasException ex) {
+        return corpoErro(HttpStatus.UNAUTHORIZED, ex);
+    }
+
     @ExceptionHandler(DadosBolsaInvalidosException.class)
     public ResponseEntity<Map<String, Object>> handleDadosBolsa(DadosBolsaInvalidosException ex) {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);

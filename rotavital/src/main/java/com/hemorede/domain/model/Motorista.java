@@ -1,7 +1,10 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
+// proxies lazy do Hibernate serializados em JSON sem os campos internos
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "motorista")
 public class Motorista {

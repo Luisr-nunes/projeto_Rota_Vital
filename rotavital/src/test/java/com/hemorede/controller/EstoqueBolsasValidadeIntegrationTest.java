@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import org.springframework.security.test.context.support.WithMockUser;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,6 +30,8 @@ import com.hemorede.repository.BolsaRepository;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class EstoqueBolsasValidadeIntegrationTest {
 
     private static final String URL_V1 = "/api/v1/estoques/bolsas";

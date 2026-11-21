@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import com.hemorede.domain.enums.HemoComponente;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.hemorede.domain.enums.Prioridade;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.StatusRequisicao;
@@ -32,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @DisplayName("Integração: Endpoint GET /api/indicadores (HU07)")
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class IndicadoresControllerIntegrationTest {
 
     @Autowired

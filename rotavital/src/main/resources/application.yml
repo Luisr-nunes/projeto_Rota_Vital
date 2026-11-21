@@ -32,9 +32,21 @@ management:
 hemorede:
   seed:
     enabled: true
+  # Autenticação dos 3 perfis. Sem valor padrão: vem só da variável de ambiente.
+  jwt:
+    secret: ${JWT_SECRET:}
+  demo:
+    senha: ${DEMO_SENHA:}
   doacao:
     intervalo-minimo-dias-homem: 60
     intervalo-minimo-dias-mulher: 90
+  # Coordenadas sintéticas do hemocentro (nó N0 do grafo) para o mapa da entrega
+  hemocentro:
+    latitude: -8.0476
+    longitude: -34.8990
+  rastreamento:
+    # 1 = tempo real; aumente na demonstração para ver o veículo andar mais rápido
+    fator-tempo: ${RASTREAMENTO_FATOR_TEMPO:1}
   estoque:
     limite-minimo-padrao: 5
   rota:
