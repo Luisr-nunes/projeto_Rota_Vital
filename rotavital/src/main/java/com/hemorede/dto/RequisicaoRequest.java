@@ -4,6 +4,7 @@ import com.hemorede.domain.enums.Prioridade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -16,8 +17,8 @@ import java.util.List;
  * </p>
  */
 public record RequisicaoRequest(
-        @NotNull Long hospitalId,
-        @NotNull Prioridade prioridade,
-        @NotEmpty List<@Valid @NotNull ItemRequisicaoRequest> itens
+        @NotNull(message = "informe o hospital") Long hospitalId,
+        @NotNull(message = "informe a prioridade") Prioridade prioridade,
+        @NotEmpty(message = "informe ao menos um item") @Size(max = 20, message = "no máximo 20 itens por requisição") List<@Valid @NotNull ItemRequisicaoRequest> itens
 ) {
 }

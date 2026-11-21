@@ -12,10 +12,10 @@ import java.time.LocalDate;
  * Corpo de entrada do POST /api/doacoes.
  */
 public record DoacaoRequest(
-        @NotNull Long doadorId,
-        @NotNull TipoSanguineo tipoSanguineo,
-        @NotNull HemoComponente hemocomponente,
-        @NotNull @PastOrPresent(message = "a data da coleta não pode estar no futuro") LocalDate dataColeta,
-        @NotNull @Future(message = "a validade deve ser uma data futura") LocalDate validade
+        @NotNull(message = "informe o doador") Long doadorId,
+        @NotNull(message = "informe o tipo sanguíneo") TipoSanguineo tipoSanguineo,
+        @NotNull(message = "informe o hemocomponente") HemoComponente hemocomponente,
+        @NotNull(message = "informe a data da coleta") @PastOrPresent(message = "a data da coleta não pode estar no futuro") LocalDate dataColeta,
+        @NotNull(message = "informe a validade") @Future(message = "a validade deve ser uma data futura") LocalDate validade
 ) {
 }

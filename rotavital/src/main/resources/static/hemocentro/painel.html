@@ -98,7 +98,7 @@
       // Fila
       fila.innerHTML = pend.length
         ? pend.slice(0, 5).map((r) => hemo.reqRow(r, `requisicao.html?id=${r.id}`)).join('')
-        : ui.empty('Nenhuma requisição pendente', 'Quando um hospital enviar um pedido, ele aparece aqui para alocação.');
+        : ui.empty('Nenhuma requisição pendente', 'Quando um hospital enviar um pedido, ele aparece aqui para alocação.', '<a class="btn btn-secondary" href="entregas.html">Ver entregas em andamento</a>');
 
       // Vencem primeiro
       fefo.innerHTML = bolsas.length ? bolsas.slice(0, 3).map((b) => {

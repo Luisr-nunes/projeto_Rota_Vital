@@ -87,8 +87,8 @@
           tipoSanguineo: l.querySelector('[data-t]').value,
           quantidade: Number(l.querySelector('[data-q]').value)
         }));
-        if (itens.some((i) => !(Number.isInteger(i.quantidade) && i.quantidade > 0))) {
-          $('erroSol').innerHTML = ui.alertBox('error', 'Quantidade inválida', 'Cada item precisa de pelo menos 1 bolsa.');
+        if (itens.some((i) => !(Number.isInteger(i.quantidade) && i.quantidade > 0 && i.quantidade <= 50))) {
+          $('erroSol').innerHTML = ui.alertBox('error', 'Quantidade inválida', 'Cada item precisa de 1 a 50 bolsas. Para mais, envie outro item ou outra requisição.');
           return;
         }
         $('erroSol').innerHTML = '';
@@ -99,8 +99,7 @@
           $('itens').innerHTML = ''; novaLinha(); e.target.prioridade.value = 'NORMAL';
           carregar();
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erroSol').innerHTML = ui.alertBox('error', 'Não foi possível enviar', campos || ui.erroMsg(err));
+          $('erroSol').innerHTML = ui.alertBox('error', 'Não foi possível enviar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
 

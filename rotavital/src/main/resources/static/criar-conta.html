@@ -45,7 +45,7 @@
 
       <div class="auth-grid">
         <label class="field full"><span class="field-label">Nome completo</span><span class="input glass-input"><input name="nome" autocomplete="name" placeholder="Seu nome" required maxlength="120"></span></label>
-        <label class="field"><span class="field-label">E-mail</span><span class="input glass-input"><input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required></span></label>
+        <label class="field"><span class="field-label">E-mail</span><span class="input glass-input"><input type="email" name="email" maxlength="254" autocomplete="email" placeholder="voce@email.com" required></span></label>
         <label class="field"><span class="field-label">CPF</span><span class="input glass-input"><input name="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required></span></label>
         <label class="field"><span class="field-label">Tipo sanguíneo</span><span class="input glass-input" data-icr="chevD"><select name="tipoSanguineo" class="ph" required><option value="" selected>Selecione</option></select></span></label>
         <label class="field"><span class="field-label">Sexo</span><span class="input glass-input" data-icr="chevD"><select name="sexo" class="ph" required><option value="" selected>Selecione</option><option value="FEMININO">Feminino</option><option value="MASCULINO">Masculino</option></select></span></label>
@@ -134,8 +134,7 @@
         RV.sessao.entrar(sessao, true);
         irParaHome(sessao.perfil);
       } catch (err) {
-        const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-        mostrarErro(campos || ui.erroMsg(err));
+        mostrarErro(ui.erroMsg(err));
       } finally {
         botao.disabled = false;
       }
