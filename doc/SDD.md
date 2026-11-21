@@ -77,7 +77,8 @@ controller ──► service ──► domain.regras (Java puro, sem Spring/JPA)
 
 ## 4.1 Navegação
 
-- Um menu lateral por perfil. O hemocentro tem um só menu: Painel, Estoque, Doações, Requisições, Gestão, Indicadores, Rede e Contas; as telas de gestão não trocam o menu.
+- Um menu lateral por perfil. O hemocentro tem um só menu: Painel, Estoque, Doações, Requisições, Entregas, Gestão, Indicadores, Rede e Contas; as telas de gestão não trocam o menu.
+- **Entregas** (`hemocentro/entregas.html`) reúne o que está em trânsito (trecho, progresso, previsão e temperatura), o que aguarda despacho e o que já foi entregue, com acesso direto ao mapa.
 - A rota prevista aparece desde o pedido ("Ver rota" no hospital, "Rota" na fila e "Ver rota prevista" na requisição); depois do despacho vira "Acompanhar".
 - Nenhum botão "em breve": tudo o que aparece no menu ou no cabeçalho leva a uma tela que funciona.
 
