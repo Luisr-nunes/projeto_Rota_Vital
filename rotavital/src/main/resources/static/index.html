@@ -4,7 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rota Vital · Gestão de hemocomponentes</title>
-  <meta name="description" content="Estoque, compatibilidade ABO/Rh, alocação por validade (FEFO), roteirização e monitoramento da cadeia fria da rede de sangue.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Rota Vital">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Rota Vital · Gestão de hemocomponentes">
+  <meta property="og:description" content="Bolsas de sangue compatíveis, alocadas pela validade e entregues pelo caminho mais curto, com a entrega acompanhada no mapa e a temperatura monitorada.">
+  <meta property="og:url" content="https://rota-vital-jnmx.onrender.com/">
+  <meta property="og:image" content="https://rota-vital-jnmx.onrender.com/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="description" content="Bolsas de sangue compatíveis, alocadas pela validade e entregues pelo caminho mais curto, com a entrega acompanhada no mapa e a temperatura monitorada.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,8 +58,8 @@
       </div>
 
       <div class="pillars">
-        <article class="pillar"><span class="ic" data-ic="chart"></span><h2>Estoque e FEFO</h2><p>Bolsas compatíveis alocadas pela validade mais próxima, reduzindo descarte.</p></article>
-        <article class="pillar"><span class="ic" data-ic="route"></span><h2>Rotas de menor custo</h2><p>Algoritmo de Dijkstra calcula o caminho do hemocentro ao hospital.</p></article>
+        <article class="pillar"><span class="ic" data-ic="chart"></span><h2>Menos bolsas vencidas</h2><p>As bolsas compatíveis que vencem primeiro saem primeiro (FEFO), reduzindo o descarte.</p></article>
+        <article class="pillar"><span class="ic" data-ic="route"></span><h2>Entrega mais rápida</h2><p>O caminho mais curto do hemocentro ao hospital é calculado na hora, e a entrega é acompanhada no mapa.</p></article>
         <article class="pillar"><span class="ic" data-ic="thermo"></span><h2>Cadeia fria monitorada</h2><p>Telemetria de temperatura a cada 30 s durante o transporte.</p></article>
       </div>
     </section>
@@ -72,7 +83,7 @@
         </ul>
         <h3 class="equipe-titulo">Disciplinas integradas</h3>
         <div class="disciplinas" aria-label="Disciplinas integradas"><span>POO</span><span>AED</span><span>Estatística</span><span>Infra. de Software</span><span>Infra. de Comunicação</span><span>Projeto 3</span></div>
-        <p style="font-size:13px;color:var(--muted)">Dados 100% sintéticos: nenhuma informação pessoal real é usada.</p>
+        <p class="fs-sm t-muted">Dados 100% sintéticos: nenhuma informação pessoal real é usada.</p>
       </article>
       <article class="glass" id="contato">
         <h2>Entrar em contato</h2>
@@ -88,7 +99,6 @@
           <li><span class="equipe-nome">Micaella Maria Barbosa Cabral</span><span class="equipe-funcao">Engenheira de Dados</span><a class="link" href="mailto:mmbc2@cesar.school">mmbc2@cesar.school</a></li>
           <li><span class="equipe-nome">Mariana Xavier Bezerra</span><span class="equipe-funcao">Desenvolvedor Frontend</span><a class="link" href="mailto:mxb@cesar.school">mxb@cesar.school</a></li>
         </ul>
-        <p style="font-size:13px;color:var(--muted)">Área técnica: <a class="link" href="operacao.html" style="font-size:13px">página de operação</a> · <a class="link" href="indicadores.html" style="font-size:13px">painel de indicadores</a></p>
       </article>
     </section>
   </main>

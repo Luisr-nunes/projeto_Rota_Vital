@@ -3,6 +3,8 @@ package com.hemorede.controller;
 import com.hemorede.dto.CadastroDoadorRequest;
 import com.hemorede.dto.LoginRequest;
 import com.hemorede.dto.SessaoResponse;
+import com.hemorede.exception.CredenciaisInvalidasException;
+import com.hemorede.seguranca.LimiteTentativasLogin;
 import com.hemorede.service.AutenticacaoService;
 import com.hemorede.seguranca.UsuarioAtual;
 import jakarta.validation.Valid;
@@ -17,15 +19,26 @@ public class AuthController {
 
     private final AutenticacaoService autenticacaoService;
     private final UsuarioAtual usuarioAtual;
+    private final LimiteTentativasLogin limite;
 
-    public AuthController(AutenticacaoService autenticacaoService, UsuarioAtual usuarioAtual) {
+    public AuthController(AutenticacaoService autenticacaoService, UsuarioAtual usuarioAtual,
+                          LimiteTentativasLogin limite) {
         this.autenticacaoService = autenticacaoService;
         this.usuarioAtual = usuarioAtual;
+        this.limite = limite;
     }
 
     @PostMapping("/login")
     public SessaoResponse login(@Valid @RequestBody LoginRequest request) {
-        return autenticacaoService.login(request.email(), request.senha());
+        limite.verificar(request.email());
+        try {
+            SessaoResponse sessao = autenticacaoService.login(request.email(), request.senha());
+            limite.registrarSucesso(request.email());
+            return sessao;
+        } catch (CredenciaisInvalidasException e) {
+            limite.registrarFalha(request.email());
+            throw e;
+        }
     }
 
     @PostMapping("/cadastro-doador")

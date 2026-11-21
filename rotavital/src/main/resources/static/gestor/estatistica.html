@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Estatística · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <link rel="stylesheet" href="../css/gestor.css">
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Estatística</h1>
+        <p class="page-sub">O que é normal na procura por sangue e nas entregas, o que anda junto e o que dá para prever</p>
+      </div>
+      <div class="page-actions"><span class="badge b-info">Dados do sistema e histórico simulado</span></div>
+    </div>
+
+    <div class="seg estat-tabs" role="tablist" aria-label="Seções" id="abas">
+      <button type="button" role="tab" data-aba="descritiva">Resumo dos dados</button>
+      <button type="button" role="tab" data-aba="correlacao">O que anda junto</button>
+      <button type="button" role="tab" data-aba="previsao">Previsão</button>
+    </div>
+
+    <!-- ===== Resumo dos dados (estatística descritiva) ===== -->
+    <div class="estat-painel" id="p-descritiva" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-var">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-var">O que é normal?</h2><p class="card-sub">Escolha uma informação para ver o valor típico, quanto ela varia e quando algo foge do comum (estatística descritiva)</p></div>
+          <label class="field" style="min-width:min(100%,340px)"><span class="field-label">Informação</span><span class="input"><select id="varDesc"></select></span></label>
+        </div>
+        <div class="porque" id="porqueDesc"></div>
+        <div class="kpis" id="descKpis"></div>
+      </section>
+      <section class="card gap-12" aria-labelledby="t-leid">
+        <div><h2 class="card-title" id="t-leid">Leitura</h2><p class="card-sub">O que os números dizem, em poucas frases</p></div>
+        <div class="list" id="leituraDesc"></div>
+      </section>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-hist">
+          <div class="card-head" style="flex-wrap:wrap">
+            <div><h2 class="card-title" id="t-hist">Como os valores se distribuem</h2><p class="card-sub" id="histSub">&nbsp;</p></div>
+            <div class="legend"><span><i class="line" style="--c:var(--red)"></i>Média</span><span><i class="line" style="--c:var(--cyan)"></i>Mediana</span></div>
+          </div>
+          <div id="hist"></div>
+        </section>
+        <section class="card col-420 gap-12" aria-labelledby="t-box">
+          <div><h2 class="card-title" id="t-box">Faixa normal e extremos</h2><p class="card-sub">A caixa mostra onde está a metade do meio; pontos soltos são casos fora do comum (boxplot)</p></div>
+          <div id="box"></div>
+          <div id="forma" class="list"></div>
+        </section>
+      </div>
+      <section class="card" aria-labelledby="t-memd">
+        <details>
+          <summary><h2 class="card-title" id="t-memd">Como foi calculado</h2><span class="card-sub">Fórmulas, tabela de frequência e conta passo a passo (memória de cálculo)</span></summary>
+          <div class="row stack-md" style="margin-top:16px">
+            <div class="grow gap-12" style="display:flex;flex-direction:column"><b class="fs-sm">Tabela de frequência</b><div id="freq"></div></div>
+            <div id="memDesc" class="formulas grow"></div>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <!-- ===== O que anda junto (correlação) ===== -->
+    <div class="estat-painel" id="p-correlacao" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-mat">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-mat">O que anda junto?</h2><p class="card-sub" id="matSub">&nbsp;</p></div>
+          <div class="chips" role="group" aria-label="Conjunto de dados" id="conjuntos">
+            <button type="button" class="chip" data-conj="diario">Dia a dia do hemocentro</button>
+            <button type="button" class="chip" data-conj="entregas">Entregas</button>
+          </div>
+        </div>
+        <div class="porque">Saber o que sobe e desce junto com a procura por sangue mostra o que vale acompanhar para se preparar antes. Cada número vai de −1 a 1 (correlação de Pearson): perto de 1, as duas coisas sobem juntas; perto de −1, quando uma sobe a outra cai; perto de 0, não têm relação.</div>
+        <div class="legend"><span><i style="--c:rgba(229,57,53,.85)"></i>sobem juntas</span><span><i style="--c:rgba(0,163,196,.85)"></i>uma sobe, a outra cai</span><span>cor mais forte = relação mais forte · toque num número para ver o par</span></div>
+        <div id="matriz"></div>
+      </section>
+      <section class="card gap-12" aria-labelledby="t-par">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-par">Comparar duas informações</h2><p class="card-sub">Cada ponto é um dia ou uma entrega</p></div>
+          <div class="pares">
+            <label class="field"><span class="field-label">Informação 1 (eixo horizontal)</span><span class="input"><select id="parX"></select></span></label>
+            <label class="field"><span class="field-label">Informação 2 (eixo vertical)</span><span class="input"><select id="parY"></select></span></label>
+          </div>
+        </div>
+        <div class="list" id="leitura"></div>
+        <div class="kpis" id="parKpis"></div>
+      </section>
+      <section class="card gap-12" aria-labelledby="t-disp">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-disp">Gráfico de dispersão</h2><p class="card-sub" id="dispSub">&nbsp;</p></div>
+          <div class="legend"><span><i style="--c:var(--teal)"></i>Um dia ou uma entrega</span><span><i class="line" style="--c:var(--red)"></i>Tendência média</span></div>
+        </div>
+        <div id="disp"></div>
+      </section>
+      <section class="card" aria-labelledby="t-memc">
+        <details>
+          <summary><h2 class="card-title" id="t-memc">Como foi calculado</h2><span class="card-sub" id="memcSub">Tabela de desvios e as duas fórmulas de Pearson (memória de cálculo)</span></summary>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px"><div id="memCorr"></div><div id="formCorr" class="formulas"></div></div>
+        </details>
+      </section>
+    </div>
+
+    <!-- ===== Previsão (seleção de features e regressão) ===== -->
+    <div class="estat-painel" id="p-previsao" role="tabpanel" hidden>
+      <section class="card gap-12" aria-labelledby="t-sel">
+        <div class="card-head" style="flex-wrap:wrap">
+          <div><h2 class="card-title" id="t-sel">O que ajuda a prever?</h2><p class="card-sub">Escolha o que você quer estimar; o sistema avalia cada informação disponível (seleção de features)</p></div>
+          <label class="field" style="min-width:min(100%,300px)"><span class="field-label">Quero prever</span><span class="input"><select id="alvo"></select></span></label>
+        </div>
+        <div class="porque" id="porquePrev"></div>
+        <div id="features"></div>
+        <div id="redund"></div>
+      </section>
+      <div class="row stack-md">
+        <section class="card grow gap-12" aria-labelledby="t-reta">
+          <div><h2 class="card-title" id="t-reta">Tendência com a informação mais útil</h2><p class="card-sub" id="retaSub">&nbsp;</p></div>
+          <div id="dispPrev"></div>
+        </section>
+        <section class="card col-420 gap-12" aria-labelledby="t-prev">
+          <div><h2 class="card-title" id="t-prev">Simular</h2><p class="card-sub">Informe um valor e veja a estimativa (regressão linear)</p></div>
+          <label class="field"><span class="field-label" id="xLabel">Valor</span><span class="input"><input type="number" id="xPrev" step="any" inputmode="decimal"></span></label>
+          <div id="yPrev"></div>
+          <details class="det-sm">
+            <summary>Como foi calculado</summary>
+            <div id="memPrev" class="formulas" style="margin-top:10px"></div>
+          </details>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/estatistica.js"></script>
+  <script>
+    (async function () {
+      const { ui, esc } = RV;
+      if (!ui.shell('gestor', 'Estatística')) return;
+      const $ = (id) => document.getElementById(id);
+      const E = RV.estat, n = E.n;
+      const CURTO = {
+        'diario.requisicoes': 'Bolsas pedidas', 'diario.acidentes': 'Acidentes', 'diario.cirurgias': 'Cirurgias', 'diario.doacoes': 'Doações',
+        'diario.temperatura': 'Temperatura', 'diario.feriado': 'Feriado', 'diario.fimDeSemana': 'Fim de semana', 'diario.diaDoMes': 'Dia do mês',
+        'entregas.tempo': 'Tempo', 'entregas.distancia': 'Distância', 'entregas.transito': 'Trânsito', 'entregas.temperaturaCaixa': 'Temp. caixa'
+      };
+      /* Por que cada informação importa para o hemocentro. */
+      const PORQUE = {
+        'diario.requisicoes': 'Quantas bolsas os hospitais pedem por dia. É a base para decidir o estoque mínimo de cada tipo.',
+        'diario.acidentes': 'Acidentes aumentam a procura por sangue. Acompanhar ajuda a antecipar dias de muito pedido.',
+        'diario.cirurgias': 'Cirurgias agendadas consomem bolsas e são conhecidas com antecedência: dá para se preparar.',
+        'diario.doacoes': 'Quantas doações entram por dia. Comparado com os pedidos, mostra se o estoque cresce ou diminui.',
+        'diario.temperatura': 'Dias quentes costumam ter menos doações. Ajuda a decidir quando fazer campanha.',
+        'diario.feriado': 'Feriados mudam a rotina: menos doações e, às vezes, mais acidentes.',
+        'diario.fimDeSemana': 'Fins de semana têm menos cirurgias agendadas e mais acidentes.',
+        'diario.diaDoMes': 'Incluída de propósito como exemplo de informação que não tem relação com a procura.',
+        'entregas.tempo': 'Quanto tempo a bolsa leva até o hospital. Numa urgência, cada minuto conta.',
+        'entregas.distancia': 'Distância entre o hemocentro e o hospital.',
+        'entregas.transito': 'Quanto o trânsito estava carregado na hora da entrega (1 livre, 10 parado).',
+        'entregas.temperaturaCaixa': 'A bolsa precisa chegar na faixa de conservação. Quanto mais tempo na rua, mais a caixa esquenta.',
+        'real.diasAteVencimento': 'Quantos dias faltam para as bolsas em estoque vencerem. Muitos valores baixos indicam risco de perda.',
+        'real.estoquePorTipo': 'Se o estoque está bem distribuído entre os 8 tipos sanguíneos ou concentrado em poucos.',
+        'real.bolsasPorRequisicao': 'O tamanho típico de um pedido de hospital.'
+      };
+      const CASO = { diario: ['dia', 'dias'], entregas: ['entrega', 'entregas'], 'real.diasAteVencimento': ['bolsa', 'bolsas'], 'real.estoquePorTipo': ['tipo', 'tipos'], 'real.bolsasPorRequisicao': ['requisição', 'requisições'] };
+      const caso = (v, k) => { const c = CASO[v.id] || CASO[v.conjunto] || ['caso', 'casos']; return k === 1 ? c[0] : c[1]; };
+      const FEM = new Set(['entrega', 'requisição', 'bolsa']);
+      const gen = (v) => { const fem = FEM.has(caso(v, 1)); return { um: fem ? 'uma' : 'um', num: fem ? 'numa' : 'num', os: fem ? 'as' : 'os', dos: fem ? 'das' : 'dos', todos: fem ? 'todas' : 'todos', outro: fem ? 'outra' : 'outro', tipico: fem ? 'típica' : 'típico' }; };
+      const deUmParaOutro = (v) => { const g = gen(v); return `de ${g.um} ${caso(v, 1)} para ${g.outro}`; };
+      const curto = (v) => CURTO[v.id] || v.nome;
+      const nomeMin = (v) => (CURTO[v.id] || v.nome).toLowerCase();
+      const rotulo = (v) => `${v.nome} (${v.unidade})`;
+      const qualitativa = (v) => v.tipo.startsWith('qualitativa');
+      const dec = (v) => (v.tipo.includes('contínua') ? 1 : 0);
+      const val = (x, v) => `${n(x, dec(v))} ${v.unidade}`;
+      const st = { vars: [], conj: 'entregas', x: 'entregas.distancia', y: 'entregas.tempo', alvo: 'diario.requisicoes', prev: null, parPrev: null };
+      const erro = (el, titulo, e) => { $(el).innerHTML = ui.alertBox('error', titulo, ui.erroMsg(e)); };
+      const formula = (nome, expr, conta, res, leitura) => `<div class="formula"><span class="nome">${nome}</span><code>${expr}</code>${conta ? `<span>${conta}</span>` : ''}<b>= ${res}</b>${leitura ? `<span class="leitura">${leitura}</span>` : ''}</div>`;
+      const frase = (ok, titulo, texto) => ui.checkItem(ok, titulo, texto);
+
+      // ---------- abas ----------
+      function abrir(aba) {
+        if (!['descritiva', 'correlacao', 'previsao'].includes(aba)) aba = 'descritiva';
+        document.querySelectorAll('#abas [data-aba]').forEach((b) => { const on = b.dataset.aba === aba; b.classList.toggle('active', on); b.setAttribute('aria-selected', on); });
+        ['descritiva', 'correlacao', 'previsao'].forEach((a) => { $('p-' + a).hidden = a !== aba; });
+        if (location.hash !== '#' + aba) history.replaceState(null, '', '#' + aba);
+        if (aba === 'correlacao' && !st.matrizCarregada) { st.matrizCarregada = true; carregarMatriz().then(carregarPar); }
+        if (aba === 'previsao' && !st.prevCarregada) { st.prevCarregada = true; carregarPrevisao(); }
+      }
+      $('abas').addEventListener('click', (e) => { const b = e.target.closest('[data-aba]'); if (b) abrir(b.dataset.aba); });
+
+      // ---------- variáveis ----------
+      try { st.vars = await RV.api('/api/estatistica/variaveis'); }
+      catch (e) { document.querySelector('.content').insertAdjacentHTML('beforeend', ui.alertBox('error', 'Não foi possível carregar as informações', ui.erroMsg(e))); return; }
+      const porId = Object.fromEntries(st.vars.map((v) => [v.id, v]));
+      const GRUPOS = [['real', 'Dados do sistema'], ['diario', 'Dia a dia do hemocentro (12 meses simulados)'], ['entregas', 'Entregas (simuladas)']];
+      const opcoes = (filtro, sel) => GRUPOS.map(([c, nome]) => {
+        const vs = st.vars.filter((v) => v.conjunto === c && filtro(v));
+        return vs.length ? `<optgroup label="${esc(nome)}">${vs.map((v) => `<option value="${esc(v.id)}" ${v.id === sel ? 'selected' : ''}>${esc(v.nome)}</option>`).join('')}</optgroup>` : '';
+      }).join('');
+
+      // ---------- Resumo dos dados ----------
+      $('varDesc').innerHTML = opcoes(() => true, 'diario.requisicoes');
+      async function carregarDescritiva() {
+        const id = $('varDesc').value; const v = porId[id];
+        $('porqueDesc').innerHTML = `<b>Por que olhar isso:</b> ${esc(PORQUE[id] || '')} <span class="t-muted">${v.n} ${caso(v, v.n)} ${v.fonte === 'real' ? 'registrados no sistema' : 'simulados'}.</span>`;
+        $('descKpis').innerHTML = ui.skeletonRows(1, 84);
+        let d;
+        try { d = await RV.api(`/api/estatistica/descritiva?variavel=${encodeURIComponent(id)}`); }
+        catch (e) { ['leituraDesc', 'hist', 'box', 'forma', 'freq', 'memDesc'].forEach((k) => { $(k).innerHTML = ''; }); erro('descKpis', 'Não foi possível calcular', e); return; }
+        const N = d.variavel.n;
+        const moda = d.modas.length ? d.modas.slice(0, 3).map((m) => n(m, m % 1 ? 1 : 0)).join(' · ') + (d.modas.length > 3 ? ' …' : '') : 'nenhum se repete mais';
+        const cv = d.coeficienteVariacao;
+
+        if (qualitativa(v)) {
+          $('descKpis').innerHTML = ui.kpi('Frequência de "sim"', n(d.media * 100, 1) + '%', 'sigma', '#48726A', '#E7F0EE', `${n(d.soma, 0)} de ${N} ${caso(v, N)}`);
+          $('leituraDesc').innerHTML = frase(true, `${curto(v)} em ${n(d.media * 100, 0)}% ${gen(v).dos} ${caso(v, 2)}`, 'É uma informação de sim ou não (variável qualitativa codificada como 0 e 1). Média, desvio e forma da curva não têm leitura útil aqui; ela serve para comparar grupos na aba O que anda junto.');
+        } else {
+          $('descKpis').innerHTML = [
+            ui.kpi('Valor típico', val(d.mediana, v), 'sigma', '#48726A', '#E7F0EE', 'mediana'),
+            ui.kpi('Média', val(d.media, v), 'chart', '#00A3C4', '#E0F6FB', 'soma ÷ quantidade'),
+            ui.kpi('Mais comum', moda, 'drop', '#E53935', '#FDECEC', 'moda'),
+            ui.kpi('Variação', `± ${val(d.desvioPadrao, v)}`, 'risk', '#B7791F', '#FFF4DB', cv == null ? 'desvio padrão' : `desvio padrão · ${n(cv, 0)}% da média`)
+          ].join('');
+          const L = [];
+          L.push(frase(true, `${gen(v).num.charAt(0).toUpperCase() + gen(v).num.slice(1)} ${caso(v, 1)} ${gen(v).tipico}: ${val(d.mediana, v)}`, `Metade ${gen(v).dos} ${caso(v, 2)} fica abaixo disso e metade acima. Na metade do meio, o valor fica entre ${val(d.q1, v)} e ${val(d.q3, v)}.`));
+          if (cv != null) {
+            if (cv < 15) L.push(frase(true, 'Varia pouco', `${deUmParaOutro(v).charAt(0).toUpperCase() + deUmParaOutro(v).slice(1)} a diferença é pequena (cerca de ${val(d.desvioPadrao, v)}). Dá para planejar pela média com segurança.`));
+            else if (cv <= 30) L.push(frase(true, 'Varia de forma moderada', `Planeje pela média, mas com uma margem de cerca de ${val(d.desvioPadrao, v)} para mais ou para menos.`));
+            else L.push(frase(false, 'Varia muito', `A média sozinha engana: os valores mudam bastante ${deUmParaOutro(v)}. Planeje pela faixa de ${val(d.q1, v)} a ${val(d.q3, v)} e acompanhe os extremos.`));
+          }
+          if (Math.abs(d.assimetria || 0) >= 0.5) {
+            L.push(frase(false, d.assimetria > 0 ? 'Alguns valores muito altos puxam a média para cima' : 'Alguns valores muito baixos puxam a média para baixo',
+              `Por isso a média (${val(d.media, v)}) se afasta do valor típico (${val(d.mediana, v)}). Para descrever o caso comum, use o valor típico.`));
+          }
+          L.push(d.outliers
+            ? frase(false, `${d.outliers} ${d.outliers === 1 ? caso(v, 1) + ' fora do comum' : caso(v, 2) + ' fora do comum'}`, `Valores abaixo de ${val(d.limiteInferiorOutlier, v)} ou acima de ${val(d.limiteSuperiorOutlier, v)}. Vale ver o que aconteceu ${d.outliers === 1 ? 'nesse caso' : 'nesses casos'}.`)
+            : frase(true, 'Nenhum valor fora do comum', `${gen(v).todos.charAt(0).toUpperCase() + gen(v).todos.slice(1)} ${gen(v).os} ${caso(v, 2)} ficaram entre ${val(d.limiteInferiorOutlier, v)} e ${val(d.limiteSuperiorOutlier, v)}.`));
+          $('leituraDesc').innerHTML = L.join('');
+        }
+
+        $('histSub').textContent = `Quantos ${caso(v, 2)} caem em cada faixa de valor · ${d.histograma.length} faixas (histograma)`;
+        $('hist').innerHTML = E.histograma(d.histograma, d.media, d.mediana);
+        $('box').innerHTML = qualitativa(v) ? '' : E.boxplot(d);
+        $('forma').innerHTML = qualitativa(v) ? '' : [
+          frase(Math.abs(d.assimetria || 0) < 0.5, Math.abs(d.assimetria || 0) < 0.5 ? 'Valores equilibrados dos dois lados' : (d.assimetria > 0 ? 'Mais concentrado nos valores baixos' : 'Mais concentrado nos valores altos'), `Assimetria ${n(d.assimetria, 2)}: ${d.leituraAssimetria}.`),
+          frase(Math.abs(d.curtose || 0) < 0.5 || d.curtose < 0, d.curtose >= 0.5 ? 'Extremos mais frequentes que o normal' : 'Extremos raros', `Curtose ${n(d.curtose, 2)}: ${d.leituraCurtose}.`)
+        ].join('');
+
+        let acum = 0;
+        $('freq').innerHTML = E.tabela(['Faixa', 'Ponto médio', 'f', 'fr', 'F acumulada'], d.histograma.map((c, i) => {
+          acum += c.frequencia;
+          return [`[${n(c.inicio, 2)}; ${n(c.fim, 2)}${i === d.histograma.length - 1 ? ']' : ')'}`, n((c.inicio + c.fim) / 2, 2), c.frequencia, n(c.frequencia / N * 100, 1) + '%', acum];
+        }), ['Total', '', N, '100%', '']);
+        $('memDesc').innerHTML = [
+          formula('Média', 'x̄ = Σx ÷ n', `= ${n(d.soma, 2)} ÷ ${N}`, n(d.media, 4)),
+          formula('Mediana', 'valor central dos dados ordenados', `posição (n + 1) ÷ 2 = ${n((N + 1) / 2, 1)}`, n(d.mediana, 4)),
+          formula('Moda', 'valor mais frequente', d.classeModal ? `faixa mais frequente [${n(d.classeModal.inicio, 2)}; ${n(d.classeModal.fim, 2)}) com f = ${d.classeModal.frequencia}` : '', esc(moda)),
+          formula('Média ponderada (dados agrupados)', 'Σ(f · ponto médio) ÷ Σf', '', n(d.mediaPonderadaAgrupada, 4), `Próxima da média real (${n(d.media, 4)}): cada faixa é representada pelo ponto médio.`),
+          formula('Amplitude', 'máx − mín', `= ${n(d.maximo, 2)} − ${n(d.minimo, 2)}`, n(d.amplitude, 2)),
+          formula('Variância amostral', 's² = Σ(x − x̄)² ÷ (n − 1)', `populacional σ² = ${n(d.varianciaPopulacional, 4)} (divide por n)`, n(d.variancia, 4)),
+          formula('Desvio padrão', 's = √s²', `= √${n(d.variancia, 4)}`, n(d.desvioPadrao, 4)),
+          formula('Coeficiente de variação', 'CV = s ÷ x̄ · 100', `= ${n(d.desvioPadrao, 4)} ÷ ${n(d.media, 4)} · 100`, cv == null ? '—' : n(cv, 2) + '%', 'Até 15%: varia pouco · 15% a 30%: moderado · acima de 30%: varia muito.'),
+          formula('Quartis e valores atípicos', 'IQR = Q3 − Q1; faixa normal de Q1 − 1,5·IQR a Q3 + 1,5·IQR', `Q1 = ${n(d.q1, 2)}, Q3 = ${n(d.q3, 2)}, IQR = ${n(d.iqr, 2)}`, `${n(d.limiteInferiorOutlier, 2)} a ${n(d.limiteSuperiorOutlier, 2)}`),
+          formula('Assimetria (G1)', 'm₃ ÷ m₂^1,5, ajustada por √(n(n − 1)) ÷ (n − 2)', '', n(d.assimetria, 4), 'Zero é simétrica; positiva, cauda à direita; negativa, cauda à esquerda.'),
+          formula('Curtose em excesso (G2)', 'm₄ ÷ m₂² − 3, ajustada pelo tamanho da amostra', '', n(d.curtose, 4), 'Zero é igual à curva normal; positiva, extremos mais frequentes.'),
+          `<p class="valores">Primeiros valores: ${d.primeirosValores.map((x) => n(x, 1)).join('; ')}${N > d.primeirosValores.length ? '; …' : ''}<br>No Colab, <code>df.describe()</code>, <code>df.skew()</code> e <code>df.kurt()</code> dão os mesmos números.</p>`
+        ].join('');
+      }
+      $('varDesc').addEventListener('change', carregarDescritiva);
+
+      // ---------- O que anda junto ----------
+      function relacao(r, x, y) {
+        const X = nomeMin(x), Y = nomeMin(y);
+        if (r == null || Math.abs(r) < 0.1) return `${curto(x)} e ${Y} não andam juntos: saber um não ajuda a prever o outro.`;
+        if (qualitativa(x)) return `Em ${X}, ${Y} costuma ser ${r > 0 ? 'maior' : 'menor'}.`;
+        return `Quanto mais ${X}, ${r > 0 ? 'mais' : 'menos'} ${Y}.`;
+      }
+      function preencherPar() {
+        const vs = st.vars.filter((v) => v.conjunto === st.conj);
+        if (!vs.some((v) => v.id === st.x)) st.x = vs[1].id;
+        if (!vs.some((v) => v.id === st.y)) st.y = vs[0].id;
+        const op = (sel) => vs.map((v) => `<option value="${esc(v.id)}" ${v.id === sel ? 'selected' : ''}>${esc(v.nome)}</option>`).join('');
+        $('parX').innerHTML = op(st.x); $('parY').innerHTML = op(st.y);
+        document.querySelectorAll('#conjuntos [data-conj]').forEach((b) => { const on = b.dataset.conj === st.conj; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+      }
+      async function carregarMatriz() {
+        preencherPar();
+        $('matriz').innerHTML = ui.skeletonRows(1, 240);
+        try { st.matriz = await RV.api(`/api/estatistica/correlacao?conjunto=${st.conj}`); }
+        catch (e) { erro('matriz', 'Não foi possível montar a tabela', e); return; }
+        $('matSub').textContent = st.conj === 'diario' ? '365 dias simulados: pedidos, doações e o que pode influenciar' : '200 entregas simuladas: tempo, distância, trânsito e temperatura da caixa';
+        $('matriz').innerHTML = E.heatmap(st.matriz, curto);
+      }
+      async function carregarPar() {
+        $('parKpis').innerHTML = ui.skeletonRows(1, 84);
+        let p;
+        try { p = await RV.api(`/api/estatistica/correlacao/par?x=${encodeURIComponent(st.x)}&y=${encodeURIComponent(st.y)}`); }
+        catch (e) { ['disp', 'leitura', 'memCorr', 'formCorr'].forEach((k) => { $(k).innerHTML = ''; }); erro('parKpis', 'Não foi possível comparar', e); return; }
+        const fraca = p.r == null || Math.abs(p.r) < 0.3;
+        const L = [frase(!fraca, relacao(p.r, p.x, p.y), p.r2 == null ? '' : `Relação ${p.forca}: ${n(p.r2 * 100, 0)}% das diferenças de ${nomeMin(p.y)} ${deUmParaOutro(p.y)} acompanham ${nomeMin(p.x)}; o resto vem de outros fatores.`)];
+        if (p.reta && !fraca && !qualitativa(p.x)) L.push(frase(true, `Cada 1 ${p.x.unidade} a mais em ${nomeMin(p.x)}: ${n(Math.abs(p.reta.a), 2)} ${p.y.unidade} ${p.reta.a > 0 ? 'a mais' : 'a menos'} em ${nomeMin(p.y)}, em média`, 'É a inclinação da linha vermelha do gráfico.'));
+        if (qualitativa(p.x) && p.reta) L.push(frase(true, `Com ${nomeMin(p.x)}: ${n(Math.abs(p.reta.a), 1)} ${p.y.unidade} ${p.reta.a > 0 ? 'a mais' : 'a menos'} em ${nomeMin(p.y)}, em média`, 'Comparação entre os dois grupos (sim e não).'));
+        L.push(ui.alertBox('warn', 'Andar junto não quer dizer causar', 'Duas coisas podem subir juntas por coincidência ou porque uma terceira influencia as duas. Exemplo: o calor e a queda nas doações andam juntos, mas quem decide doar são as pessoas.'));
+        $('leitura').innerHTML = L.join('');
+        $('parKpis').innerHTML = [
+          ui.kpi('Força da relação', n(p.r, 2), 'sigma', '#48726A', '#E7F0EE', `${p.forca} · r de Pearson`),
+          ui.kpi('Quanto explica', p.r2 == null ? '—' : n(p.r2 * 100, 0) + '%', 'chart', '#00A3C4', '#E0F6FB', 'r²'),
+          ui.kpi('Observações', n(p.n, 0), 'net', '#B7791F', '#FFF4DB', caso(p.y, p.n))
+        ].join('');
+        $('dispSub').textContent = `${p.y.nome} conforme ${nomeMin(p.x)}`;
+        $('disp').innerHTML = E.dispersao(p.pontos, p.reta, rotulo(p.x), rotulo(p.y));
+        $('memcSub').textContent = `Primeiras ${p.memoria.length} das ${p.n} linhas; a linha Σ soma as ${p.n}. x̄ = ${n(p.mediaX, 4)}, ȳ = ${n(p.mediaY, 4)} (memória de cálculo)`;
+        const f4 = (v) => n(v, 4), s = p.somatorios, N = p.n;
+        $('memCorr').innerHTML = E.tabela(['x', 'y', 'x − x̄', 'y − ȳ', '(x − x̄)(y − ȳ)', '(x − x̄)²', '(y − ȳ)²'],
+          p.memoria.map((l) => [n(l.x, 2), n(l.y, 2), f4(l.dx), f4(l.dy), f4(l.dxdy), f4(l.dx2), f4(l.dy2)]),
+          ['Σ ' + n(s.sx, 2), n(s.sy, 2), '0', '0', f4(s.sdxdy), f4(s.sdx2), f4(s.sdy2)]);
+        $('formCorr').innerHTML = [
+          formula('r pela fórmula dos desvios', 'r = Σ(x − x̄)(y − ȳ) ÷ √[Σ(x − x̄)² · Σ(y − ȳ)²]', `= ${f4(s.sdxdy)} ÷ √(${f4(s.sdx2)} · ${f4(s.sdy2)})`, n(p.r, 4)),
+          formula('r pela fórmula dos somatórios', 'r = [nΣxy − ΣxΣy] ÷ √{[nΣx² − (Σx)²] · [nΣy² − (Σy)²]}',
+            `n = ${N}, Σx = ${n(s.sx, 2)}, Σy = ${n(s.sy, 2)}, Σxy = ${n(s.sxy, 2)}, Σx² = ${n(s.sx2, 2)}, Σy² = ${n(s.sy2, 2)}`, n(p.rPorSomatorios, 4), 'As duas fórmulas são a mesma conta reorganizada.'),
+          formula('Covariância e r', 'Cov = Σ(x − x̄)(y − ȳ) ÷ (n − 1);  r = Cov ÷ (sₓ · s_y)', `= ${f4(s.sdxdy)} ÷ ${N - 1};  ${n(p.covariancia, 4)} ÷ (${f4(p.desvioX)} · ${f4(p.desvioY)})`, `${n(p.covariancia, 4)};  r = ${n(p.r, 4)}`),
+          formula('Coeficiente de determinação', 'r² = r · r', `= ${n(p.r, 4)}²`, n(p.r2, 4)),
+          formula('Escala de força usada', '|r| < 0,1 praticamente nula · < 0,3 fraca · < 0,7 moderada · a partir de 0,7 forte', '', esc(p.forca))
+        ].join('');
+      }
+      $('conjuntos').addEventListener('click', (e) => { const b = e.target.closest('[data-conj]'); if (!b || b.dataset.conj === st.conj) return; st.conj = b.dataset.conj; st.x = st.y = null; carregarMatriz().then(carregarPar); });
+      $('matriz').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-par]'); if (!b) return;
+        const [i, j] = b.dataset.par.split(',').map(Number); if (i === j) return;
+        st.y = st.matriz.variaveis[i].id; st.x = st.matriz.variaveis[j].id; preencherPar(); carregarPar();
+        $('t-par').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      $('parX').addEventListener('change', () => { st.x = $('parX').value; carregarPar(); });
+      $('parY').addEventListener('change', () => { st.y = $('parY').value; carregarPar(); });
+
+      // ---------- Previsão ----------
+      $('alvo').innerHTML = opcoes((v) => v.correlacionavel && !qualitativa(v) && v.id !== 'diario.diaDoMes', st.alvo);
+      async function carregarPrevisao(soX) {
+        const x = $('xPrev').value;
+        let pr;
+        try { pr = await RV.api(`/api/estatistica/previsao?alvo=${encodeURIComponent(st.alvo)}${soX && x !== '' ? '&x=' + encodeURIComponent(x) : ''}`); }
+        catch (e) { erro(soX ? 'yPrev' : 'features', 'Não foi possível calcular a previsão', e); return; }
+        if (soX) { mostrarY(pr); return; }
+        st.prev = pr;
+        const A = nomeMin(pr.alvo);
+        $('porquePrev').innerHTML = `<b>Para que serve:</b> estimar ${esc(A)} a partir do que já se sabe antes, para preparar o estoque e a logística. Só ajuda a prever o que tem relação pelo menos moderada com o que se quer estimar.`;
+        $('features').innerHTML = E.tabela(['Informação', 'Ajuda a prever?', 'Força da relação', 'Por quê'], pr.features.map((f) => [
+          esc(f.variavel.nome),
+          f.selecionada ? '<span class="badge b-ok">Sim</span>' : '<span class="badge b-inativo">Não</span>',
+          `${esc(f.forca)} (${n(f.r, 2)})`,
+          f.selecionada ? esc(relacao(f.r, f.variavel, pr.alvo))
+            : esc(f.r == null || Math.abs(f.r) < 0.1 ? 'Não tem relação com o que se quer prever.' : 'A relação é fraca demais para ajudar.')]));
+        $('features').querySelectorAll('tbody td:last-child').forEach((td) => td.classList.add('wrap'));
+        $('redund').innerHTML = pr.redundantes.length
+          ? ui.alertBox('info', 'Informações repetidas', pr.redundantes.map(([a, b]) => `${porId[a].nome} e ${porId[b].nome}`).join('; ') + ' contam quase a mesma história. Basta acompanhar uma de cada par.')
+          : '';
+        if (!pr.reta) { $('dispPrev').innerHTML = ui.empty('Sem tendência', 'Nenhuma informação varia junto com o que se quer prever.'); return; }
+        const mf = pr.melhorFeature;
+        $('retaSub').textContent = `${mf.nome} é a que mais ajuda: explica ${n(pr.r2 * 100, 0)}% das diferenças de ${A} (r² = ${n(pr.r2, 2)})`;
+        $('xLabel').textContent = `${mf.nome} (${mf.unidade})`;
+        try {
+          const p = await RV.api(`/api/estatistica/correlacao/par?x=${encodeURIComponent(mf.id)}&y=${encodeURIComponent(pr.alvo.id)}`);
+          st.parPrev = p;
+          $('dispPrev').innerHTML = E.dispersao(p.pontos, p.reta, rotulo(mf), rotulo(pr.alvo));
+          if ($('xPrev').value === '') $('xPrev').value = Math.round(p.mediaX);
+          const s = p.somatorios;
+          $('memPrev').innerHTML = [
+            formula('Equação da reta (regressão linear)', 'ŷ = a·x + b', '', `${n(p.reta.a, 4)}·x ${p.reta.b < 0 ? '−' : '+'} ${n(Math.abs(p.reta.b), 4)}`),
+            formula('Inclinação', 'a = Σ(x − x̄)(y − ȳ) ÷ Σ(x − x̄)²', `= ${n(s.sdxdy, 4)} ÷ ${n(s.sdx2, 4)}`, n(p.reta.a, 4)),
+            formula('Intercepto', 'b = ȳ − a · x̄', `= ${n(p.mediaY, 4)} − ${n(p.reta.a, 4)} · ${n(p.mediaX, 4)}`, n(p.reta.b, 4)),
+            formula('Faixa provável', 'ŷ ± 2 · s_y · √(1 − r²)', `s_y = ${n(p.desvioY, 4)}, r² = ${n(p.r2, 4)}`, `± ${n(2 * p.desvioY * Math.sqrt(1 - p.r2), 2)}`, 'Aproximação: cerca de 95% dos casos ficam dentro dessa margem em torno da reta.')
+          ].join('');
+        } catch (e) { erro('dispPrev', 'Não foi possível desenhar a tendência', e); }
+        carregarPrevisao(true);
+      }
+      function mostrarY(pr) {
+        if (pr.yPrevisto == null) { $('yPrev').innerHTML = ''; return; }
+        const r2 = st.prev ? st.prev.r2 : pr.r2, p = st.parPrev;
+        const margem = p ? 2 * p.desvioY * Math.sqrt(1 - r2) : null;
+        const u = pr.alvo.unidade, mf = st.prev.melhorFeature;
+        const conf = r2 >= 0.7 ? ['success', 'Estimativa confiável', `${mf.nome} explica a maior parte das diferenças.`]
+          : r2 >= 0.3 ? ['info', 'Estimativa razoável', 'Use como referência e combine com a experiência da equipe.']
+          : ['warn', 'Estimativa fraca', `${mf.nome} explica só ${n(r2 * 100, 0)}% das diferenças. Use como ordem de grandeza e acompanhe as outras informações que ajudam a prever.`];
+        $('yPrev').innerHTML = `<div class="resultado"><span>Com ${n(pr.x, dec(mf))} ${esc(mf.unidade)} de ${esc(nomeMin(mf))}, espere cerca de</span><b>${n(pr.yPrevisto, 0)} ${esc(u)}</b>${margem != null ? `<span>Na maioria dos casos, entre ${n(Math.max(0, pr.yPrevisto - margem), 0)} e ${n(pr.yPrevisto + margem, 0)} ${esc(u)}.</span>` : ''}</div>`
+          + ui.alertBox(conf[0], conf[1], conf[2]);
+      }
+      $('alvo').addEventListener('change', () => { st.alvo = $('alvo').value; $('xPrev').value = ''; carregarPrevisao(); });
+      let tx;
+      $('xPrev').addEventListener('input', () => { clearTimeout(tx); tx = setTimeout(() => carregarPrevisao(true), 300); });
+
+      abrir(location.hash.slice(1));
+      carregarDescritiva();
+    })();
+  </script>
+</body>
+</html>

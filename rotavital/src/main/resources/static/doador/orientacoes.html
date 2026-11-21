@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Antes de doar · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Antes de doar</h1>
+        <p class="page-sub">O que fazer e o que evitar nos dias antes da doação, no dia e depois dela.</p>
+      </div>
+    </div>
+    <div id="aviso"></div>
+    <div class="row stack-md">
+      <div class="col grow">
+        <section class="card gap-12" aria-labelledby="t-vespera">
+          <div><h2 class="card-title" id="t-vespera">Nos dias antes</h2><p class="card-sub">Para chegar descansado e hidratado</p></div>
+          <div class="list" id="vespera"></div>
+        </section>
+        <section class="card gap-12" aria-labelledby="t-dia">
+          <div><h2 class="card-title" id="t-dia">No dia da doação</h2><p class="card-sub">A doação leva cerca de 1 hora, contando cadastro e triagem</p></div>
+          <div class="list" id="dia"></div>
+        </section>
+        <section class="card gap-12" aria-labelledby="t-depois">
+          <div><h2 class="card-title" id="t-depois">Depois de doar</h2><p class="card-sub">Seu corpo repõe o volume de sangue em poucos dias</p></div>
+          <div class="list" id="depois"></div>
+        </section>
+      </div>
+      <div class="col col-380">
+        <section class="card gap-12" aria-labelledby="t-quem">
+          <div><h2 class="card-title" id="t-quem">Quem pode doar</h2><p class="card-sub">Quando você pode doar de novo aparece no seu painel</p></div>
+          <div class="list" id="quem"></div>
+        </section>
+        <section class="card gap-12" aria-labelledby="t-espere">
+          <div><h2 class="card-title" id="t-espere">Quando esperar para doar</h2><p class="card-sub">São impedimentos temporários: passado o prazo, você pode voltar</p></div>
+          <div class="list" id="espere"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (function () {
+      const { ui } = RV;
+      if (!ui.shell('doador', 'Antes de doar')) return;
+
+      // [pode fazer?, título, detalhe]. Orientações gerais do Ministério da Saúde; a triagem decide cada caso.
+      const DICAS = {
+        vespera: [
+          [true, 'Durma bem', 'Pelo menos 6 horas na noite anterior.'],
+          [true, 'Beba bastante água', 'No dia anterior e no dia da doação.'],
+          [false, 'Não beba bebida alcoólica', 'Nas 12 horas antes da doação.'],
+          [false, 'Evite esforço físico intenso', 'Na véspera, para não chegar cansado.']
+        ],
+        dia: [
+          [true, 'Não venha em jejum', 'Faça uma refeição leve antes. Depois do almoço, espere 2 horas para doar.'],
+          [false, 'Evite alimentos gordurosos', 'Nas 3 horas antes da doação.'],
+          [false, 'Não fume', 'Nas 2 horas antes da doação.'],
+          [true, 'Leve um documento oficial com foto', 'RG, CNH, carteira de trabalho ou passaporte.'],
+          [true, 'Conte tudo na triagem', 'Remédios, vacinas, doenças e viagens recentes. As respostas são sigilosas.']
+        ],
+        depois: [
+          [true, 'Fique pelo menos 15 minutos no hemocentro', 'E aceite o lanche oferecido.'],
+          [true, 'Beba mais líquido que o normal', 'Nas próximas 24 horas.'],
+          [true, 'Mantenha o curativo', 'Por pelo menos 4 horas.'],
+          [false, 'Não fume nem beba álcool', 'Sem cigarro nas 2 horas seguintes e sem álcool nas 12 horas seguintes.'],
+          [false, 'Evite esforço e peso com o braço da coleta', 'No resto do dia. Atividade física intensa só no dia seguinte.'],
+          [true, 'Se sentir tontura, deite ou sente', 'Com as pernas elevadas ou a cabeça entre os joelhos, e avise alguém por perto.']
+        ],
+        quem: [
+          [true, 'Ter entre 16 e 69 anos', 'Menores de 18 precisam de autorização do responsável. A primeira doação deve ser até os 60 anos.'],
+          [true, 'Pesar pelo menos 50 kg', 'Abaixo disso, o volume coletado faria falta ao seu corpo.'],
+          [true, 'Estar bem de saúde no dia', 'Sem febre, gripe ou mal-estar.'],
+          [true, 'Respeitar o intervalo entre doações', 'Homens: 60 dias, até 4 vezes por ano. Mulheres: 90 dias, até 3 vezes por ano.']
+        ],
+        espere: [
+          [false, 'Gripe, resfriado ou febre', '7 dias depois do fim dos sintomas.'],
+          [false, 'Extração de dente', '7 dias.'],
+          [false, 'Tatuagem, piercing ou maquiagem definitiva', '12 meses.'],
+          [false, 'Gravidez e pós-parto', 'Durante a gestação e até 90 dias depois do parto normal ou 180 dias depois da cesárea. Amamentando, até o bebê completar 12 meses.'],
+          [false, 'Vacinas, remédios, cirurgias e exames como endoscopia', 'O prazo varia. Informe na triagem.']
+        ]
+      };
+      Object.entries(DICAS).forEach(([id, itens]) => {
+        document.getElementById(id).innerHTML = itens.map(([ok, t, d]) => ui.checkItem(ok, t, d)).join('');
+      });
+      document.getElementById('aviso').innerHTML = ui.alertBox('info', 'Orientações gerais',
+        'Seguem as regras do Ministério da Saúde. Na triagem, a equipe do hemocentro confirma se você pode doar no dia.');
+    })();
+  </script>
+</body>
+</html>
