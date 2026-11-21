@@ -117,23 +117,44 @@
   /* ---------- Shell autenticado (topbar + sidebar de vidro por perfil) ---------- */
   const MENUS = {
     hemocentro: {
+      perfil: 'HEMOCENTRO',
       busca: 'Buscar bolsa, doador ou requisição…',
-      itens: [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'], ['Doações', 'drop', null], ['Requisições', 'inbox', 'hemocentro/requisicoes.html']]
+      itens: [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'], ['Doações', 'drop', 'operacao.html'],
+        ['Requisições', 'inbox', 'hemocentro/requisicoes.html'], ['Contas', 'building', 'hemocentro/usuarios.html'], ['Gestão', 'risk', 'gestor/painel.html']]
     },
     gestor: {
-      busca: 'Buscar hospital, relatório…',
-      itens: [['Painel', 'chart', 'gestor/painel.html'], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'], ['Relatórios', 'file', null], ['Hospitais', 'building', null]]
+      perfil: 'HEMOCENTRO',
+      busca: null,
+      itens: [['Painel', 'chart', 'gestor/painel.html'], ['Indicadores', 'risk', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'],
+        ['Hospitais', 'building', 'hemocentro/usuarios.html'], ['Hemocentro', 'home', 'hemocentro/painel.html']]
+    },
+    hospital: {
+      perfil: 'HOSPITAL',
+      busca: null,
+      itens: [['Painel', 'home', 'hospital/painel.html'], ['Solicitar', 'plus', 'hospital/painel.html#solicitar']]
+    },
+    doador: {
+      perfil: 'DOADOR',
+      busca: null,
+      itens: [['Meu painel', 'drop', 'doador/painel.html']]
     }
   };
-  function requireSession() {
+  /* Sessão obrigatória e do perfil certo; senão vai para o login ou para a home do próprio perfil. */
+  function requireSession(menu) {
     const s = RV.sessao.atual();
     if (!s) { location.replace(url('login.html')); return null; }
+    const esperado = MENUS[menu] && MENUS[menu].perfil;
+    if (esperado && s.perfil !== esperado) {
+      const p = RV.PERFIS[s.perfil];
+      location.replace(url(p ? p.home : 'login.html'));
+      return null;
+    }
     return s;
   }
   function shell(menu, active) {
-    const s = requireSession();
+    const s = requireSession(menu);
     if (!s) return null;
-    const perfil = RV.PERFIS[s.perfil] || RV.PERFIS.HEMOCENTRO;
+    const perfil = RV.PERFIS[s.perfil];
     const M = MENUS[menu];
     const item = (n, ic, href) => {
       const a = n === active;
@@ -145,7 +166,7 @@
     top.innerHTML = `
       <a class="brand" href="${url(perfil.home || 'login.html')}">${drop(26)}<span class="brand-name">Rota Vital</span><span class="sep"></span><span class="unit">${esc(s.unidade || perfil.unidade)}</span></a>
       <div class="topbar-actions">
-        <form class="topbar-search" role="search" data-busca>${icon('search', 18, '#fff')}<input type="search" placeholder="${esc(M.busca)}" aria-label="Buscar"></form>
+        ${M.busca ? `<form class="topbar-search" role="search" data-busca>${icon('search', 18, '#fff')}<input type="search" placeholder="${esc(M.busca)}" aria-label="Buscar"></form>` : ''}
         <button type="button" class="icon-square" aria-label="Notificações" data-soon="Notificações">${icon('bell', 20, '#fff')}<span class="dot"></span></button>
         <div class="user"><span class="avatar">${esc(RV.iniciais(s.nome))}</span><div><div class="user-name">${esc(s.nome)}</div><div class="user-role">${esc(perfil.label)}</div></div></div>
       </div>`;
@@ -153,15 +174,15 @@
     side.className = 'sidebar';
     side.setAttribute('aria-label', 'Navegação principal');
     side.innerHTML = M.itens.map(([n, ic, h]) => item(n, ic, h)).join('') + '<span class="grow"></span>' +
-      item('Perfil', 'user', null) + `<button type="button" class="nav-item" data-sair>${icon('logout', 24, '#2E403C')}<span>Sair</span></button>`;
+      `<button type="button" class="nav-item" data-sair>${icon('logout', 24, '#2E403C')}<span>Sair</span></button>`;
     document.body.prepend(side);
     document.body.prepend(top);
     side.querySelector('[data-sair]').onclick = () => { RV.sessao.sair(); location.href = url('login.html'); };
     [...top.querySelectorAll('[data-soon]'), ...side.querySelectorAll('[data-soon]')].forEach((b) => b.addEventListener('click', () => toast('info', `${b.dataset.soon}: em breve`, 'Esta tela faz parte de outra jornada e ainda vai ser implementada.')));
-    top.querySelector('[data-busca]').addEventListener('submit', (e) => {
+    const busca = top.querySelector('[data-busca]');
+    if (busca) busca.addEventListener('submit', (e) => {
       e.preventDefault();
       const q = e.target.querySelector('input').value.trim();
-      if (menu !== 'hemocentro') { toast('info', 'Busca: em breve', 'A busca desta área ainda vai ser implementada.'); return; }
       location.href = url('hemocentro/estoque.html') + (q ? '?q=' + encodeURIComponent(q) : '');
     });
     return s;

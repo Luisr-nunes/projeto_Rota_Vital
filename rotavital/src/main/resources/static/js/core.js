@@ -12,7 +12,9 @@
   }
 
   async function api(path, options = {}) {
-    const opts = { headers: { Accept: 'application/json' }, ...options };
+    const opts = { ...options, headers: { Accept: 'application/json', ...(options.headers || {}) } };
+    const atual = sessao.atual();
+    if (atual) opts.headers.Authorization = 'Bearer ' + atual.token;
     if (opts.body && typeof opts.body !== 'string') {
       opts.body = JSON.stringify(opts.body);
       opts.headers['Content-Type'] = 'application/json';
@@ -26,6 +28,7 @@
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    if (res.status === 401 && !String(path).startsWith('/api/auth/')) { sessao.sair(); irParaLogin(); }
     if (!res.ok) throw new ApiError(res.status, data);
     return data;
   }
@@ -110,46 +113,63 @@
   const codigoBolsa = (b) => { const d = parseDate(b.dataColeta); return `BR-${d ? d.getFullYear() : '0000'}-${pad(b.id, 4)}`; };
   const num = (n, dec = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 
-  /* ---------- Sessão (somente front: o backend ainda não tem autenticação) ---------- */
+  /* ---------- Sessão: token JWT emitido pelo backend em /api/auth/login ---------- */
   const PERFIS = {
-    ATENDENTE: { label: 'Atendente do hemocentro', home: 'hemocentro/painel.html', unidade: 'Hemocentro Central' },
-    HEMOCENTRO: { label: 'Profissional do hemocentro', home: 'hemocentro/painel.html', unidade: 'Hemocentro Central' },
-    HOSPITAL: { label: 'Profissional do hospital', home: null, unidade: 'Hospital' },
-    LOGISTICA: { label: 'Operador de logística', home: null, unidade: 'Logística · Hemocentro Central' },
-    GESTOR: { label: 'Gestor da rede', home: 'gestor/painel.html', unidade: 'Rede de sangue (simulada)' }
+    HEMOCENTRO: { label: 'Hemocentro', home: 'hemocentro/painel.html', unidade: 'Hemocentro Central', menu: 'hemocentro' },
+    HOSPITAL: { label: 'Hospital', home: 'hospital/painel.html', unidade: 'Hospital', menu: 'hospital' },
+    DOADOR: { label: 'Doador', home: 'doador/painel.html', unidade: 'Área do doador', menu: 'doador' }
   };
   const KEY_SESSAO = 'rv.sessao';
-  const KEY_CONTAS = 'rv.contas';
-  const store = {
-    get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* armazenamento indisponível */ } },
-    del(k) { try { localStorage.removeItem(k); } catch (e) { /* idem */ } }
-  };
+  const guarda = (area) => ({
+    get(k, def) { try { const v = area.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } },
+    set(k, v) { try { area.setItem(k, JSON.stringify(v)); } catch (e) { /* armazenamento indisponível */ } },
+    del(k) { try { area.removeItem(k); } catch (e) { /* idem */ } }
+  });
+  const store = guarda(global.localStorage);
+  const temp = guarda(global.sessionStorage);
   const sessao = {
-    atual: () => store.get(KEY_SESSAO, null),
-    entrar(u, lembrar) { store.set(KEY_SESSAO, { ...u, lembrar: !!lembrar, desde: Date.now() }); },
-    sair() { store.del(KEY_SESSAO); },
-    contas: () => store.get(KEY_CONTAS, {}),
-    salvarConta(c) { const all = store.get(KEY_CONTAS, {}); all[c.email.toLowerCase()] = c; store.set(KEY_CONTAS, all); }
+    /* Sessão válida ou null (expirada é descartada). "Manter conectado" usa localStorage; senão, só a aba. */
+    atual() {
+      const s = store.get(KEY_SESSAO, null) || temp.get(KEY_SESSAO, null);
+      if (!s || !s.token) return null;
+      if (s.expiraEm && Date.parse(s.expiraEm) <= Date.now()) { sessao.sair(); return null; }
+      return s;
+    },
+    entrar(r, lembrar) {
+      const p = PERFIS[r.perfil] || {};
+      const dados = { token: r.token, expiraEm: r.expiraEm, nome: r.nome, email: r.email, perfil: r.perfil,
+        hospitalId: r.hospitalId, doadorId: r.doadorId, unidade: r.hospitalNome || p.unidade };
+      sessao.sair();
+      (lembrar ? store : temp).set(KEY_SESSAO, dados);
+    },
+    sair() { store.del(KEY_SESSAO); temp.del(KEY_SESSAO); }
   };
+
+  /* Raiz do site, para redirecionar ao login de qualquer subpasta. */
+  const RAIZ = (document.currentScript && document.currentScript.src.replace(/js\/core\.js(\?.*)?$/, '')) || '/';
+  function irParaLogin() {
+    if (!/\/(login|criar-conta|recuperar-senha|index)\.html$/.test(location.pathname)) location.replace(RAIZ + 'login.html?expirou=1');
+  }
+
+  /* fetch com o token, para as páginas legadas que ainda usam Response (operacao.html, indicadores.html). */
+  async function authFetch(path, options = {}) {
+    const s = sessao.atual();
+    const headers = new Headers(options.headers || {});
+    if (s) headers.set('Authorization', 'Bearer ' + s.token);
+    const res = await fetch(path, { ...options, headers });
+    if (res.status === 401) { sessao.sair(); irParaLogin(); }
+    return res;
+  }
+
   const iniciais = (nome) => (nome || '?').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
   const saudacao = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 
-  /* Hash da senha guardada localmente (nunca o texto puro). */
-  async function hashSenha(email, senha) {
-    const data = new TextEncoder().encode(`rota-vital:${email}:${senha}`);
-    if (global.crypto && crypto.subtle) {
-      const buf = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-    }
-    let h = 0; for (const b of data) h = (h * 31 + b) | 0; return 'h' + h;
-  }
 
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   global.RV = Object.assign(global.RV || {}, {
     api, ApiError, TIPOS, COMPONENTES, COMPONENTE, DOADORES, STATUS_REQ, STATUS_BOLSA, PERFIS,
     tipoLabel, compLabel, receptoresDe, parseDate, today, fmtDate, fmtTime, diasAte, desde, validade,
-    codigoBolsa, num, pad, sessao, iniciais, saudacao, esc, store, hashSenha
+    codigoBolsa, num, pad, sessao, iniciais, saudacao, esc, store, authFetch
   });
 })(window);
