@@ -198,6 +198,28 @@ class RegrasAplicadasNosServicosTest {
         }
 
         @Test
+        @DisplayName("Limite anual atingido: a próxima data é quando a doação mais antiga sai da janela de 12 meses")
+        void proximaDataPeloLimiteAnual() {
+            Doador d = doador(Sexo.FEMININO, HOJE.minusDays(100));
+            DoadorRepository doadores = mock(DoadorRepository.class);
+            BolsaRepository bolsas = mock(BolsaRepository.class);
+            when(doadores.findById(1L)).thenReturn(Optional.of(d));
+            when(bolsas.countByDoadorIdAndDataColetaAfter(any(), any())).thenReturn(3L);
+            when(bolsas.findByDoadorIdOrderByDataColetaDesc(1L)).thenReturn(List.of(
+                    Bolsa.builder().dataColeta(HOJE.minusDays(100)).build(),
+                    Bolsa.builder().dataColeta(HOJE.minusDays(200)).build(),
+                    Bolsa.builder().dataColeta(HOJE.minusDays(300)).build()));
+            DoacaoService s = new DoacaoService(doadores, bolsas);
+            ReflectionTestUtils.setField(s, "intervaloMinimoDias", 60);
+            ReflectionTestUtils.setField(s, "intervaloMinimoDiasMulher", 90);
+
+            var r = s.elegibilidade(d, HOJE);
+
+            assertFalse(r.apto());
+            assertEquals(HOJE.minusDays(300).plusYears(1), r.proximaDataPossivel());
+        }
+
+        @Test
         @DisplayName("Elegibilidade informa a próxima data possível")
         void elegibilidadeComProximaData() {
             Doador d = doador(Sexo.FEMININO, HOJE.minusDays(30));

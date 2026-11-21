@@ -54,7 +54,7 @@
       const params = new URLSearchParams(location.search);
       const st = { aba: params.get('status') || 'PENDENTE', prio: '', pagina: 0, tipo: params.get('tipo') || '' };
       // HU06: só requisições com bolsas já reservadas podem ter a entrega confirmada.
-      const ENTREGAVEIS = ['ALOCADA', 'APROVADA', 'EM_ROTA'];
+      const ENTREGAVEIS = ['EM_ROTA'];
       const $ = (id) => document.getElementById(id);
       const lista = $('lista'), rodape = $('rodape');
       lista.innerHTML = ui.skeletonRows(6, 52);
@@ -105,7 +105,7 @@
               <span>${ui.prioridade(r.prioridade)}</span>
               <span>${esc(RV.desde(r.dataSolicitacao))}</span>
               <span>${ui.badgeReq(r.status)}</span>
-              <span class="acoes">${ENTREGAVEIS.includes(r.status) ? `<button type="button" class="btn btn-primary sm" data-entrega="${r.id}">${ui.icon('truck', 18, '#fff', 2)}Confirmar entrega</button>` : ''}<a class="btn ${destaque ? 'btn-primary' : 'btn-secondary'} sm" href="requisicao.html?id=${r.id}">${pend ? 'Alocar' : 'Ver'} ${ui.icon('arrowR', 18, destaque ? '#fff' : '#1F2D2A', 2)}</a></span>
+              <span class="acoes">${r.status !== 'CANCELADA' ? `<a class="btn btn-ghost sm" href="../rastreamento.html?id=${r.id}" title="Ver a rota da entrega">${ui.icon('route', 16, '#1F2D2A', 2)}Rota</a>` : ''}${ENTREGAVEIS.includes(r.status) ? `<button type="button" class="btn btn-primary sm" data-entrega="${r.id}">${ui.icon('truck', 18, '#fff', 2)}Confirmar entrega</button>` : ''}<a class="btn ${destaque ? 'btn-primary' : 'btn-secondary'} sm" href="requisicao.html?id=${r.id}">${pend ? 'Alocar' : ['ALOCADA', 'APROVADA'].includes(r.status) ? 'Despachar' : 'Ver'} ${ui.icon('arrowR', 18, destaque ? '#fff' : '#1F2D2A', 2)}</a></span>
             </div>`;
           }).join('');
         const nomeAba = ABAS.find((a) => a[0] === st.aba)[1].toLowerCase();

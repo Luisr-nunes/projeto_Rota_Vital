@@ -85,6 +85,8 @@
     return new Date(s);
   };
   const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  /* Data de hoje no fuso do navegador (yyyy-mm-dd); toISOString usaria UTC e viraria o dia às 21h no Brasil. */
+  const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const pad = (n, l = 2) => String(n).padStart(l, '0');
   const fmtDate = (s) => { const d = parseDate(s); return d ? `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}` : '—'; };
   const fmtTime = (s) => { const d = parseDate(s); return d ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : ''; };
@@ -169,7 +171,7 @@
 
   global.RV = Object.assign(global.RV || {}, {
     api, ApiError, TIPOS, COMPONENTES, COMPONENTE, DOADORES, STATUS_REQ, STATUS_BOLSA, PERFIS,
-    tipoLabel, compLabel, receptoresDe, parseDate, today, fmtDate, fmtTime, diasAte, desde, validade,
+    tipoLabel, compLabel, receptoresDe, parseDate, today, hojeISO, fmtDate, fmtTime, diasAte, desde, validade,
     codigoBolsa, num, pad, sessao, iniciais, saudacao, esc, store, authFetch
   });
 })(window);

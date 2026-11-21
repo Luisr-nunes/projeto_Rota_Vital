@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar doação · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .doador-topo { display: flex; align-items: center; gap: 14px; }
+    @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Registrar doação</h1>
+        <p class="page-sub">A coleta gera a bolsa no estoque como Disponível. O sistema confere a elegibilidade do doador e o prazo de validade do componente.</p>
+      </div>
+      <div class="page-actions"><a class="btn btn-secondary" href="estoque.html" data-ic="search">Ver estoque</a></div>
+    </div>
+    <div class="row stack-md">
+      <form class="card grow gap-12" id="form" novalidate aria-labelledby="t-form">
+        <div><h2 class="card-title" id="t-form">Dados da coleta</h2><p class="card-sub">O tipo sanguíneo vem do cadastro do doador.</p></div>
+        <div id="erro"></div>
+        <div class="form-grid">
+          <label class="field full"><span class="field-label">Doador</span><span class="input"><select name="doador" required></select></span></label>
+          <label class="field"><span class="field-label">Tipo sanguíneo</span><span class="input ro"><select name="tipo" required></select></span></label>
+          <label class="field"><span class="field-label">Hemocomponente</span><span class="input"><select name="componente" required></select></span></label>
+          <label class="field"><span class="field-label">Data da coleta</span><span class="input"><input type="date" name="coleta" required></span></label>
+          <label class="field"><span class="field-label">Validade</span><span class="input"><input type="date" name="validade" required></span>
+            <span class="field-help" id="ajudaValidade"></span></label>
+        </div>
+        <button type="submit" class="btn btn-primary lg" id="registrar">Registrar doação</button>
+      </form>
+      <div class="col col-380">
+        <section class="card gap-12" id="doadorCard" aria-live="polite"></section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (async function () {
+      const { ui, esc } = RV;
+      if (!ui.shell('hemocentro', 'Doações')) return;
+      document.querySelectorAll('.page-actions [data-ic]').forEach((el) => el.insertAdjacentHTML('afterbegin', ui.icon(el.dataset.ic, 18, '#1F2D2A', 2)));
+      const $ = (id) => document.getElementById(id);
+      const f = $('form');
+      const hoje = RV.hojeISO();
+      f.tipo.innerHTML = RV.TIPOS.map((t) => `<option value="${t}">${RV.tipoLabel(t)}</option>`).join('');
+      f.componente.innerHTML = RV.COMPONENTES.map((c) => `<option value="${c}">${esc(RV.compLabel(c))}</option>`).join('');
+      f.coleta.value = hoje; f.coleta.max = hoje;
+
+      const somaDias = (iso, n) => { const d = RV.parseDate(iso); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${RV.pad(d.getMonth() + 1)}-${RV.pad(d.getDate())}`; };
+      function validadePadrao() {
+        const comp = RV.COMPONENTE[f.componente.value];
+        if (!f.coleta.value || !comp) return;
+        f.validade.value = somaDias(f.coleta.value, comp.validade);
+        f.validade.max = f.validade.value;
+        $('ajudaValidade').textContent = `Prazo máximo de ${comp.validade} dias para ${comp.label.toLowerCase()} (${comp.faixa}).`;
+      }
+      f.componente.onchange = validadePadrao; f.coleta.onchange = validadePadrao; validadePadrao();
+
+      let doadores = [];
+      try { doadores = await RV.api('/api/doadores'); }
+      catch (e) { $('erro').innerHTML = ui.alertBox('error', 'Não foi possível carregar os doadores', ui.erroMsg(e)); return; }
+      f.doador.innerHTML = doadores.map((d) => `<option value="${d.id}">#${d.id} · ${esc(d.nome)}${d.ativo === false ? ' (inativo)' : ''}</option>`).join('');
+
+      async function mostrarDoador() {
+        const d = doadores.find((x) => x.id === Number(f.doador.value));
+        if (!d) { $('doadorCard').innerHTML = ui.empty('Nenhum doador', 'Cadastre doadores pela área do doador.'); return; }
+        if (d.tipoSanguineo) { f.tipo.value = d.tipoSanguineo; f.tipo.disabled = true; } else { f.tipo.disabled = false; }
+        $('doadorCard').innerHTML = ui.skeletonRows(4, 30);
+        let el;
+        try { el = await RV.api(`/api/doadores/${d.id}/elegibilidade`); }
+        catch (e) { $('doadorCard').innerHTML = ui.alertBox('error', 'Elegibilidade indisponível', ui.erroMsg(e)); return; }
+        $('doadorCard').innerHTML = `<h2 class="card-title">Doador selecionado</h2>
+          <div class="doador-topo">${ui.blood(d.tipoSanguineo, 52)}<div><b style="font-size:16px">${esc(d.nome)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${d.dataUltimaDoacao ? RV.fmtDate(d.dataUltimaDoacao) : 'nenhuma'}</p></div></div>
+          ${el.apto ? ui.alertBox('success', 'Apto para doar hoje', 'Intervalo, idade, peso e frequência anual dentro das regras.')
+                    : ui.alertBox('warn', RV.diasAte(el.proximaDataPossivel) > 0 ? `Não pode doar hoje · a partir de ${RV.fmtDate(el.proximaDataPossivel)}` : 'Não pode doar hoje', el.motivos.join('; ') + '.')}
+          <div class="muted-box"><b>Regras conferidas (RN-04)</b><p>16 a 69 anos, 50 kg ou mais, 60 dias (masculino) ou 90 dias (feminino) desde a última doação e no máximo 4 ou 3 doações em 12 meses.</p></div>`;
+        $('registrar').disabled = !el.apto;
+      }
+      f.doador.onchange = mostrarDoador;
+      mostrarDoador();
+
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        $('erro').innerHTML = '';
+        if (!f.coleta.value || !f.validade.value) { $('erro').innerHTML = ui.alertBox('error', 'Revise as datas', 'Informe a data da coleta e a validade.'); return; }
+        const b = $('registrar'); b.disabled = true; b.innerHTML = '<span class="spin"></span>Registrando…';
+        try {
+          const bolsa = await RV.api('/api/doacoes', { method: 'POST', body: {
+            doadorId: Number(f.doador.value), tipoSanguineo: f.tipo.value, hemocomponente: f.componente.value,
+            dataColeta: f.coleta.value, validade: f.validade.value } });
+          ui.toast('success', `Bolsa ${RV.codigoBolsa(bolsa)} no estoque`, `${RV.compLabel(bolsa.hemoComponente)} ${RV.tipoLabel(bolsa.tipoSanguineo)}, válida até ${RV.fmtDate(bolsa.dataValidade)}.`);
+          const d = doadores.find((x) => x.id === Number(f.doador.value)); if (d) d.dataUltimaDoacao = f.coleta.value;
+          b.innerHTML = 'Registrar doação';
+          await mostrarDoador();
+        } catch (err) {
+          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
+          $('erro').innerHTML = ui.alertBox('error', 'Doação não registrada', campos || ui.erroMsg(err));
+          b.innerHTML = 'Registrar doação'; b.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

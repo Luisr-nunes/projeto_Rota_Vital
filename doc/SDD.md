@@ -29,7 +29,7 @@ Regra de isolamento: o hospital e o doador são identificados **só pelo JWT** (
 | RF-01 | Entrar com e-mail e senha e receber um token de 8 h | Todos | `POST /api/auth/login` · `login.html` | — | `PerfisEFluxoEntregaIntegrationTest.loginInvalido` |
 | RF-02 | Autocadastro do doador com tipo sanguíneo, sexo, nascimento e peso | Público | `POST /api/auth/cadastro-doador` · `criar-conta.html` | RN-04 | `...doador`, `...doadorInvalido` |
 | RF-03 | Ver dados, elegibilidade (apto, motivos, próxima data) e histórico | DOADOR | `GET/PUT /api/doador/me` · `doador/painel.html` | RN-04 | `...doador`, `RegrasAplicadasNosServicosTest.Doacao` |
-| RF-04 | Registrar doação e gerar a bolsa | HEMOCENTRO | `POST /api/doacoes` · `operacao.html` | RN-03, RN-04 | `DoacaoControllerIntegrationTest`, `RegrasAplicadasNosServicosTest` |
+| RF-04 | Registrar doação e gerar a bolsa, vendo antes se o doador está apto | HEMOCENTRO | `POST /api/doacoes`, `GET /api/doadores/{id}/elegibilidade` · `hemocentro/doacao.html` | RN-03, RN-04 | `DoacaoControllerIntegrationTest`, `RegrasAplicadasNosServicosTest` |
 | RF-05 | Consultar estoque disponível por tipo/componente em ordem FEFO | HEMOCENTRO | `GET /api/estoques/bolsas` · `hemocentro/estoque.html` | RN-02, RN-03 | `EstoqueBolsasValidadeIntegrationTest` |
 | RF-06 | Solicitar bolsas (prioridade + itens); o hospital vem do token | HOSPITAL | `POST /api/hospital/requisicoes` · `hospital/painel.html` | RN-09 | `...fluxoCompleto` |
 | RF-07 | Listar e abrir só as próprias requisições | HOSPITAL | `GET /api/hospital/requisicoes[/{id}]` | isolamento | `...fluxoCompleto` (404 entre hospitais) |
@@ -74,6 +74,12 @@ controller ──► service ──► domain.regras (Java puro, sem Spring/JPA)
 - **`domain.regras`**: regras de negócio sem dependência de framework, reutilizáveis em outro serviço, num job ou num app. Os services só orquestram: buscam os dados, chamam a regra e gravam.
 - **`algoritmos`**: estruturas de dados da disciplina de AED (heap FEFO, índice por tipo, Dijkstra).
 - **`seguranca`**: configuração do Spring Security, emissão do token e leitura do usuário atual.
+
+## 4.1 Navegação
+
+- Um menu lateral por perfil. O hemocentro tem um só menu: Painel, Estoque, Doações, Requisições, Gestão, Indicadores, Rede e Contas; as telas de gestão não trocam o menu.
+- A rota prevista aparece desde o pedido ("Ver rota" no hospital, "Rota" na fila e "Ver rota prevista" na requisição); depois do despacho vira "Acompanhar".
+- Nenhum botão "em breve": tudo o que aparece no menu ou no cabeçalho leva a uma tela que funciona.
 
 ## 5. Máquina de estados da requisição (RN-09)
 
