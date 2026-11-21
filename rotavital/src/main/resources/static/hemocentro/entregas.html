@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entregas · Rota Vital</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -77,7 +79,7 @@
 
         // Em trânsito: progresso, previsão e temperatura de cada entrega
         if (!emRota.length) {
-          $('emRota').innerHTML = ui.empty('Nenhuma entrega em trânsito', 'Despache uma requisição com bolsas reservadas para acompanhar aqui.');
+          $('emRota').innerHTML = ui.empty('Nenhuma entrega em trânsito', 'Despache uma requisição com bolsas reservadas para acompanhar o trajeto aqui.', aguardando.length ? '' : '<a class="btn btn-secondary" href="requisicoes.html">Ver requisições pendentes</a>');
         } else {
           const rast = await Promise.all(emRota.map((r) => RV.api(`/api/v1/requisicoes/${r.id}/rastreamento`).catch(() => null)));
           $('emRota').innerHTML = `<div class="table entregas"><div class="tr thead"><span>Nº</span><span>Hospital</span><span>Trecho atual</span><span>Progresso</span><span>Temperatura</span><span></span></div>` +
@@ -99,10 +101,10 @@
 
         $('aguardando').innerHTML = aguardando.length
           ? aguardando.map((r) => linhaSimples(r, `<a class="btn btn-ghost sm" href="${rota(r.id)}">Rota</a><a class="btn btn-primary sm" href="requisicao.html?id=${r.id}">${ui.icon('truck', 16, '#fff', 2)}Despachar</a>`)).join('')
-          : ui.empty('Nada aguardando despacho', 'As requisições alocadas aparecem aqui.');
+          : ui.empty('Nada aguardando despacho', 'Aloque as bolsas de uma requisição pendente para despachá-la.', '<a class="btn btn-secondary" href="requisicoes.html?status=PENDENTE">Ver pendentes</a>');
         $('entregues').innerHTML = entregues.length
           ? entregues.slice(0, 8).map((r) => linhaSimples(r, `<a class="btn btn-secondary sm" href="${rota(r.id)}">Ver trajeto</a>`)).join('')
-          : ui.empty('Nenhuma entrega concluída', 'As entregas confirmadas aparecem aqui.');
+          : ui.empty('Nenhuma entrega concluída', 'Quando o hospital confirmar o recebimento, a entrega aparece aqui.');
         $('sub').textContent = `Bolsas em trânsito, aguardando despacho e entregues · atualizado às ${RV.fmtTime(new Date().toISOString())}`;
       }
 

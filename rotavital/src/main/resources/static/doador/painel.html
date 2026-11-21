@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Área do doador · Rota Vital</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -89,7 +91,7 @@
         $('historico').innerHTML = p.doacoes && p.doacoes.length
           ? `<div class="table doa"><div class="tr thead"><span>Data</span><span>Componente</span><span>Situação</span></div>` +
             p.doacoes.map((d) => `<div class="tr"><span>${RV.fmtDate(d.dataColeta)}</span><span>${esc(RV.compLabel(d.hemoComponente))}</span><span>${ui.badgeBolsa(d.status)}</span></div>`).join('') + '</div>'
-          : ui.empty('Nenhuma doação registrada', 'Depois da sua primeira coleta, ela aparece aqui.');
+          : ui.empty('Você ainda não tem doações registradas', 'Depois da sua primeira coleta no hemocentro, ela aparece aqui com a data e o hemocomponente.');
       }
 
       async function carregar() {
@@ -113,8 +115,7 @@
             dataNascimento: f.dataNascimento.value, pesoKg: peso, telefone: f.telefone.value.trim() || null } }));
           ui.toast('success', 'Dados salvos', 'Sua situação para doar foi recalculada.');
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erroDados').innerHTML = ui.alertBox('error', 'Não foi possível salvar', campos || ui.erroMsg(err));
+          $('erroDados').innerHTML = ui.alertBox('error', 'Não foi possível salvar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
       carregar();

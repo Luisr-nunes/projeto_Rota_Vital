@@ -616,6 +616,14 @@ a.req-row:hover { border-color: #C3D3CF; background: var(--surface-2); }
   .auth-grid { grid-template-columns: 1fr; }
 }
 
+/* Estado vazio dentro de um cartão: em linha (ícone à esquerda), para não ocupar a tela com "nada". */
+.card .empty { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 2px; align-items: center; padding: 8px 0; text-align: left; }
+.card .empty .ic-circle { grid-row: span 2; width: 44px; height: 44px; }
+.card .empty .ic-circle svg { width: 22px; height: 22px; }
+.card .empty h3 { font-size: 15px; align-self: end; }
+.card .empty p { max-width: none; align-self: start; }
+.card .empty > :nth-child(n+4) { grid-column: 2; justify-self: start; margin-top: 8px; }
+
 html { scroll-behavior: smooth; }
 #sobre, #contato { scroll-margin-top: 88px; }
 
