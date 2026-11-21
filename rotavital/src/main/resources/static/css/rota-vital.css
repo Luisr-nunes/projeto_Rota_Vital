@@ -607,7 +607,8 @@ a.req-row:hover { border-color: #C3D3CF; background: #EFF3F2; }
   .page-head { align-items: flex-start; }
   .card { padding: 16px; border-radius: 16px; }
   .row { flex-direction: column; align-items: stretch; }
-  .row > *, .col-380, .col-400, .col-420 { width: 100%; }
+  .row > *, .col-380, .col-420 { width: 100%; }
+  .col-400 { width: 100% !important; } /* gestor/painel.html fixa 400 px inline */
   .seg { max-width: 100%; overflow-x: auto; }
   .seg button { flex: none; }
   .kpi { padding: 14px; }
