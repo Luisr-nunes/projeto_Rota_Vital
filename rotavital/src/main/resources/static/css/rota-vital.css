@@ -599,5 +599,11 @@ a.req-row:hover { border-color: #C3D3CF; background: #EFF3F2; }
   .auth-grid { grid-template-columns: 1fr; }
 }
 
+/* Estado vazio dentro de um cartão: compacto, para não ocupar a tela com "nada". */
+.card .empty { gap: 8px; padding: 20px 16px; }
+.card .empty .ic-circle { width: 44px; height: 44px; }
+.card .empty .ic-circle svg { width: 22px; height: 22px; }
+.card .empty h3 { font-size: 16px; }
+
 html { scroll-behavior: smooth; }
 #sobre, #contato { scroll-margin-top: 88px; }
