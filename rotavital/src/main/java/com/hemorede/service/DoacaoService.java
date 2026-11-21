@@ -13,6 +13,7 @@ import com.hemorede.exception.DoacaoForaDoIntervaloException;
 import com.hemorede.exception.DoadorInaptoException;
 import com.hemorede.exception.DoadorInativoException;
 import com.hemorede.exception.IncompatibilidadeSanguineaException;
+import com.hemorede.exception.TransicaoStatusInvalidaException;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.DoadorRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -124,6 +125,29 @@ public class DoacaoService {
             }
         }
         return new RegraElegibilidadeDoador.Resultado(motivos.isEmpty(), List.copyOf(motivos), proxima);
+    }
+
+    /**
+     * Correção do tipo sanguíneo pelo HEMOCENTRO. As bolsas DISPONIVEL do doador recebem o tipo
+     * corrigido (o tipo delas veio do cadastro). Recusa (409) se houver bolsa dele RESERVADA ou
+     * EM_TRANSITO, para não mudar uma alocação ou entrega em andamento. Bolsas UTILIZADA e
+     * DESCARTADA ficam como estão (histórico).
+     */
+    @Transactional
+    public Doador corrigirTipoSanguineo(Long doadorId, TipoSanguineo novoTipo) {
+        Doador doador = buscarDoador(doadorId);
+        List<Bolsa> bolsas = bolsaRepository.findByDoadorIdOrderByDataColetaDesc(doadorId);
+        boolean emUso = bolsas.stream().anyMatch(b ->
+                b.getStatus() == StatusBolsa.RESERVADA || b.getStatus() == StatusBolsa.EM_TRANSITO);
+        if (emUso) {
+            throw new TransicaoStatusInvalidaException("O doador " + doadorId
+                    + " tem bolsa reservada ou em trânsito; conclua ou cancele a requisição antes de corrigir o tipo.");
+        }
+        doador.setTipoSanguineo(novoTipo);
+        List<Bolsa> disponiveis = bolsas.stream().filter(b -> b.getStatus() == StatusBolsa.DISPONIVEL).toList();
+        disponiveis.forEach(b -> b.setTipoSanguineo(novoTipo));
+        bolsaRepository.saveAll(disponiveis);
+        return doadorRepository.save(doador);
     }
 
     /** Elegibilidade de um doador hoje, pelo id (tela de doação do hemocentro). */

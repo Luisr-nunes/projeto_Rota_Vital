@@ -220,6 +220,41 @@ class RegrasAplicadasNosServicosTest {
         }
 
         @Test
+        @DisplayName("Hemocentro corrige o tipo: bolsas disponíveis acompanham, histórico fica como está")
+        void corrigirTipoSanguineo() {
+            Doador d = doador(Sexo.MASCULINO, null);
+            Bolsa disponivel = Bolsa.builder().id(10L).tipoSanguineo(TipoSanguineo.O_POS).status(StatusBolsa.DISPONIVEL).build();
+            Bolsa usada = Bolsa.builder().id(11L).tipoSanguineo(TipoSanguineo.O_POS).status(StatusBolsa.UTILIZADA).build();
+            DoadorRepository doadores = mock(DoadorRepository.class);
+            BolsaRepository bolsas = mock(BolsaRepository.class);
+            when(doadores.findById(1L)).thenReturn(Optional.of(d));
+            when(doadores.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(bolsas.findByDoadorIdOrderByDataColetaDesc(1L)).thenReturn(List.of(disponivel, usada));
+
+            Doador corrigido = new DoacaoService(doadores, bolsas).corrigirTipoSanguineo(1L, TipoSanguineo.A_NEG);
+
+            assertEquals(TipoSanguineo.A_NEG, corrigido.getTipoSanguineo());
+            assertEquals(TipoSanguineo.A_NEG, disponivel.getTipoSanguineo());
+            assertEquals(TipoSanguineo.O_POS, usada.getTipoSanguineo());
+        }
+
+        @Test
+        @DisplayName("Correção recusada (409) com bolsa do doador reservada ou em trânsito")
+        void corrigirTipoComBolsaEmUso() {
+            Doador d = doador(Sexo.MASCULINO, null);
+            DoadorRepository doadores = mock(DoadorRepository.class);
+            BolsaRepository bolsas = mock(BolsaRepository.class);
+            when(doadores.findById(1L)).thenReturn(Optional.of(d));
+            when(bolsas.findByDoadorIdOrderByDataColetaDesc(1L)).thenReturn(List.of(
+                    Bolsa.builder().id(12L).tipoSanguineo(TipoSanguineo.O_POS).status(StatusBolsa.EM_TRANSITO).build()));
+
+            assertThrows(TransicaoStatusInvalidaException.class,
+                    () -> new DoacaoService(doadores, bolsas).corrigirTipoSanguineo(1L, TipoSanguineo.A_NEG));
+            assertEquals(TipoSanguineo.O_POS, d.getTipoSanguineo());
+            verify(doadores, never()).save(any());
+        }
+
+        @Test
         @DisplayName("Elegibilidade informa a próxima data possível")
         void elegibilidadeComProximaData() {
             Doador d = doador(Sexo.FEMININO, HOJE.minusDays(30));
