@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do hospital · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    .reqs { --cols: 70px 110px minmax(160px, 1fr) 90px 120px 220px; }
+    .item-linha { display: grid; grid-template-columns: 1fr 1fr 110px 40px; gap: 10px; align-items: end; }
+    .item-linha + .item-linha { margin-top: 10px; }
+    .acoes-linha { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    @media (max-width: 720px) { .item-linha { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title" id="ola">Olá</h1>
+        <p class="page-sub" id="sub">Solicite bolsas ao hemocentro e acompanhe as entregas.</p>
+      </div>
+      <div class="page-actions"><a class="btn btn-primary" href="#solicitar">Nova solicitação</a></div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+
+    <div class="row stack-md">
+      <section class="card grow gap-12" aria-labelledby="t-lista">
+        <div class="card-head">
+          <div><h2 class="card-title" id="t-lista">Minhas requisições</h2><p class="card-sub">Mais recentes primeiro · atualiza a cada 30 s</p></div>
+          <button type="button" class="btn btn-ghost sm" id="recarregar">Atualizar</button>
+        </div>
+        <div id="lista"></div>
+      </section>
+
+      <div class="col col-420">
+        <form class="card gap-12" id="solicitar" novalidate aria-labelledby="t-sol">
+          <div><h2 class="card-title" id="t-sol">Solicitar bolsas</h2><p class="card-sub">Informe o que o hospital precisa agora. O hemocentro aloca por compatibilidade ABO/Rh e validade (FEFO).</p></div>
+          <div id="erroSol"></div>
+          <label class="field"><span class="field-label">Prioridade</span>
+            <span class="input"><select name="prioridade" required><option value="NORMAL">Normal</option><option value="URGENTE">Urgente</option></select></span></label>
+          <div id="itens"></div>
+          <button type="button" class="btn btn-secondary sm" id="addItem">Adicionar item</button>
+          <button type="submit" class="btn btn-primary lg block" id="enviar">Enviar solicitação</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (function () {
+      const { ui, esc } = RV;
+      const s = ui.shell('hospital', 'Painel');
+      if (!s) return;
+      const $ = (id) => document.getElementById(id);
+      $('ola').textContent = `${RV.saudacao()}, equipe do ${s.unidade || 'hospital'}`;
+      $('sub').textContent = `${s.unidade || 'Hospital'} · solicite bolsas ao hemocentro e acompanhe as entregas.`;
+
+      // ---------- Formulário de solicitação
+      const opcoes = (lista, rot) => lista.map((v) => `<option value="${v}">${esc(rot(v))}</option>`).join('');
+      function novaLinha() {
+        const div = document.createElement('div');
+        div.className = 'item-linha';
+        div.innerHTML = `
+          <label class="field"><span class="field-label">Componente</span><span class="input"><select data-c>${opcoes(RV.COMPONENTES, RV.compLabel)}</select></span></label>
+          <label class="field"><span class="field-label">Tipo do paciente</span><span class="input"><select data-t>${opcoes(RV.TIPOS, RV.tipoLabel)}</select></span></label>
+          <label class="field"><span class="field-label">Quantidade</span><span class="input"><input data-q type="number" min="1" max="50" value="1" inputmode="numeric"></span></label>
+          <button type="button" class="btn btn-ghost sm" aria-label="Remover item" data-rm>${ui.icon('x', 16, '#5B6B68', 2)}</button>`;
+        div.querySelector('[data-rm]').onclick = () => { if ($('itens').children.length > 1) div.remove(); };
+        $('itens').appendChild(div);
+      }
+      novaLinha();
+      $('addItem').onclick = novaLinha;
+
+      $('solicitar').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const itens = [...$('itens').children].map((l) => ({
+          hemoComponente: l.querySelector('[data-c]').value,
+          tipoSanguineo: l.querySelector('[data-t]').value,
+          quantidade: Number(l.querySelector('[data-q]').value)
+        }));
+        if (itens.some((i) => !(Number.isInteger(i.quantidade) && i.quantidade > 0))) {
+          $('erroSol').innerHTML = ui.alertBox('error', 'Quantidade inválida', 'Cada item precisa de pelo menos 1 bolsa.');
+          return;
+        }
+        $('erroSol').innerHTML = '';
+        const b = $('enviar'); b.disabled = true;
+        try {
+          const r = await RV.api('/api/hospital/requisicoes', { method: 'POST', body: { prioridade: e.target.prioridade.value, itens } });
+          ui.toast('success', `Requisição #${r.id} enviada`, 'O hemocentro já pode alocar as bolsas. Acompanhe o status na lista.');
+          $('itens').innerHTML = ''; novaLinha(); e.target.prioridade.value = 'NORMAL';
+          carregar();
+        } catch (err) {
+          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
+          $('erroSol').innerHTML = ui.alertBox('error', 'Não foi possível enviar', campos || ui.erroMsg(err));
+        } finally { b.disabled = false; }
+      });
+
+      // ---------- Lista e indicadores
+      const itensTexto = (r) => (r.itens || []).map((i) => `${i.quantidade}× ${RV.compLabel(i.hemoComponente)} ${RV.tipoLabel(i.tipoSanguineo)}`).join(' + ');
+      async function carregar() {
+        let lista;
+        try { lista = await RV.api('/api/hospital/requisicoes'); }
+        catch (e) { $('lista').innerHTML = ui.alertBox('error', 'Não foi possível carregar', ui.erroMsg(e)); return; }
+        const conta = (st) => lista.filter((r) => st.includes(r.status)).length;
+        $('kpis').innerHTML =
+          ui.kpi('Aguardando hemocentro', conta(['PENDENTE']), 'clock', '#E0A100', '#FFF6DB') +
+          ui.kpi('Reservadas', conta(['ALOCADA', 'APROVADA']), 'bag', '#00A3C4', '#E3F6FA') +
+          ui.kpi('Em trânsito', conta(['EM_ROTA']), 'truck', '#E53935', '#FDECEC') +
+          ui.kpi('Entregues', conta(['ENTREGUE']), 'check', '#34C759', '#E6F8EB');
+        if (!lista.length) { $('lista').innerHTML = ui.empty('Nenhuma requisição ainda', 'Use o formulário ao lado para pedir bolsas ao hemocentro.'); return; }
+        $('lista').innerHTML = `<div class="table reqs"><div class="tr thead"><span>Nº</span><span>Data</span><span>Itens</span><span>Prioridade</span><span>Status</span><span></span></div>` +
+          lista.map((r) => {
+            const acompanhar = ['ALOCADA', 'APROVADA', 'EM_ROTA', 'ENTREGUE'].includes(r.status);
+            return `<div class="tr"><span class="td-strong">#${r.id}</span><span>${RV.fmtDate(r.dataSolicitacao)} ${RV.fmtTime(r.dataSolicitacao)}</span>
+              <span>${esc(itensTexto(r))}</span><span>${ui.prioridade(r.prioridade)}</span><span>${ui.badgeReq(r.status)}</span>
+              <span class="acoes-linha">${acompanhar ? `<a class="btn btn-secondary sm" href="../rastreamento.html?id=${r.id}">${ui.icon('route', 16, '#1F2D2A', 2)}Acompanhar</a>` : ''}
+              ${r.status === 'EM_ROTA' ? `<button type="button" class="btn btn-primary sm" data-receber="${r.id}">Confirmar recebimento</button>` : ''}</span></div>`;
+          }).join('') + '</div>';
+        document.querySelectorAll('[data-receber]').forEach((b) => b.onclick = async () => {
+          b.disabled = true;
+          try {
+            await RV.api(`/api/hospital/requisicoes/${b.dataset.receber}/recebimento`, { method: 'PATCH' });
+            ui.toast('success', 'Recebimento confirmado', 'As bolsas foram registradas como recebidas.');
+            carregar();
+          } catch (e) { b.disabled = false; ui.toast('error', 'Não foi possível confirmar', ui.erroMsg(e)); }
+        });
+      }
+      $('kpis').innerHTML = ui.skeletonRows(1, 90);
+      $('lista').innerHTML = ui.skeletonRows(4, 48);
+      $('recarregar').onclick = carregar;
+      carregar();
+      setInterval(() => { if (!document.hidden) carregar(); }, 30000);
+    })();
+  </script>
+</body>
+</html>
