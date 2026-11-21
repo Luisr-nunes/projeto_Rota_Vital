@@ -2,6 +2,8 @@ package com.hemorede.controller;
 
 import com.hemorede.domain.model.Requisicao;
 import com.hemorede.dto.RequisicaoRequest;
+import com.hemorede.dto.RastreamentoResponse;
+import com.hemorede.service.RastreamentoService;
 import com.hemorede.service.RequisicaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,11 @@ import java.util.List;
 public class RequisicaoController {
 
     private final RequisicaoService requisicaoService;
+    private final RastreamentoService rastreamentoService;
 
-    public RequisicaoController(RequisicaoService requisicaoService) {
+    public RequisicaoController(RequisicaoService requisicaoService, RastreamentoService rastreamentoService) {
         this.requisicaoService = requisicaoService;
+        this.rastreamentoService = rastreamentoService;
     }
 
     @GetMapping
@@ -51,6 +55,18 @@ public class RequisicaoController {
      * ENTREGUE e suas bolsas a UTILIZADA. 409 se a requisição não estiver
      * alocada; 404 se não existir.
      */
+    /** Despacho: requisição alocada sai para entrega (EM_ROTA) com veículo compatível. */
+    @PostMapping("/{id}/despacho")
+    public RastreamentoResponse despachar(@PathVariable Long id) {
+        return rastreamentoService.despachar(id);
+    }
+
+    /** Acompanhamento da entrega: trajeto, posição estimada, previsão e temperatura. */
+    @GetMapping("/{id}/rastreamento")
+    public RastreamentoResponse rastrear(@PathVariable Long id) {
+        return rastreamentoService.rastrear(id);
+    }
+
     @PatchMapping("/{id}/entrega")
     public ResponseEntity<Requisicao> confirmarEntrega(@PathVariable Long id) {
         return ResponseEntity.ok(requisicaoService.confirmarEntrega(id));
