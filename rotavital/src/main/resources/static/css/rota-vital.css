@@ -317,6 +317,7 @@ svg { flex-shrink: 0; display: block; }
   transition: background .15s;
 }
 .nav-item:hover { background: rgba(255, 255, 255, .45); }
+.nav-item span { text-align: center; line-height: 1.2; } /* rótulos de duas palavras quebram centralizados */
 .nav-item.active { background: rgba(255, 255, 255, .92); box-shadow: 0 6px 16px rgba(15, 31, 28, .14); color: var(--ink); font-weight: 600; }
 
 .content {
