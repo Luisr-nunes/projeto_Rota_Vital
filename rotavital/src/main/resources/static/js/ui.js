@@ -118,7 +118,7 @@
   /* Um menu por perfil. As telas de gestão (gestor/*) usam o mesmo menu do hemocentro,
      para a navegação não mudar ao entrar nos indicadores. */
   const ITENS_HEMOCENTRO = [['Painel', 'home', 'hemocentro/painel.html'], ['Estoque', 'chart', 'hemocentro/estoque.html'],
-    ['Doações', 'drop', 'hemocentro/doacao.html'], ['Requisições', 'inbox', 'hemocentro/requisicoes.html'],
+    ['Doações', 'drop', 'hemocentro/doacao.html'], ['Requisições', 'inbox', 'hemocentro/requisicoes.html'], ['Entregas', 'truck', 'hemocentro/entregas.html'],
     ['Gestão', 'risk', 'gestor/painel.html'], ['Indicadores', 'thermo', 'gestor/indicadores.html'], ['Rede', 'net', 'gestor/rede.html'],
     ['Contas', 'building', 'hemocentro/usuarios.html']];
   const MENUS = {

@@ -62,12 +62,12 @@
       if (!s) { location.replace(ui.url('login.html')); return; }
       const hospital = s.perfil === 'HOSPITAL';
       if (!hospital && s.perfil !== 'HEMOCENTRO') { location.replace(ui.url(RV.PERFIS[s.perfil].home)); return; }
-      if (!ui.shell(hospital ? 'hospital' : 'hemocentro', hospital ? 'Painel' : 'Requisições')) return;
+      if (!ui.shell(hospital ? 'hospital' : 'hemocentro', hospital ? 'Painel' : 'Entregas')) return;
 
       const $ = (id) => document.getElementById(id);
       const id = Number(new URLSearchParams(location.search).get('id'));
       const endpoint = hospital ? `/api/hospital/requisicoes/${id}/rastreamento` : `/api/v1/requisicoes/${id}/rastreamento`;
-      $('voltar').href = ui.url(hospital ? 'hospital/painel.html' : `hemocentro/requisicao.html?id=${id}`);
+      $('voltar').href = ui.url(hospital ? 'hospital/painel.html' : 'hemocentro/entregas.html');
       $('voltar').insertAdjacentHTML('afterbegin', ui.icon('arrowL', 14, '#2F5E55', 2));
       $('resumo').innerHTML = ui.skeletonRows(5, 32);
 
