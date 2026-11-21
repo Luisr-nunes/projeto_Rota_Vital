@@ -259,7 +259,7 @@
 <main>
     <!-- Aviso obrigatório de dados sintéticos (HU07) -->
     <aside class="aviso-sintetico" role="status">
-        <span class="icone-alerta">ℹ️</span>
+        <span class="icone-alerta">ℹ</span>
         <div>
             <strong>Aviso de dados sintéticos:</strong>
             Os indicadores exibidos neste painel são baseados em <strong>dados sintéticos</strong> gerados para testes e homologação do sistema Rota Vital.
@@ -278,7 +278,7 @@
 
     <!-- Container do estado vazio (Cenário 2 da HU07) -->
     <div id="estado-vazio" class="painel-vazio" style="display: none;">
-        <div class="icone-vazio">📭</div>
+        <div class="icone-vazio"></div>
         <h3>Nenhum registro encontrado</h3>
         <p>O banco de dados não possui registros cadastrados no momento. Não há bolsas disponíveis nem requisições para computar os indicadores. O painel encontra-se em <strong>estado inicial vazio</strong> (Cenário 2 da HU07), sem exibição de números inventados.</p>
     </div>
@@ -362,6 +362,7 @@
     <p class="metodologia" id="atualizado-em"></p>
 </main>
 
+<script src="js/core.js"></script>
 <script>
     const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
@@ -375,7 +376,7 @@
         erro.style.display = 'none';
 
         try {
-            const resposta = await fetch(`/api/indicadores?diasProximoVencimento=${janela}`);
+            const resposta = await RV.authFetch(`/api/indicadores?diasProximoVencimento=${janela}`);
             if (!resposta.ok) throw new Error(`A API respondeu com status ${resposta.status}`);
             const dados = await resposta.json();
 
@@ -463,7 +464,7 @@
     }
 
     async function lerJson(url) {
-        const r = await fetch(url);
+        const r = await RV.authFetch(url);
         const corpo = await r.json().catch(() => null);
         if (!r.ok) {
             const e = new Error((corpo && corpo.mensagem) || `A API respondeu com status ${r.status}`);

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contas de acesso · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>.contas { --cols: minmax(140px, 1fr) minmax(180px, 1.2fr) 120px minmax(140px, 1fr); }</style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title">Contas de acesso</h1>
+        <p class="page-sub">Crie o acesso dos hospitais e da equipe do hemocentro. Doadores criam a própria conta.</p>
+      </div>
+    </div>
+    <div class="row stack-md">
+      <section class="card grow gap-12" aria-labelledby="t-contas">
+        <h2 class="card-title" id="t-contas">Contas cadastradas</h2>
+        <div id="lista"></div>
+      </section>
+      <div class="col col-380">
+        <form class="card gap-12" id="form" novalidate aria-labelledby="t-nova">
+          <h2 class="card-title" id="t-nova">Nova conta</h2>
+          <div id="erro"></div>
+          <label class="field"><span class="field-label">Perfil</span><span class="input"><select name="perfil"><option value="HOSPITAL">Hospital</option><option value="HEMOCENTRO">Hemocentro</option></select></span></label>
+          <label class="field" id="campoHospital"><span class="field-label">Hospital</span><span class="input"><select name="hospitalId"></select></span></label>
+          <label class="field"><span class="field-label">Nome do responsável</span><span class="input"><input name="nome" maxlength="120" required></span></label>
+          <label class="field"><span class="field-label">E-mail</span><span class="input"><input type="email" name="email" autocomplete="off" required></span></label>
+          <label class="field"><span class="field-label">Senha inicial</span><span class="input"><input type="password" name="senha" autocomplete="new-password" minlength="8" maxlength="72" required></span>
+            <span class="field-help">Mínimo de 8 caracteres. Repasse por um canal seguro.</span></label>
+          <button type="submit" class="btn btn-primary block" id="criar">Criar conta</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (async function () {
+      const { ui, esc } = RV;
+      if (!ui.shell('hemocentro', 'Contas')) return;
+      const $ = (id) => document.getElementById(id);
+      const f = $('form');
+      let hospitais = [];
+      try { hospitais = await RV.api('/api/hospitais'); } catch (e) { /* lista vazia */ }
+      f.hospitalId.innerHTML = hospitais.map((h) => `<option value="${h.id}">${esc(h.nome)}</option>`).join('');
+      const nomeHospital = (id) => (hospitais.find((h) => h.id === id) || {}).nome || '—';
+      f.perfil.onchange = () => { $('campoHospital').hidden = f.perfil.value !== 'HOSPITAL'; };
+
+      async function carregar() {
+        $('lista').innerHTML = ui.skeletonRows(4, 44);
+        try {
+          const contas = await RV.api('/api/usuarios');
+          const rot = { HEMOCENTRO: 'Hemocentro', HOSPITAL: 'Hospital', DOADOR: 'Doador' };
+          $('lista').innerHTML = `<div class="table contas"><div class="tr thead"><span>Nome</span><span>E-mail</span><span>Perfil</span><span>Vínculo</span></div>` +
+            contas.map((c) => `<div class="tr"><span class="td-strong">${esc(c.nome)}</span><span>${esc(c.email)}</span><span>${ui.badge(rot[c.perfil] || c.perfil, 'b-info')}</span>
+              <span>${c.hospitalId ? esc(nomeHospital(c.hospitalId)) : c.doadorId ? 'Doador #' + c.doadorId : '—'}</span></div>`).join('') + '</div>';
+        } catch (e) { $('lista').innerHTML = ui.alertBox('error', 'Não foi possível carregar', ui.erroMsg(e)); }
+      }
+
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const b = $('criar'); b.disabled = true; $('erro').innerHTML = '';
+        try {
+          await RV.api('/api/usuarios', { method: 'POST', body: {
+            nome: f.nome.value.trim(), email: f.email.value.trim().toLowerCase(), senha: f.senha.value,
+            perfil: f.perfil.value, hospitalId: f.perfil.value === 'HOSPITAL' ? Number(f.hospitalId.value) : null } });
+          ui.toast('success', 'Conta criada', `${f.email.value.trim()} já pode entrar no sistema.`);
+          f.nome.value = ''; f.email.value = ''; f.senha.value = '';
+          carregar();
+        } catch (err) {
+          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
+          $('erro').innerHTML = ui.alertBox('error', 'Não foi possível criar', campos || ui.erroMsg(err));
+        } finally { b.disabled = false; }
+      });
+      carregar();
+    })();
+  </script>
+</body>
+</html>
