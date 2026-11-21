@@ -83,7 +83,7 @@
           const n = base().filter(f).length;
           return `<button type="button" role="tab" aria-selected="${st.aba === k}" class="${st.aba === k ? 'active' : ''}" data-aba="${k}">${l}${k === 'TODAS' ? '' : ' · ' + n}</button>`;
         }).join('');
-        $('prio').innerHTML = '<span class="sub" style="font-size:13px;font-weight:500">Prioridade:</span>' +
+        $('prio').innerHTML = '<span class="sub fs-sm fw-500">Prioridade:</span>' +
           [['', 'Todas'], ['URGENTE', 'Urgente'], ['NORMAL', 'Normal']].map(([k, l]) => `<button type="button" class="chip${st.prio === k ? ' active' : ''}" data-prio="${k}" aria-pressed="${st.prio === k}">${l}</button>`).join('');
 
         const vs = visiveis();
@@ -124,7 +124,7 @@
         const b = e.target.closest('[data-entrega]'); if (!b) return;
         const r = reqs.find((x) => x.id === Number(b.dataset.entrega)); if (!r) return;
         const n = hemo.totalBolsas(r);
-        const m = ui.overlay(`<span class="status-circle">${ui.icon('truck', 30, '#fff', 2.4)}</span>
+        const m = ui.overlay(`<span class="status-circle">${ui.icon('truck', 30, '#fff', 2)}</span>
           <h2>Confirmar entrega da requisição #${r.id}?</h2>
           <p>${esc(hemo.hospitalNome(r))} recebeu ${n} ${n === 1 ? 'bolsa' : 'bolsas'} (${esc(hemo.itensTexto(r))}). A requisição passa a <b>Entregue</b> e as bolsas a <b>Utilizada</b>; não é possível desfazer.</p>
           <div class="modal-actions"><button type="button" class="btn btn-secondary" data-close>Cancelar</button>

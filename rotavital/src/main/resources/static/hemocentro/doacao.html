@@ -84,7 +84,7 @@
         try { el = await RV.api(`/api/doadores/${d.id}/elegibilidade`); }
         catch (e) { $('doadorCard').innerHTML = ui.alertBox('error', 'Elegibilidade indisponível', ui.erroMsg(e)); return; }
         $('doadorCard').innerHTML = `<h2 class="card-title">Doador selecionado</h2>
-          <div class="doador-topo">${ui.blood(d.tipoSanguineo, 52)}<div><b style="font-size:16px">${esc(d.nome)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${d.dataUltimaDoacao ? RV.fmtDate(d.dataUltimaDoacao) : 'nenhuma'}</p></div></div>
+          <div class="doador-topo">${ui.blood(d.tipoSanguineo, 52)}<div><b class="fs-lg">${esc(d.nome)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${d.dataUltimaDoacao ? RV.fmtDate(d.dataUltimaDoacao) : 'nenhuma'}</p></div></div>
           ${el.apto ? ui.alertBox('success', 'Apto para doar hoje', 'Intervalo, idade, peso e frequência anual dentro das regras.')
                     : ui.alertBox('warn', RV.diasAte(el.proximaDataPossivel) > 0 ? `Não pode doar hoje · a partir de ${RV.fmtDate(el.proximaDataPossivel)}` : 'Não pode doar hoje', el.motivos.join('; ') + '.')}
           <button type="button" class="btn btn-secondary sm" id="corrigirTipo">Corrigir tipo sanguíneo</button>

@@ -62,7 +62,7 @@
       const { ui, esc } = RV;
       if (!ui.shell('gestor', 'Indicadores')) return;
       document.getElementById('exportar').insertAdjacentHTML('afterbegin', ui.icon('download', 18, '#1F2D2A', 2));
-      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2.2);
+      document.querySelector('[data-info]').outerHTML = ui.icon('info', 20, '#00A3C4', 2);
 
       const $ = (id) => document.getElementById(id);
       const DIAS_DESCARTE = 7;
