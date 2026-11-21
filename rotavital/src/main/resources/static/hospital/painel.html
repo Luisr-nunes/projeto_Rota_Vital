@@ -97,8 +97,7 @@
           $('itens').innerHTML = ''; novaLinha(); e.target.prioridade.value = 'NORMAL';
           carregar();
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erroSol').innerHTML = ui.alertBox('error', 'Não foi possível enviar', campos || ui.erroMsg(err));
+          $('erroSol').innerHTML = ui.alertBox('error', 'Não foi possível enviar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
 
