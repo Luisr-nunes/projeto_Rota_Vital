@@ -31,11 +31,9 @@
     return !!invalid;
   };
 
-  /* Leva o usuário para a home do perfil. Perfis cujas jornadas ainda não
-     foram implementadas caem no painel do hemocentro, com um aviso. */
+  /* Leva o usuário para a home do perfil retornado pelo backend. */
   global.irParaHome = function (perfil) {
-    const p = global.RV.PERFIS[perfil] || global.RV.PERFIS.HEMOCENTRO;
-    if (!p.home) global.RV.store.set('rv.aviso', `A jornada "${p.label}" ainda está em construção. Você foi levado ao painel do hemocentro.`);
-    location.href = ui.url(p.home || 'hemocentro/painel.html');
+    const p = global.RV.PERFIS[perfil];
+    location.href = ui.url(p ? p.home : 'login.html');
   };
 })(window);
