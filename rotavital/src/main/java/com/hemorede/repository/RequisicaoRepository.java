@@ -10,4 +10,7 @@ import java.util.List;
 public interface RequisicaoRepository extends JpaRepository<Requisicao, Long> {
     List<Requisicao> findByStatusOrderByPrioridadeAscDataSolicitacaoAsc(StatusRequisicao status);
     List<Requisicao> findByPrioridadeAndStatus(Prioridade prioridade, StatusRequisicao status);
+
+    // Perfil HOSPITAL: só as requisições do hospital do token.
+    List<Requisicao> findByHospitalSolicitanteIdOrderByDataSolicitacaoDesc(Long hospitalId);
 }

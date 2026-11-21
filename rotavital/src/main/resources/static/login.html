@@ -60,6 +60,14 @@
     const form = document.getElementById('form');
     const erro = document.getElementById('erro');
 
+    // Já conectado: vai direto para a home do perfil.
+    const atual = RV.sessao.atual();
+    if (atual) irParaHome(atual.perfil);
+    if (new URLSearchParams(location.search).get('expirou')) {
+      erro.innerHTML = ui.alertBox('info', 'Sessão encerrada', 'Sua sessão expirou ou você saiu. Entre de novo para continuar.');
+      erro.hidden = false;
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = form.email.value.trim().toLowerCase();
@@ -69,19 +77,21 @@
       markInvalid(form.senha, !senha) && bad.push('senha');
       if (bad.length) { showErro('Preencha o ' + bad.join(' e a ') + ' para continuar.'); return; }
 
-      const conta = RV.sessao.contas()[email];
-      if (conta && conta.senhaHash !== await RV.hashSenha(email, senha)) { markInvalid(form.senha, true); showErro('E-mail ou senha incorretos.'); return; }
-      const perfil = conta ? conta.perfil : 'HEMOCENTRO';
-      const nome = conta ? conta.nome : nomeDoEmail(email);
-      RV.sessao.entrar({ email, nome, perfil, unidade: conta && conta.instituicao }, form.lembrar.checked);
-      irParaHome(perfil);
+      const botao = document.getElementById('entrar');
+      botao.disabled = true;
+      try {
+        const sessao = await RV.api('/api/auth/login', { method: 'POST', body: { email, senha } });
+        RV.sessao.entrar(sessao, form.lembrar.checked);
+        irParaHome(sessao.perfil);
+      } catch (err) {
+        if (err.status === 401) { markInvalid(form.senha, true); showErro('E-mail ou senha incorretos.'); }
+        else showErro(ui.erroMsg(err));
+      } finally {
+        botao.disabled = false;
+      }
     });
 
     function showErro(msg) { erro.innerHTML = ui.alertBox('error', 'Não foi possível entrar', msg); erro.hidden = false; }
-    function nomeDoEmail(email) {
-      const base = email.split('@')[0].replace(/[._-]+/g, ' ');
-      return base.replace(/\b\w/g, (c) => c.toUpperCase());
-    }
   </script>
 </body>
 </html>

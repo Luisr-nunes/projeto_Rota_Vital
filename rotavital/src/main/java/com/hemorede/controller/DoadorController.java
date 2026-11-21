@@ -2,7 +2,9 @@ package com.hemorede.controller;
 
 import com.hemorede.domain.model.Doador;
 import com.hemorede.service.DoacaoService;
+import com.hemorede.domain.regras.RegraElegibilidadeDoador;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,5 +26,11 @@ public class DoadorController {
     @GetMapping
     public List<Doador> listar() {
         return doacaoService.listarDoadores();
+    }
+
+    /** Situação do doador para doar hoje (RN-04): apto, motivos e próxima data possível. */
+    @GetMapping("/{id}/elegibilidade")
+    public RegraElegibilidadeDoador.Resultado elegibilidade(@PathVariable Long id) {
+        return doacaoService.elegibilidade(id);
     }
 }

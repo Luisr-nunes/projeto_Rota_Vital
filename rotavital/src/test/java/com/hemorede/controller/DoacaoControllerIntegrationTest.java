@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Doador;
@@ -25,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class DoacaoControllerIntegrationTest {
 
     @Autowired

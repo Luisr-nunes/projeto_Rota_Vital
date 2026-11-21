@@ -17,6 +17,13 @@
 </p>
 
 <p align="center">
+  <b>Acesse o sistema online:</b> <a href="https://rota-vital-jnmx.onrender.com"><b>rota-vital-jnmx.onrender.com</b></a>
+  · <a href="https://rota-vital-jnmx.onrender.com/login.html">Entrar</a>
+  · <a href="https://rota-vital-jnmx.onrender.com/actuator/health">Status</a>
+  <br><sub>Hospedado no plano gratuito do Render: o primeiro acesso depois de um tempo parado pode levar cerca de 1 minuto para acordar.</sub>
+</p>
+
+<p align="center">
   <a href="#sobre-o-projeto">Sobre</a> •
   <a href="#problema">Problema</a> •
   <a href="#solução">Solução</a> •
@@ -162,10 +169,16 @@ Com a API no ar, abra `http://localhost:8080`. Veja [Como acessar a interface](#
 
 ### Como acessar a interface
 
+Especificação e testes: [SDD](doc/SDD.md) · [TDD](doc/TDD.md) · [Regras de negócio](doc/regras-de-negocio.md) · [Big O dos fluxos](doc/big-o.md).
+
 As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resources/static/` e são servidas pela própria API.
 
-- **Entrar:** em `/login.html`, qualquer e-mail válido e qualquer senha entram como **Profissional do hemocentro**. O backend ainda não tem autenticação: a sessão fica só no navegador.
-- **Outros perfis:** em `/criar-conta.html`, a **Função** escolhida define o perfil. A conta fica salva no navegador (a senha é guardada como hash, nunca em texto). O perfil **Gestor da rede** abre o painel gerencial. Os perfis de hospital e logística ainda não têm telas próprias e caem no painel do hemocentro, com um aviso.
+- **Perfis:** o sistema tem 3 perfis, com autenticação real no backend (JWT). Cada perfil só acessa a própria área da API.
+  - **Doador:** cria a própria conta em `/criar-conta.html` (tipo sanguíneo, sexo, nascimento, peso) e vê se pode doar, quando pode doar de novo e o histórico.
+  - **Hospital:** a conta é criada pelo hemocentro em **Contas**. Solicita bolsas, vê só as próprias requisições, acompanha a entrega no mapa e confirma o recebimento.
+  - **Hemocentro:** controla tudo (estoque, doações, alocação FEFO, despacho, rastreamento, indicadores, rede e contas).
+- **Contas de demonstração:** com a variável `DEMO_SENHA` definida, a primeira subida cria `hemocentro@rotavital.dev`, `hospital.norte@rotavital.dev` e `doador@rotavital.dev`, todas com essa senha. Rodando localmente sem `DEMO_SENHA`, a senha é gerada e aparece no log da aplicação. Em produção sem `DEMO_SENHA`, nenhuma conta demo é criada.
+- **Fluxo completo:** hospital solicita → hemocentro aloca por FEFO e despacha → hospital e hemocentro acompanham o veículo no mapa (com botão para abrir a rota no Google Maps) → hospital confirma o recebimento.
 - **Dados:** são os dados sintéticos carregados na primeira subida (`HEMOREDE_SEED_ENABLED=true`).
 
 | Tela | Endereço |
@@ -176,6 +189,10 @@ As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resou
 | Consulta de estoque (HU02) | `/hemocentro/estoque.html` |
 | Fila de requisições | `/hemocentro/requisicoes.html` |
 | Alocação por FEFO (HU04) | `/hemocentro/requisicao.html?id=<id>` |
+| Despacho e acompanhamento da entrega | `/hemocentro/requisicao.html?id=<id>` · `/rastreamento.html?id=<id>` |
+| Contas de acesso (hospitais e equipe) | `/hemocentro/usuarios.html` |
+| Painel do hospital (solicitar e acompanhar) | `/hospital/painel.html` |
+| Painel do doador | `/doador/painel.html` |
 | Painel gerencial (HU07) | `/gestor/painel.html` |
 | Risco de desabastecimento e descarte | `/gestor/indicadores.html` |
 | Painel de rede | `/gestor/rede.html` |
@@ -186,6 +203,9 @@ As telas de acesso e da jornada do hemocentro ficam em `rotavital/src/main/resou
 | `POSTGRES_DB` / `POSTGRES_USER` | Nome do banco e do usuário | `rotavital` |
 | `API_PORT` | Porta da API no seu computador | `8080` |
 | `HEMOREDE_SEED_ENABLED` | Carga de dados sintéticos na primeira subida | `true` |
+| `JWT_SECRET` | Assina os tokens de login (mínimo de 32 caracteres; gere com `openssl rand -base64 48`). **Obrigatória** no perfil `prod` | — (sem padrão) |
+| `DEMO_SENHA` | Senha das 3 contas de demonstração | vazia (sem contas demo em produção) |
+| `RASTREAMENTO_FATOR_TEMPO` | Acelera o veículo no mapa na demonstração (1 = tempo real) | `1` |
 
 **Decisões deste setup** (a tabela completa está em [Decisões](#decisões)):
 

@@ -25,24 +25,23 @@
       <span class="icon-tile" data-lock></span>
       <div class="auth-head">
         <h1 class="auth-title">Recuperar senha</h1>
-        <p class="auth-sub" style="opacity:1">Informe o e-mail cadastrado. Enviaremos um link para você criar uma nova senha.</p>
+        <p class="auth-sub" style="opacity:1">Informe o e-mail da conta. A redefinição é feita pela equipe do hemocentro, que confere sua identidade antes de liberar o novo acesso.</p>
       </div>
       <div id="erro" hidden></div>
       <label class="field">
         <span class="field-label">E-mail</span>
         <span class="input lg glass-input" data-ic="mail"><input type="email" name="email" autocomplete="email" placeholder="voce@rotavital.com" required></span>
       </label>
-      <button type="submit" class="btn btn-primary xl block">Enviar link de recuperação <span data-arrow></span></button>
+      <button type="submit" class="btn btn-primary xl block">Ver como redefinir <span data-arrow></span></button>
       <a class="auth-foot link" href="login.html" style="gap:6px;align-items:center" data-back>Voltar para o login</a>
     </form>
 
     <!-- 0.5 · Link enviado -->
     <section class="auth-card glass center" id="enviado" hidden aria-live="polite">
       <span class="status-circle" data-ok></span>
-      <h1 class="auth-title sm">Verifique seu e-mail</h1>
-      <p class="auth-sub" style="opacity:1;max-width:340px">Enviamos um link para <b id="para"></b>. Ele expira em 30 minutos.</p>
+      <h1 class="auth-title sm">Como redefinir sua senha</h1>
+      <p class="auth-sub" style="opacity:1;max-width:340px">Fale com a equipe do hemocentro informando o e-mail <b id="para"></b>. Por segurança, a senha só é redefinida depois da confirmação da sua identidade.</p>
       <a class="btn btn-primary xl block" href="login.html">Voltar para o login</a>
-      <button type="button" class="btn btn-ghost" id="reenviar" disabled style="opacity:1;color:var(--text-2);font-weight:500;font-size:13px"></button>
     </section>
   </main>
 
@@ -59,22 +58,7 @@
 
     const form = document.getElementById('form');
     const enviado = document.getElementById('enviado');
-    const reenviar = document.getElementById('reenviar');
-    let timer;
 
-    // O backend ainda não tem envio de e-mail: a tela simula o envio e mostra a confirmação.
-    function enviar(email) {
-      document.getElementById('para').textContent = email;
-      form.hidden = true; enviado.hidden = false;
-      let s = 45;
-      const paint = () => {
-        reenviar.innerHTML = ui.icon('clock', 16, '#2E403C') + (s > 0 ? ` Reenviar link em 0:${RV.pad(s)}` : ' Reenviar link');
-        reenviar.disabled = s > 0;
-        reenviar.style.color = s > 0 ? 'var(--text-2)' : 'var(--teal-link)';
-      };
-      clearInterval(timer); paint();
-      timer = setInterval(() => { s--; paint(); if (s <= 0) clearInterval(timer); }, 1000);
-    }
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = form.email.value.trim();
@@ -83,9 +67,10 @@
         erro.innerHTML = ui.alertBox('error', 'E-mail inválido', 'Confira o endereço digitado.');
         erro.hidden = false; return;
       }
-      enviar(email);
+      // Não há envio de e-mail no sistema: a tela orienta o contato com o hemocentro.
+      document.getElementById('para').textContent = email;
+      form.hidden = true; enviado.hidden = false;
     });
-    reenviar.addEventListener('click', () => { enviar(document.getElementById('para').textContent); ui.toast('success', 'Link reenviado', 'Confira sua caixa de entrada e o spam.'); });
   </script>
 </body>
 </html>

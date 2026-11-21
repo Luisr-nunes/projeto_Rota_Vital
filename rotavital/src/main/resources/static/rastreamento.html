@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acompanhar entrega · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/rota-vital.css">
+  <style>
+    #mapa { height: 460px; border-radius: 16px; border: 1px solid var(--line-3); z-index: 0; }
+    .etapas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+    .etapa { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; position: relative; }
+    .etapa + .etapa::before { content: ""; position: absolute; left: 6px; top: -10px; height: 20px; border-left: 2px solid var(--line-3); }
+    .etapa.feita + .etapa::before { border-color: var(--teal); }
+    .etapa .ponto { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-3); background: #fff; margin-top: 3px; flex: none; transition: background .4s, border-color .4s; }
+    .etapa.feita .ponto { background: var(--teal); border-color: var(--teal); }
+    .etapa.atual .ponto { background: var(--red); border-color: var(--red); animation: pulso 1.6s ease-in-out infinite; }
+    .etapa b { display: block; font-size: 14px; color: var(--ink); }
+    .etapa span { font-size: 12px; color: var(--muted); }
+    .progress span { transition: width .8s ease; }
+    @keyframes pulso { 0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, .35); } 50% { box-shadow: 0 0 0 7px rgba(229, 57, 53, 0); } }
+    @media (prefers-reduced-motion: reduce) { .etapa.atual .ponto { animation: none; } .progress span, .etapa .ponto { transition: none; } }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <a class="crumb" href="#" id="voltar">Voltar</a>
+        <h1 class="page-title" id="titulo">Acompanhar entrega</h1>
+        <p class="page-sub" id="sub">&nbsp;</p>
+      </div>
+      <div class="page-actions" id="acoes"></div>
+    </div>
+    <div id="aviso"></div>
+    <div class="row stack-md">
+      <section class="card grow gap-12" aria-labelledby="t-mapa">
+        <div class="card-head">
+          <div><h2 class="card-title" id="t-mapa">Trajeto</h2><p class="card-sub">Menor rota (Dijkstra) do hemocentro até o hospital · posição estimada pelo tempo de viagem</p></div>
+          <span id="chip"></span>
+        </div>
+        <div id="mapa" role="region" aria-label="Mapa do trajeto da entrega"></div>
+        <p class="sub" id="atualizado" aria-live="polite" style="margin:0;font-size:12px"></p>
+      </section>
+      <div class="col col-380">
+        <section class="card gap-12" id="resumo" aria-live="polite"></section>
+        <section class="card gap-12"><h2 class="card-title">Etapas do trajeto</h2><ol class="etapas" id="etapas"></ol></section>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/core.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    (function () {
+      const { ui, esc } = RV;
+      const s = RV.sessao.atual();
+      if (!s) { location.replace(ui.url('login.html')); return; }
+      const hospital = s.perfil === 'HOSPITAL';
+      if (!hospital && s.perfil !== 'HEMOCENTRO') { location.replace(ui.url(RV.PERFIS[s.perfil].home)); return; }
+      if (!ui.shell(hospital ? 'hospital' : 'hemocentro', hospital ? 'Painel' : 'Entregas')) return;
+
+      const $ = (id) => document.getElementById(id);
+      const id = Number(new URLSearchParams(location.search).get('id'));
+      const endpoint = hospital ? `/api/hospital/requisicoes/${id}/rastreamento` : `/api/v1/requisicoes/${id}/rastreamento`;
+      $('voltar').href = ui.url(hospital ? 'hospital/painel.html' : 'hemocentro/entregas.html');
+      $('voltar').insertAdjacentHTML('afterbegin', ui.icon('arrowL', 14, '#2F5E55', 2));
+      $('resumo').innerHTML = ui.skeletonRows(5, 32);
+
+      let mapa, camadaTrajeto, camadaPercorrida, veiculo, enquadrado = false, timer;
+      const COR_ROTA = '#48726A', COR_ATIVA = '#E53935';
+
+      function iniciarMapa() {
+        if (mapa || !window.L) return;
+        mapa = L.map('mapa', { scrollWheelZoom: false });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; colaboradores do OpenStreetMap'
+        }).addTo(mapa);
+      }
+
+      const hora = (iso) => iso ? RV.fmtTime(iso) : '—';
+
+      function render(r) {
+        document.title = `Entrega #${r.requisicaoId} · Rota Vital`;
+        $('titulo').textContent = `Entrega da requisição #${r.requisicaoId}`;
+        $('sub').textContent = `Hemocentro → ${r.hospital || 'hospital'} · ${RV.num(r.distanciaKm, 1)} km`;
+        $('chip').innerHTML = ui.badgeReq(r.status);
+
+        const emRota = r.status === 'EM_ROTA';
+        const entregue = r.status === 'ENTREGUE';
+        const pct = entregue ? 100 : (r.percentual || 0);
+        const pontos = r.trajeto.map((p) => [p.lat, p.lng]);
+
+        // Mapa: trajeto completo, parte percorrida e o veículo
+        iniciarMapa();
+        if (mapa) {
+          // o Leaflet exige centro e zoom antes de receber camadas
+          if (!enquadrado) { mapa.fitBounds(L.latLngBounds(pontos).pad(0.25)); enquadrado = true; }
+          if (camadaTrajeto) camadaTrajeto.remove();
+          if (camadaPercorrida) camadaPercorrida.remove();
+          camadaTrajeto = L.layerGroup().addTo(mapa);
+          L.polyline(pontos, { color: COR_ROTA, weight: 6, opacity: emRota || entregue ? .45 : .9, dashArray: emRota || entregue ? null : '10 8' }).addTo(camadaTrajeto);
+          r.trajeto.forEach((p, i) => {
+            const fim = i === r.trajeto.length - 1;
+            L.circleMarker([p.lat, p.lng], { radius: i === 0 || fim ? 9 : 6, color: '#fff', weight: 2, fillColor: fim ? COR_ATIVA : COR_ROTA, fillOpacity: 1 })
+              .bindTooltip(`${esc(p.nome)} (${esc(p.no)})`).addTo(camadaTrajeto);
+          });
+          if (emRota || entregue) {
+            const feito = pontos.slice(0, (r.trechoAtual ?? pontos.length - 2) + 1).concat([[r.posicaoAtual.lat, r.posicaoAtual.lng]]);
+            camadaPercorrida = L.polyline(entregue ? pontos : feito, { color: COR_ATIVA, weight: 5 }).addTo(mapa);
+            const pos = [r.posicaoAtual.lat, r.posicaoAtual.lng];
+            if (!veiculo) veiculo = L.circleMarker(pos, { radius: 11, color: '#fff', weight: 3, fillColor: COR_ATIVA, fillOpacity: 1 }).addTo(mapa);
+            else veiculo.setLatLng(pos);
+            veiculo.bindTooltip(entregue ? 'Entregue' : `Veículo ${esc(r.veiculoPlaca || '')} · ${RV.num(pct, 0)}%`);
+          }
+        } else {
+          $('mapa').innerHTML = ui.alertBox('warn', 'Mapa indisponível', 'Não foi possível carregar o mapa. O andamento continua ao lado.');
+        }
+
+        // Etapas: cada nó do caminho
+        const atual = emRota ? (r.trechoAtual ?? 0) : (entregue ? r.trajeto.length : -1);
+        $('etapas').innerHTML = r.trajeto.map((p, i) => {
+          const cls = entregue || i <= atual ? 'feita' : (emRota && i === atual + 1 ? 'atual' : '');
+          const legenda = i === 0 ? (r.saida ? `Saída às ${hora(r.saida)}` : 'Aguardando saída')
+            : i === r.trajeto.length - 1 ? (entregue ? 'Entregue' : r.previsaoChegada ? `Previsão ${hora(r.previsaoChegada)}` : 'Destino')
+            : 'Ponto de passagem';
+          return `<li class="etapa ${cls}"><span class="ponto" aria-hidden="true"></span><div><b>${esc(p.nome)}</b><span>${esc(legenda)}</span></div></li>`;
+        }).join('');
+
+        // Resumo
+        const temp = r.temperaturaC == null ? 'sem leitura'
+          : `${RV.num(r.temperaturaC, 1)} °C · ${r.statusTemperatura === 'OK' ? 'na faixa' : 'fora da faixa'}`;
+        const trecho = emRota && r.trajeto[atual + 1] ? `${r.trajeto[atual].nome} → ${r.trajeto[atual + 1].nome}` : '—';
+        const situacao = entregue ? 'Entregue ao hospital' : emRota ? 'Em trânsito' : ['ALOCADA', 'APROVADA'].includes(r.status) ? 'Bolsas reservadas, aguardando despacho' : 'Rota prevista · aguardando alocação das bolsas';
+        $('resumo').innerHTML = `
+          <h2 class="card-title">${esc(situacao)}</h2>
+          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted" style="font-size:13px;font-weight:500">Trajeto concluído</span><b style="font-size:13px;color:var(--ink)">${RV.num(pct, 0)}%</b></div>
+            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><span style="width:${pct}%"></span></div></div>
+          <div class="kv">
+            <div><span class="k">Trecho atual</span><span class="v">${esc(trecho)}</span></div>
+            <div><span class="k">Saída</span><span class="v">${hora(r.saida)}</span></div>
+            <div><span class="k">Previsão de chegada</span><span class="v">${hora(r.previsaoChegada)}</span></div>
+            <div><span class="k">Tempo restante</span><span class="v">${r.minutosRestantes == null ? '—' : r.minutosRestantes + ' min'}</span></div>
+            <div><span class="k">Veículo</span><span class="v">${esc(r.veiculoPlaca || '—')}</span></div>
+            <div><span class="k">Temperatura</span><span class="v ${r.statusTemperatura === 'ALERTA' ? 't-red' : ''}">${esc(temp)}</span></div>
+          </div>`;
+        if (r.statusTemperatura === 'ALERTA') $('aviso').innerHTML = ui.alertBox('error', 'Temperatura fora da faixa', 'A cadeia fria da carga saiu da faixa segura. Avise o motorista e o hemocentro.');
+        else $('aviso').innerHTML = '';
+
+        // Ações
+        const acoes = [];
+        if (r.googleMapsUrl) acoes.push(`<a class="btn btn-secondary" href="${esc(r.googleMapsUrl)}" target="_blank" rel="noopener noreferrer">${ui.icon('globe', 18, '#1F2D2A', 2)}Abrir no Google Maps</a>`);
+        if (!hospital && ['ALOCADA', 'APROVADA'].includes(r.status)) acoes.push(`<button type="button" class="btn btn-primary" data-acao="despachar">${ui.icon('truck', 18, '#fff', 2)}Despachar</button>`);
+        if (emRota) acoes.push(`<button type="button" class="btn btn-primary" data-acao="confirmar">${ui.icon('check', 18, '#fff', 2)}${hospital ? 'Confirmar recebimento' : 'Confirmar entrega'}</button>`);
+        $('acoes').innerHTML = acoes.join('');
+        const bd = document.querySelector('[data-acao="despachar"]');
+        if (bd) bd.onclick = () => agir(bd, `/api/v1/requisicoes/${id}/despacho`, 'POST', 'Saiu para entrega', 'O veículo partiu e o trajeto está sendo acompanhado.');
+        const bc = document.querySelector('[data-acao="confirmar"]');
+        if (bc) bc.onclick = () => agir(bc, hospital ? `/api/hospital/requisicoes/${id}/recebimento` : `/api/v1/requisicoes/${id}/entrega`, 'PATCH',
+          'Entrega confirmada', 'As bolsas foram registradas como utilizadas e o veículo foi liberado.');
+
+        $('atualizado').textContent = emRota ? `Atualizado às ${RV.fmtTime(new Date().toISOString())} · nova leitura a cada 10 s` : '';
+      }
+
+      async function agir(botao, path, method, titulo, msg) {
+        botao.disabled = true;
+        try {
+          await RV.api(path, { method });
+          ui.toast('success', titulo, msg);
+          carregar();
+        } catch (e) {
+          botao.disabled = false;
+          ui.toast('error', 'Não foi possível concluir', ui.erroMsg(e));
+        }
+      }
+
+      async function carregar() {
+        clearTimeout(timer);
+        try {
+          const r = await RV.api(endpoint);
+          render(r);
+          if (r.status === 'EM_ROTA') timer = setTimeout(carregar, 10000);
+        } catch (e) {
+          $('resumo').innerHTML = ui.alertBox('error', 'Não foi possível abrir a entrega', e.status === 404 ? `A requisição #${id || '?'} não foi encontrada.` : ui.erroMsg(e));
+        }
+      }
+      carregar();
+    })();
+  </script>
+</body>
+</html>

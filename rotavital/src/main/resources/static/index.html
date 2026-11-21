@@ -9,6 +9,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/rota-vital.css">
+  <style>
+    .equipe-titulo { margin: 8px 0 4px; font-size: 15px; font-weight: 600; }
+    .equipe { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+    .equipe li { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(0, 0, 0, .06); font-size: 14px; }
+    .equipe li:last-child { border-bottom: 0; }
+    .equipe-nome { font-weight: 600; }
+    .equipe-funcao { color: var(--muted); font-size: 13px; }
+    .perfis-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 14px; }
+    .perfis-lista b { margin-right: 4px; }
+    .disciplinas { display: flex; flex-wrap: wrap; gap: 6px; }
+    .disciplinas span { padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .6); border: 1px solid rgba(0, 0, 0, .08); font-size: 12px; font-weight: 600; }
+    @media (max-width: 640px) { .equipe li { grid-template-columns: 1fr; gap: 2px; } }
+  </style>
 </head>
 <body class="bg-auth bg-home">
   <header class="navbar">
@@ -43,19 +56,38 @@
     <section class="home-section">
       <article class="glass" id="sobre">
         <h2>Quem somos</h2>
-        <p>O Rota Vital é o Projeto Integrador do 3º semestre de Análise e Desenvolvimento de Sistemas da CESAR School (2026.2). A aplicação apoia a rede de sangue na gestão e distribuição de hemocomponentes, inspirada no fluxo da Hemorrede/SUS.</p>
+        <p>O Rota Vital é o Projeto Integrador do 3º semestre de Análise e Desenvolvimento de Sistemas da CESAR School (2026.2). Apoia a rede de sangue, inspirado na Hemorrede/SUS, para garantir o componente certo, no lugar certo, no tempo certo e na temperatura certa.</p>
+        <h3 class="equipe-titulo">O que o sistema faz</h3>
         <ul>
-          <li>Doação e cadastro de bolsas no estoque do hemocentro</li>
-          <li>Requisições dos hospitais e alocação compatível por FEFO</li>
-          <li>Roteirização da entrega e confirmação no hospital</li>
-          <li>Indicadores da rede, sempre com dados 100% sintéticos</li>
+          <li>Doação e estoque, conferindo a elegibilidade do doador</li>
+          <li>Alocação compatível (ABO/Rh) pela validade mais próxima (FEFO)</li>
+          <li>Rota de menor custo (Dijkstra) e entrega acompanhada no mapa</li>
+          <li>Temperatura no transporte e indicadores da rede</li>
         </ul>
+        <h3 class="equipe-titulo">Para quem</h3>
+        <ul class="perfis-lista">
+          <li><b>Doador</b> informa o tipo sanguíneo e sabe quando pode doar</li>
+          <li><b>Hospital</b> solicita bolsas e acompanha a entrega</li>
+          <li><b>Hemocentro</b> controla estoque, alocação, despacho e indicadores</li>
+        </ul>
+        <h3 class="equipe-titulo">Disciplinas integradas</h3>
+        <div class="disciplinas" aria-label="Disciplinas integradas"><span>POO</span><span>AED</span><span>Estatística</span><span>Infra. de Software</span><span>Infra. de Comunicação</span><span>Projeto 3</span></div>
+        <p style="font-size:13px;color:var(--muted)">Dados 100% sintéticos: nenhuma informação pessoal real é usada.</p>
       </article>
       <article class="glass" id="contato">
         <h2>Entrar em contato</h2>
         <p>Dúvidas sobre o projeto, a documentação ou as entregas? Fale com o time pelo repositório do projeto.</p>
         <p><a class="link" href="https://github.com/Luisr-nunes/projeto_Rota_Vital" target="_blank" rel="noopener">github.com/Luisr-nunes/projeto_Rota_Vital ↗</a></p>
-        <p>Gerente de projetos: Luis Felipe Farias Nunes · <a class="link" href="mailto:lffn@cesar.school">lffn@cesar.school</a></p>
+        <h3 class="equipe-titulo">Equipe</h3>
+        <ul class="equipe" aria-label="Integrantes do projeto">
+          <li><span class="equipe-nome">Lucas Henrique Gomes Medeiros</span><span class="equipe-funcao">Tech Lead</span><a class="link" href="mailto:lhgm@cesar.school">lhgm@cesar.school</a></li>
+          <li><span class="equipe-nome">Luis Felipe Farias Nunes</span><span class="equipe-funcao">Gerente de Projetos</span><a class="link" href="mailto:lffn@cesar.school">lffn@cesar.school</a></li>
+          <li><span class="equipe-nome">João Pedro Cavalcanti Souza</span><span class="equipe-funcao">Desenvolvedor Backend</span><a class="link" href="mailto:jpcs2@cesar.school">jpcs2@cesar.school</a></li>
+          <li><span class="equipe-nome">Luis Lucena Wanderley G.</span><span class="equipe-funcao">Desenvolvedor Backend</span><a class="link" href="mailto:llwg@cesar.school">llwg@cesar.school</a></li>
+          <li><span class="equipe-nome">Matheus Rodrigues Larré</span><span class="equipe-funcao">Desenvolvedor Backend</span><a class="link" href="mailto:mrl2@cesar.school">mrl2@cesar.school</a></li>
+          <li><span class="equipe-nome">Micaella Maria Barbosa Cabral</span><span class="equipe-funcao">Engenheira de Dados</span><a class="link" href="mailto:mmbc2@cesar.school">mmbc2@cesar.school</a></li>
+          <li><span class="equipe-nome">Mariana Xavier Bezerra</span><span class="equipe-funcao">Desenvolvedor Frontend</span><a class="link" href="mailto:mxb@cesar.school">mxb@cesar.school</a></li>
+        </ul>
         <p style="font-size:13px;color:var(--muted)">Área técnica: <a class="link" href="operacao.html" style="font-size:13px">página de operação</a> · <a class="link" href="indicadores.html" style="font-size:13px">painel de indicadores</a></p>
       </article>
     </section>

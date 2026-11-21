@@ -71,7 +71,8 @@
       document.title = `Requisição #${req.id} · Rota Vital`;
       $('titulo').textContent = `Requisição #${req.id}`;
       $('sub').textContent = `${hemo.hospitalNome(req)} · solicitada em ${RV.fmtDate(req.dataSolicitacao)} às ${RV.fmtTime(req.dataSolicitacao)}`;
-      $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq(req.status);
+      $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq(req.status)
+        + (req.status !== 'CANCELADA' ? `<a class="btn btn-secondary sm" href="../rastreamento.html?id=${req.id}">${ui.icon('route', 16, '#1F2D2A', 2)}${['PENDENTE', 'ALOCADA', 'APROVADA'].includes(req.status) ? 'Ver rota prevista' : 'Acompanhar entrega'}</a>` : '');
 
       // Itens solicitados
       $('itens').innerHTML = (req.itens || []).map((i) => `<div class="item-row">${ui.blood(i.tipoSanguineo, 52)}
@@ -173,7 +174,7 @@
         const n = bolsas.length || necessario;
         ui.overlay(`<span class="status-circle">${ui.icon('check', 30, '#fff', 2.6)}</span>
           <h2>Requisição #${req.id} aprovada</h2>
-          <p>${n} ${n === 1 ? 'bolsa foi reservada' : 'bolsas foram reservadas'} por FEFO. O pedido já está na fila de roteirização da logística.</p>
+          <p>${n} ${n === 1 ? 'bolsa foi reservada' : 'bolsas foram reservadas'} por FEFO. Agora é só despachar para a entrega e acompanhar o trajeto.</p>
           <div class="kv" style="width:100%;gap:8px">${bolsas.map((b) => `<div style="align-items:center"><span class="cell">${ui.blood(b.tipoSanguineo, 28)}<span class="semi" style="font-size:13px">${RV.codigoBolsa(b)}</span></span>${ui.badgeBolsa('RESERVADA')}</div>`).join('')}</div>
           <div class="modal-actions"><a class="btn btn-secondary" href="requisicoes.html">Voltar à fila</a>
             ${proxima ? `<a class="btn btn-primary" href="requisicao.html?id=${proxima.id}">Próxima requisição ${ui.icon('arrowR', 18, '#fff', 2)}</a>` : `<a class="btn btn-primary" href="painel.html">Ir ao painel</a>`}</div>`, { cls: 'center w500' });
@@ -191,9 +192,23 @@
           ? `<div class="table fefo" style="--cols:70px minmax(120px,1fr) 70px 170px 130px"><div class="tr thead"><span>Ordem</span><span>Bolsa</span><span>Tipo</span><span>Validade</span><span>Status</span></div>` +
             bolsas.map((b, i) => `<div class="tr"><span style="font-weight:500">${i + 1}º</span><span class="td-strong">${RV.codigoBolsa(b)}</span><span>${ui.blood(b.tipoSanguineo, 32)}</span><span>${RV.fmtDate(b.dataValidade)}</span><span>${ui.badgeBolsa(b.status || 'RESERVADA')}</span></div>`).join('') + '</div>'
           : '<p class="sub">Nenhuma bolsa associada a esta requisição.</p>';
+        const podeDespachar = ['ALOCADA', 'APROVADA'].includes(req.status);
         $('resumo').innerHTML = `<h2 class="card-title">Situação</h2>
           <div class="kv"><div><span class="k">Status</span>${ui.badgeReq(req.status)}</div><div><span class="k">Bolsas reservadas</span><span class="v">${bolsas.length}</span></div><div><span class="k">Hospital</span><span class="v">${esc(hemo.hospitalNome(req))}</span></div></div>
-          <a class="btn btn-secondary block" href="requisicoes.html">Voltar à fila</a>`;
+          ${podeDespachar ? `<div class="muted-box"><b>Despacho</b><p>Escolhe o veículo com a refrigeração do componente, calcula a menor rota e passa as bolsas para Em trânsito.</p></div>
+          <button type="button" class="btn btn-primary lg block" id="despachar">${ui.icon('truck', 18, '#fff', 2)}Despachar para entrega</button>` : ''}
+          <a class="btn btn-ghost block" href="requisicoes.html">Voltar à fila</a>`;
+        const d = $('despachar');
+        if (d) d.onclick = async () => {
+          d.disabled = true; d.innerHTML = '<span class="spin"></span>Despachando…';
+          try {
+            await RV.api(`/api/v1/requisicoes/${req.id}/despacho`, { method: 'POST' });
+            location.href = `../rastreamento.html?id=${req.id}`;
+          } catch (e) {
+            d.disabled = false; d.innerHTML = ui.icon('truck', 18, '#fff', 2) + 'Despachar para entrega';
+            ui.toast('error', 'Não foi possível despachar', ui.erroMsg(e));
+          }
+        };
       }
 
       function falha(msg) {

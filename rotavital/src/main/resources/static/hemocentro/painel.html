@@ -17,8 +17,9 @@
         <p class="page-sub" id="sub"></p>
       </div>
       <div class="page-actions">
+        <a class="btn btn-secondary" href="entregas.html" data-ic="truck">Entregas em andamento</a>
         <a class="btn btn-secondary" href="estoque.html" data-ic="search">Consultar estoque</a>
-        <button type="button" class="btn btn-primary" data-ic="plus" data-soon="Registrar doação">Registrar doação</button>
+        <a class="btn btn-primary" data-ic="plus" href="doacao.html">Registrar doação</a>
       </div>
     </div>
 
@@ -57,7 +58,6 @@
       hemo.avisoPendente();
       document.querySelectorAll('[data-ic]').forEach((b) => b.insertAdjacentHTML('afterbegin', ui.icon(b.dataset.ic, 18, b.classList.contains('btn-primary') ? '#fff' : '#1F2D2A', 2)));
       document.querySelector('[data-arrow]').outerHTML = ui.icon('arrowR', 18, '#2F5E55', 2);
-      document.querySelectorAll('.page-actions [data-soon]').forEach((b) => b.addEventListener('click', () => ui.toast('info', 'Registrar doação: em breve', 'A tela de doação (HU01) faz parte da jornada do atendente e vem no próximo PR.')));
 
       const primeiro = (s.nome || '').split(' ')[0];
       document.getElementById('ola').textContent = `${RV.saudacao()}, ${primeiro}`;

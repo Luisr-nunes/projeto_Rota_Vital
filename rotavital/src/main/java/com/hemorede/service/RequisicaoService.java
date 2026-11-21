@@ -10,6 +10,7 @@ import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Hospital;
 import com.hemorede.domain.model.ItemRequisicao;
 import com.hemorede.domain.model.Requisicao;
+import com.hemorede.domain.regras.RegraTransicaoRequisicao;
 import com.hemorede.dto.ItemRequisicaoRequest;
 import com.hemorede.dto.RequisicaoRequest;
 import com.hemorede.repository.HospitalRepository;
@@ -29,10 +30,6 @@ import java.util.Set;
 @Service
 public class RequisicaoService {
 
-    /** Status a partir dos quais a entrega pode ser confirmada (bolsas já reservadas). */
-    private static final Set<StatusRequisicao> PRONTAS_PARA_ENTREGA =
-            EnumSet.of(StatusRequisicao.ALOCADA, StatusRequisicao.APROVADA, StatusRequisicao.EM_ROTA);
-
     /** Status de bolsa que podem passar a UTILIZADA na entrega. */
     private static final Set<StatusBolsa> BOLSAS_ENTREGAVEIS =
             EnumSet.of(StatusBolsa.RESERVADA, StatusBolsa.EM_TRANSITO);
@@ -40,6 +37,8 @@ public class RequisicaoService {
     private final RequisicaoRepository requisicaoRepository;
     private final HospitalRepository hospitalRepository;
     private final AlocacaoService alocacaoService;
+    /** Opcional para manter o construtor dos testes unitários; encerra a rota na entrega. */
+    private RastreamentoService rastreamentoService;
 
     public RequisicaoService(RequisicaoRepository requisicaoRepository,
                              HospitalRepository hospitalRepository,
@@ -57,6 +56,11 @@ public class RequisicaoService {
     public Requisicao buscarPorId(Long id) {
         return requisicaoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + id));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRastreamentoService(RastreamentoService rastreamentoService) {
+        this.rastreamentoService = rastreamentoService;
     }
 
     /**
@@ -95,6 +99,12 @@ public class RequisicaoService {
         Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
                 .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + requisicaoId));
 
+        // RN-09: só PENDENTE pode ser aprovada. Antes, uma requisição ENTREGUE voltava a APROVADA.
+        if (!RegraTransicaoRequisicao.permitida(requisicao.getStatus(), StatusRequisicao.APROVADA)) {
+            throw new TransicaoStatusInvalidaException("Requisição " + requisicaoId + " está "
+                    + requisicao.getStatus() + "; só requisição PENDENTE pode ser aprovada");
+        }
+
         // Se algum item não conseguir ser 100% alocado, a EstoqueInsuficienteException
         // propaga e o Spring reverte toda a transação (nenhuma bolsa fica
         // parcialmente reservada) — a requisição permanece com o status atual
@@ -128,7 +138,7 @@ public class RequisicaoService {
         Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
                 .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + requisicaoId));
 
-        if (!PRONTAS_PARA_ENTREGA.contains(requisicao.getStatus())) {
+        if (!RegraTransicaoRequisicao.permitida(requisicao.getStatus(), StatusRequisicao.ENTREGUE)) {
             throw new TransicaoStatusInvalidaException("Requisição " + requisicaoId + " está "
                     + requisicao.getStatus() + "; só é possível confirmar a entrega de requisição alocada");
         }
@@ -144,6 +154,9 @@ public class RequisicaoService {
         }
 
         requisicao.setStatus(StatusRequisicao.ENTREGUE);
+        if (rastreamentoService != null) {
+            rastreamentoService.encerrarRota(requisicao);
+        }
         return requisicaoRepository.save(requisicao);
     }
 }

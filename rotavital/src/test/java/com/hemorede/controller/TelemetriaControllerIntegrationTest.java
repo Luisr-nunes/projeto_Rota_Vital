@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import com.hemorede.domain.enums.StatusVeiculo;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.hemorede.domain.enums.TipoRefrigeracao;
 import com.hemorede.domain.model.Veiculo;
 import com.hemorede.repository.VeiculoRepository;
@@ -23,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class TelemetriaControllerIntegrationTest {
 
     @Autowired

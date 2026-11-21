@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import java.time.LocalDate;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.hamcrest.Matchers.hasSize;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +30,8 @@ import com.hemorede.repository.BolsaRepository;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class EstoqueControllerIntegrationTest {
 
     @Autowired

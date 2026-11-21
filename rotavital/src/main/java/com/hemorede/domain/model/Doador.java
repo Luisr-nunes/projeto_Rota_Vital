@@ -1,6 +1,8 @@
 package com.hemorede.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hemorede.domain.enums.Sexo;
 import com.hemorede.domain.enums.TipoSanguineo;
 import jakarta.persistence.*;
 
@@ -8,6 +10,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// proxies lazy do Hibernate serializados em JSON sem os campos internos
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "doador")
 public class Doador {
@@ -34,6 +38,16 @@ public class Doador {
      */
     @Column(nullable = false)
     private boolean ativo = true;
+
+    /** Dados básicos informados pelo próprio doador (perfil DOADOR); opcionais nos cadastros legados. */
+    @Enumerated(EnumType.STRING)
+    private Sexo sexo;
+
+    private LocalDate dataNascimento;
+
+    private Double pesoKg;
+
+    private String telefone;
 
     @JsonIgnore
     @OneToMany(mappedBy = "doador", cascade = CascadeType.ALL)
@@ -106,5 +120,37 @@ public class Doador {
 
     public void setBolsas(List<Bolsa> bolsas) {
         this.bolsas = bolsas;
+    }
+
+    public Sexo getSexo() {
+        return sexo;
+    }
+
+    public void setSexo(Sexo sexo) {
+        this.sexo = sexo;
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
+
+    public Double getPesoKg() {
+        return pesoKg;
+    }
+
+    public void setPesoKg(Double pesoKg) {
+        this.pesoKg = pesoKg;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
     }
 }

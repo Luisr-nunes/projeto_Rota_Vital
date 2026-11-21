@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import org.junit.jupiter.api.DisplayName;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class MetricasRedeControllerIntegrationTest {
 
     @Autowired
@@ -57,7 +60,7 @@ class MetricasRedeControllerIntegrationTest {
                 .andExpect(status().isAccepted());
 
         // o consumidor processa a fila de forma assíncrona
-        await().atMost(java.time.Duration.ofSeconds(5)).untilAsserted(() ->
+        await().pollInSameThread().atMost(java.time.Duration.ofSeconds(5)).untilAsserted(() ->
                 mockMvc.perform(get("/api/v1/metricas/rede"))
                         .andExpect(jsonPath("$.telemetria.leiturasProcessadas", greaterThanOrEqualTo(1)))
                         .andExpect(jsonPath("$.telemetria.atrasoMedioMs", greaterThanOrEqualTo(50.0))));

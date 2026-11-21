@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DoadorRepository extends JpaRepository<Doador, Long> {
     Doador findByCpf(String cpf);
+
+    boolean existsByCpf(String cpf);
 }

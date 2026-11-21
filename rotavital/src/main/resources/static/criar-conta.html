@@ -24,37 +24,32 @@
       <div class="auth-row">
         <span class="logo-tile lg" data-drop-lg></span>
         <div class="auth-head">
-          <h1 class="auth-title sm">Criar conta</h1>
-          <p class="auth-sub">Cadastre-se para acessar o painel da rede de sangue.</p>
+          <h1 class="auth-title sm">Quero ser doador</h1>
+          <p class="auth-sub">Informe seu tipo sanguíneo e os dados básicos para doar. Hospitais recebem o acesso pela equipe do hemocentro.</p>
         </div>
       </div>
 
       <div id="erro" hidden></div>
 
       <div class="auth-grid">
-        <label class="field"><span class="field-label">Nome</span><span class="input glass-input"><input name="nome" autocomplete="given-name" placeholder="Seu nome" required></span></label>
-        <label class="field"><span class="field-label">Sobrenome</span><span class="input glass-input"><input name="sobrenome" autocomplete="family-name" placeholder="Seu sobrenome" required></span></label>
-        <label class="field full"><span class="field-label">E-mail institucional</span><span class="input glass-input"><input type="email" name="email" autocomplete="email" placeholder="voce@instituicao.com" required></span></label>
-        <label class="field"><span class="field-label">Data de nascimento</span><span class="input glass-input" data-ic="cal"><input type="text" name="nascimento" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10"></span></label>
-        <label class="field"><span class="field-label">Gênero</span><span class="input glass-input" data-icr="chevD"><select name="genero" class="ph"><option value="" selected>Selecione</option><option>Feminino</option><option>Masculino</option><option>Não binário</option><option>Prefiro não informar</option></select></span></label>
-        <label class="field"><span class="field-label">Função</span><span class="input glass-input" data-icr="chevD"><select name="perfil" class="ph" required>
-          <option value="" selected>Selecione</option>
-          <option value="ATENDENTE">Atendente do hemocentro</option>
-          <option value="HEMOCENTRO">Profissional do hemocentro</option>
-          <option value="HOSPITAL">Profissional do hospital</option>
-          <option value="LOGISTICA">Operador de logística</option>
-          <option value="GESTOR">Gestor da rede</option>
-        </select></span></label>
-        <label class="field"><span class="field-label">Instituição</span><span class="input glass-input" data-icr="chevD"><select name="instituicao" class="ph" required><option value="" selected>Hospital ou hemocentro</option><option>Hemocentro Central</option></select></span></label>
-        <div class="field"><span class="field-label"><label for="senha">Senha</label></span><span class="input glass-input"><input id="senha" type="password" name="senha" autocomplete="new-password" placeholder="••••••••••" required><button type="button" class="icon-btn" data-toggle></button></span></div>
-        <div class="field"><span class="field-label"><label for="senha2">Confirmar senha</label></span><span class="input glass-input"><input id="senha2" type="password" name="senha2" autocomplete="new-password" placeholder="••••••••••" required><button type="button" class="icon-btn" data-toggle></button></span></div>
+        <label class="field full"><span class="field-label">Nome completo</span><span class="input glass-input"><input name="nome" autocomplete="name" placeholder="Seu nome" required maxlength="120"></span></label>
+        <label class="field"><span class="field-label">E-mail</span><span class="input glass-input"><input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required></span></label>
+        <label class="field"><span class="field-label">CPF</span><span class="input glass-input"><input name="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required></span></label>
+        <label class="field"><span class="field-label">Tipo sanguíneo</span><span class="input glass-input" data-icr="chevD"><select name="tipoSanguineo" class="ph" required><option value="" selected>Selecione</option></select></span></label>
+        <label class="field"><span class="field-label">Sexo</span><span class="input glass-input" data-icr="chevD"><select name="sexo" class="ph" required><option value="" selected>Selecione</option><option value="FEMININO">Feminino</option><option value="MASCULINO">Masculino</option></select></span></label>
+        <label class="field"><span class="field-label">Data de nascimento</span><span class="input glass-input"><input type="date" name="dataNascimento" required></span></label>
+        <label class="field"><span class="field-label">Peso (kg)</span><span class="input glass-input"><input type="number" name="pesoKg" min="1" max="400" step="0.1" inputmode="decimal" placeholder="Ex.: 68" required></span></label>
+        <label class="field full"><span class="field-label">Telefone (opcional)</span><span class="input glass-input"><input type="tel" name="telefone" autocomplete="tel" placeholder="(81) 90000-0000" maxlength="20"></span></label>
+        <div class="field"><span class="field-label"><label for="senha">Senha</label></span><span class="input glass-input"><input id="senha" type="password" name="senha" autocomplete="new-password" placeholder="••••••••••" required maxlength="72"><button type="button" class="icon-btn" data-toggle></button></span></div>
+        <div class="field"><span class="field-label"><label for="senha2">Confirmar senha</label></span><span class="input glass-input"><input id="senha2" type="password" name="senha2" autocomplete="new-password" placeholder="••••••••••" required maxlength="72"><button type="button" class="icon-btn" data-toggle></button></span></div>
         <div class="strength full" aria-live="polite">
           <div class="strength-bars"><span></span><span></span><span></span><span></span></div>
           <span id="forca">Mínimo de 8 caracteres, com letras e números</span>
         </div>
+        <p class="field-help full" style="margin:0">Para doar: 16 a 69 anos, pelo menos 50 kg e intervalo de 60 dias (homens) ou 90 dias (mulheres) entre doações.</p>
       </div>
 
-      <button type="submit" class="btn btn-primary xl block">Criar conta</button>
+      <button type="submit" class="btn btn-primary xl block" id="criar">Criar conta de doador</button>
       <p class="auth-foot" style="margin:0">Já possui uma conta? <a href="login.html">Entrar</a></p>
     </form>
   </main>
@@ -68,19 +63,14 @@
     const form = document.getElementById('form');
     const erro = document.getElementById('erro');
 
-    // Selects mostram o placeholder em cinza até a escolha.
+    RV.TIPOS.forEach((t) => form.tipoSanguineo.insertAdjacentHTML('beforeend', `<option value="${t}">${RV.tipoLabel(t)}</option>`));
     form.querySelectorAll('select').forEach((s) => s.addEventListener('change', () => s.classList.toggle('ph', !s.value)));
+    form.dataNascimento.max = RV.hojeISO();
 
-    // Instituições: Hemocentro Central + hospitais cadastrados na API.
-    RV.api('/api/hospitais').then((hs) => {
-      const sel = form.instituicao;
-      (hs || []).forEach((h) => sel.insertAdjacentHTML('beforeend', `<option>${RV.esc(h.nome)}</option>`));
-    }).catch(() => { /* sem API, fica só o Hemocentro Central */ });
-
-    // Máscara dd/mm/aaaa
-    form.nascimento.addEventListener('input', (e) => {
-      const d = e.target.value.replace(/\D/g, '').slice(0, 8);
-      e.target.value = d.replace(/^(\d{2})(\d)/, '$1/$2').replace(/^(\d{2}\/\d{2})(\d)/, '$1/$2');
+    // Máscara de CPF
+    form.cpf.addEventListener('input', (e) => {
+      const d = e.target.value.replace(/\D/g, '').slice(0, 11);
+      e.target.value = d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3}\.\d{3})(\d)/, '$1.$2').replace(/^(\d{3}\.\d{3}\.\d{3})(\d)/, '$1-$2');
     });
 
     // Força da senha
@@ -101,35 +91,42 @@
       forca.textContent = !n ? 'Mínimo de 8 caracteres, com letras e números'
         : n <= 1 ? 'Senha fraca · use 8 caracteres, com letras e números'
         : n === 2 ? 'Senha razoável · combine maiúsculas e minúsculas'
-        : 'Senha forte · mínimo de 8 caracteres, com letras e números';
+        : 'Senha forte';
     });
+
+    function mostrarErro(msg) { erro.innerHTML = ui.alertBox('error', 'Revise o cadastro', msg); erro.hidden = false; erro.scrollIntoView({ block: 'nearest' }); }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const f = form;
       const msgs = [];
-      if (markInvalid(f.nome, !f.nome.value.trim()) | markInvalid(f.sobrenome, !f.sobrenome.value.trim())) msgs.push('Informe nome e sobrenome.');
+      if (markInvalid(f.nome, f.nome.value.trim().length < 3)) msgs.push('Informe seu nome completo.');
       if (markInvalid(f.email, !/^\S+@\S+\.\S+$/.test(f.email.value.trim()))) msgs.push('Informe um e-mail válido.');
-      if (f.nascimento.value && markInvalid(f.nascimento, !/^\d{2}\/\d{2}\/\d{4}$/.test(f.nascimento.value))) msgs.push('A data de nascimento deve estar no formato dd/mm/aaaa.');
-      if (markInvalid(f.perfil, !f.perfil.value)) msgs.push('Escolha sua função.');
-      if (markInvalid(f.instituicao, !f.instituicao.value)) msgs.push('Escolha sua instituição.');
+      if (markInvalid(f.cpf, f.cpf.value.replace(/\D/g, '').length !== 11)) msgs.push('Informe o CPF com 11 dígitos.');
+      if (markInvalid(f.tipoSanguineo, !f.tipoSanguineo.value)) msgs.push('Escolha o tipo sanguíneo.');
+      if (markInvalid(f.sexo, !f.sexo.value)) msgs.push('Escolha o sexo.');
+      if (markInvalid(f.dataNascimento, !f.dataNascimento.value)) msgs.push('Informe a data de nascimento.');
+      const peso = Number(f.pesoKg.value);
+      if (markInvalid(f.pesoKg, !(peso > 0 && peso <= 400))) msgs.push('Informe o peso em kg.');
       if (markInvalid(f.senha, !(f.senha.value.length >= 8 && /[a-zA-Z]/.test(f.senha.value) && /\d/.test(f.senha.value)))) msgs.push('A senha precisa de 8 caracteres, com letras e números.');
       else if (markInvalid(f.senha2, f.senha.value !== f.senha2.value)) msgs.push('As senhas não conferem.');
-      const email = f.email.value.trim().toLowerCase();
-      if (!msgs.length && RV.sessao.contas()[email]) { markInvalid(f.email, true); msgs.push('Já existe uma conta com este e-mail. Entre pela tela de login.'); }
-      if (msgs.length) {
-        erro.innerHTML = ui.alertBox('error', 'Revise o cadastro', msgs.join(' '));
-        erro.hidden = false;
-        return;
+      if (msgs.length) { mostrarErro(msgs.join(' ')); return; }
+
+      const botao = document.getElementById('criar');
+      botao.disabled = true;
+      try {
+        const sessao = await RV.api('/api/auth/cadastro-doador', { method: 'POST', body: {
+          nome: f.nome.value.trim(), email: f.email.value.trim().toLowerCase(), senha: f.senha.value, cpf: f.cpf.value,
+          tipoSanguineo: f.tipoSanguineo.value, sexo: f.sexo.value, dataNascimento: f.dataNascimento.value,
+          pesoKg: peso, telefone: f.telefone.value.trim() || null } });
+        RV.sessao.entrar(sessao, true);
+        irParaHome(sessao.perfil);
+      } catch (err) {
+        const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
+        mostrarErro(campos || ui.erroMsg(err));
+      } finally {
+        botao.disabled = false;
       }
-      const conta = {
-        email, senhaHash: await RV.hashSenha(email, f.senha.value),
-        nome: `${f.nome.value.trim()} ${f.sobrenome.value.trim()}`,
-        perfil: f.perfil.value, instituicao: f.instituicao.value
-      };
-      RV.sessao.salvarConta(conta);
-      RV.sessao.entrar({ email, nome: conta.nome, perfil: conta.perfil, unidade: conta.instituicao }, true);
-      irParaHome(conta.perfil);
     });
   </script>
 </body>

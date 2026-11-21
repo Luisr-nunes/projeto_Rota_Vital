@@ -28,4 +28,10 @@ public interface BolsaRepository extends JpaRepository<Bolsa, Long> {
     // Mesma ideia, mas restrita a um estoque específico (EstoqueService).
     List<Bolsa> findByEstoqueIdAndHemoComponenteAndStatus(
             Long estoqueId, HemoComponente hemoComponente, StatusBolsa status);
+
+    // RN-04: frequência anual de doações do doador.
+    long countByDoadorIdAndDataColetaAfter(Long doadorId, LocalDate data);
+
+    // Perfil DOADOR: histórico das próprias doações.
+    List<Bolsa> findByDoadorIdOrderByDataColetaDesc(Long doadorId);
 }

@@ -512,7 +512,7 @@
 <header>
     <div class="header-content">
         <div class="header-brand">
-            <h1>🩸 Rota Vital</h1>
+            <h1> Rota Vital</h1>
             <p>Gestão e Distribuição de Hemocomponentes na Hemorrede</p>
         </div>
         <nav class="nav-links">
@@ -544,7 +544,7 @@
     <section class="painel" id="painel-hu01" style="margin-bottom: 1.5rem;">
         <div class="painel-header">
             <div>
-                <h2>🩸 Registrar Doação e Cadastrar Bolsa (HU01)</h2>
+                <h2> Registrar Doação e Cadastrar Bolsa (HU01)</h2>
                 <p>A doação e a bolsa coletada são salvas juntas; a bolsa entra no estoque com status DISPONIVEL. Doador inativo é recusado.</p>
             </div>
         </div>
@@ -597,7 +597,7 @@
         <section class="painel">
             <div class="painel-header">
                 <div>
-                    <h2>📋 Requisições Hospitalares (HU04)</h2>
+                    <h2> Requisições Hospitalares (HU04)</h2>
                     <p>Alocação de bolsas compatíveis (ABO/Rh) priorizando o menor vencimento (FEFO)</p>
                 </div>
                 <button id="btn-toggle-novo" class="btn btn-outline btn-sm">+ Novo Pedido</button>
@@ -667,14 +667,14 @@
         <section class="painel">
             <div class="painel-header">
                 <div>
-                    <h2>🗺️ Roteirização de Entrega (HU05)</h2>
+                    <h2> Roteirização de Entrega (HU05)</h2>
                     <p>Menor caminho computado pelo algoritmo de Dijkstra manual sobre a malha de 6 nós</p>
                 </div>
             </div>
 
             <div id="box-detalhe-rota">
                 <div style="text-align: center; padding: 2rem 1rem; color: var(--muted); border: 2px dashed var(--borda); border-radius: .65rem;">
-                    <p style="margin: 0; font-size: .95rem;">👈 Selecione ou aprove uma requisição ao lado e clique em <b>"Calcular Menor Rota (Dijkstra)"</b> para ver o resultado.</p>
+                    <p style="margin: 0; font-size: .95rem;"> Selecione ou aprove uma requisição ao lado e clique em <b>"Calcular Menor Rota (Dijkstra)"</b> para ver o resultado.</p>
                 </div>
             </div>
 
@@ -753,13 +753,14 @@
                     </g>
                 </svg>
                 <div style="font-size: .75rem; color: var(--muted); margin-top: .4rem;">
-                    🔴 N0 = Hemocentro Central | ⚪ N1 a N5 = Hospitais da Rede
+                     N0 = Hemocentro Central |  N1 a N5 = Hospitais da Rede
                 </div>
             </div>
         </section>
     </div>
 </main>
 
+<script src="js/core.js"></script>
 <script>
     const NOMES_NOS = {
         "N0": "Hemocentro Central (Origem)",
@@ -782,7 +783,7 @@
 
     async function carregarHospitais() {
         try {
-            const resp = await fetch('/api/hospitais');
+            const resp = await RV.authFetch('/api/hospitais');
             if (resp.ok) {
                 hospitaisCache = await resp.json();
                 const select = document.getElementById('form-hospital');
@@ -798,7 +799,7 @@
     async function carregarRequisicoes() {
         const container = document.getElementById('lista-requisicoes');
         try {
-            const resp = await fetch('/api/requisicoes');
+            const resp = await RV.authFetch('/api/requisicoes');
             if (!resp.ok) throw new Error('Falha ao obter requisições');
             const lista = await resp.json();
 
@@ -818,15 +819,15 @@
                         ${it.bolsasAlocadas && it.bolsasAlocadas.length > 0 ? `
                             <div class="bolsas-alocadas-box">
                                 <div style="font-size: .8rem; font-weight: 700; color: var(--verde);">
-                                    ✓ Bolsas Reservadas no Estoque:
+                                     Bolsas Reservadas no Estoque:
                                 </div>
                                 ${it.bolsasAlocadas.map(b => `
                                     <div class="bolsa-chip">
-                                        🩸 Bolsa #${b.id} | Tipo: ${(b.tipoSanguineo || '').replace('_', ' ')} | Vence em: <b>${b.dataValidade}</b>
+                                         Bolsa #${b.id} | Tipo: ${(b.tipoSanguineo || '').replace('_', ' ')} | Vence em: <b>${b.dataValidade}</b>
                                     </div>
                                 `).join('')}
                                 <div class="fefo-destaque">
-                                    ★ Alocada pelo algoritmo FEFO (Min-Heap / validade mais crítica)
+                                     Alocada pelo algoritmo FEFO (Min-Heap / validade mais crítica)
                                 </div>
                             </div>
                         ` : ''}
@@ -840,7 +841,7 @@
                             <span class="status-badge status-${req.status}">${req.status}</span>
                         </div>
                         <div class="req-hospital">
-                            🏥 ${hospital.nome || 'Hospital'} 
+                             ${hospital.nome || 'Hospital'} 
                             ${hospital.codigoNo ? `<span class="badge-tag tag-blue" style="font-size: .75rem;">Nó ${hospital.codigoNo}</span>` : ''}
                         </div>
                         <div class="req-meta">
@@ -853,15 +854,15 @@
                         <div class="req-actions">
                             ${!isAprovada ? `
                                 <button class="btn btn-primary btn-sm" onclick="alocarFEFO(${req.id})">
-                                    ⚡ Alocar Bolsas por FEFO (HU04)
+                                     Alocar Bolsas por FEFO (HU04)
                                 </button>
                             ` : `
                                 <span style="color: var(--verde); font-size: .85rem; font-weight: 700;">
-                                    ✓ Alocação Concluída
+                                     Alocação Concluída
                                 </span>
                             `}
                             <button class="btn btn-outline btn-sm" onclick="calcularRota(${req.id})">
-                                🗺️ Calcular Rota Dijkstra (HU05)
+                                 Calcular Rota Dijkstra (HU05)
                             </button>
                         </div>
                     </article>
@@ -874,15 +875,15 @@
 
     async function alocarFEFO(requisicaoId) {
         try {
-            const resp = await fetch(`/api/requisicoes/${requisicaoId}/aprovar`, { method: 'POST' });
+            const resp = await RV.authFetch(`/api/requisicoes/${requisicaoId}/aprovar`, { method: 'POST' });
             if (!resp.ok) {
                 const erroData = await resp.json().catch(() => ({}));
                 throw new Error(erroData.message || `Erro HTTP ${resp.status} ao aprovar requisição.`);
             }
-            showToast(`✅ <b>HU04 Executada com Sucesso!</b> Bolsas compatíveis alocadas e ordenadas por validade mais próxima via <b>FilaFEFO (Min-Heap)</b>.`);
+            showToast(` <b>HU04 Executada com Sucesso!</b> Bolsas compatíveis alocadas e ordenadas por validade mais próxima via <b>FilaFEFO (Min-Heap)</b>.`);
             await carregarRequisicoes();
         } catch (e) {
-            showToast(`❌ Falha na alocação FEFO: ${e.message}`, 'error');
+            showToast(` Falha na alocação FEFO: ${e.message}`, 'error');
         }
     }
 
@@ -893,7 +894,7 @@
 
         try {
             // 1. Rota Dijkstra
-            const resp = await fetch('/api/rotas/calcular', {
+            const resp = await RV.authFetch('/api/rotas/calcular', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ requisicaoId: requisicaoId })
@@ -909,7 +910,7 @@
             // 2. Veículo compatível sugerido
             let veiculoInfo = 'Padrão da frota';
             try {
-                const respV = await fetch(`/api/rotas/veiculo-compativel/${requisicaoId}`);
+                const respV = await RV.authFetch(`/api/rotas/veiculo-compativel/${requisicaoId}`);
                 if (respV.ok) {
                     const v = await respV.json();
                     veiculoInfo = `${v.placa} (${(v.tipoRefrigeracao || '').replaceAll('_', ' ')})`;
@@ -919,14 +920,14 @@
             // Monta visual dos passos da rota
             const trajetoHtml = rota.caminho.map((no, idx) => `
                 <div class="no-badge">${no}</div>
-                ${idx < rota.caminho.length - 1 ? `<span class="no-seta">➔</span>` : ''}
+                ${idx < rota.caminho.length - 1 ? `<span class="no-seta">→</span>` : ''}
             `).join('');
 
             boxRota.innerHTML = `
                 <div class="resultado-rota-box">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 700; color: var(--vermelho-escuro); font-size: .95rem;">
-                            🚀 Rota de Menor Custo Calculada (Dijkstra)
+                             Rota de Menor Custo Calculada (Dijkstra)
                         </span>
                         <span class="badge-tag tag-green">Sucesso HTTP 200</span>
                     </div>
@@ -952,14 +953,14 @@
                     </div>
 
                     <div style="margin-top: .75rem; font-size: .82rem; background: white; border: 1px solid var(--borda); padding: .5rem .75rem; border-radius: .4rem;">
-                        🚛 <b>Veículo Compatível Alocado:</b> ${veiculoInfo}
+                         <b>Veículo Compatível Alocado:</b> ${veiculoInfo}
                     </div>
                 </div>
             `;
 
             // Destaque visual no Grafo SVG
             destacarRotaGrafo(rota.caminho);
-            showToast(`🗺️ <b>HU05 Executada!</b> Menor rota encontrada: ${rota.caminho.join(' ➔ ')} (${rota.distanciaTotalKm} km em ${rota.tempoEstimadoMinutos.toFixed(0)} min).`);
+            showToast(` <b>HU05 Executada!</b> Menor rota encontrada: ${rota.caminho.join(' → ')} (${rota.distanciaTotalKm} km em ${rota.tempoEstimadoMinutos.toFixed(0)} min).`);
 
         } catch (e) {
             boxRota.innerHTML = `
@@ -1029,7 +1030,7 @@
         };
 
         try {
-            const resp = await fetch('/api/requisicoes', {
+            const resp = await RV.authFetch('/api/requisicoes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -1042,13 +1043,13 @@
 
             const criada = await resp.json();
             document.getElementById('resultado-requisicao').innerHTML =
-                `<div class="toast-success" style="display:block; position:static;">✅ Requisição <b>#${criada.id}</b> registrada com status <b>${criada.status}</b> — ${quantidade}x ${componente} (${tipo})</div>`;
-            showToast(`✅ Requisição #${criada.id} registrada com status ${criada.status}. Pronto para alocar bolsas por FEFO.`);
+                `<div class="toast-success" style="display:block; position:static;"> Requisição <b>#${criada.id}</b> registrada com status <b>${criada.status}</b> — ${quantidade}x ${componente} (${tipo})</div>`;
+            showToast(` Requisição #${criada.id} registrada com status ${criada.status}. Pronto para alocar bolsas por FEFO.`);
             document.getElementById('box-novo-pedido').style.display = 'none';
             await carregarRequisicoes();
         } catch (e) {
             document.getElementById('resultado-requisicao').innerHTML =
-                `<div class="toast-error" style="display:block; position:static;">⛔ Requisição não salva — ${e.message}</div>`;
+                `<div class="toast-error" style="display:block; position:static;"> Requisição não salva — ${e.message}</div>`;
             showToast(`Falha ao cadastrar: ${e.message}`, 'error');
         }
     });
@@ -1063,7 +1064,7 @@
 
     // HU01 - doadores sintéticos e registro da doação
     async function carregarDoadores() {
-        const resp = await fetch('/api/doadores');
+        const resp = await RV.authFetch('/api/doadores');
         const doadores = await resp.json();
         const select = document.getElementById('doacao-doador');
         select.innerHTML = doadores.map(d =>
@@ -1080,7 +1081,7 @@
     function iniciarDatasDoacao() {
         const hoje = new Date();
         const validade = new Date(hoje.getTime() + 35 * 24 * 60 * 60 * 1000);
-        document.getElementById('doacao-coleta').value = hoje.toISOString().slice(0, 10);
+        document.getElementById('doacao-coleta').value = RV.hojeISO();
         document.getElementById('doacao-validade').value = validade.toISOString().slice(0, 10);
     }
 
@@ -1096,7 +1097,7 @@
         };
         const box = document.getElementById('resultado-doacao');
         try {
-            const resp = await fetch('/api/doacoes', {
+            const resp = await RV.authFetch('/api/doacoes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -1106,10 +1107,10 @@
                 throw new Error(descreverErro(errData, resp.status));
             }
             const bolsa = await resp.json();
-            box.innerHTML = `<div class="toast-success" style="display:block; position:static;">✅ Bolsa <b>#${bolsa.id}</b> cadastrada no estoque — ${bolsa.tipoSanguineo} · ${bolsa.hemoComponente} · status <b>${bolsa.status}</b> · validade ${bolsa.dataValidade}</div>`;
-            showToast(`✅ Doação registrada e bolsa #${bolsa.id} disponível no estoque.`);
+            box.innerHTML = `<div class="toast-success" style="display:block; position:static;"> Bolsa <b>#${bolsa.id}</b> cadastrada no estoque — ${bolsa.tipoSanguineo} · ${bolsa.hemoComponente} · status <b>${bolsa.status}</b> · validade ${bolsa.dataValidade}</div>`;
+            showToast(` Doação registrada e bolsa #${bolsa.id} disponível no estoque.`);
         } catch (e) {
-            box.innerHTML = `<div class="toast-error" style="display:block; position:static;">⛔ ${e.message}</div>`;
+            box.innerHTML = `<div class="toast-error" style="display:block; position:static;"> ${e.message}</div>`;
             showToast(`Doação não registrada: ${e.message}`, 'error');
         }
     });

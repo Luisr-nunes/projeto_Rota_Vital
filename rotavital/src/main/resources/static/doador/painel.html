@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área do doador · Rota Vital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/rota-vital.css">
+  <style>
+    .doa { --cols: 110px minmax(120px, 1fr) 140px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .tipo-grande { display: flex; align-items: center; gap: 16px; }
+    .receptores { display: flex; gap: 6px; flex-wrap: wrap; }
+    @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="bg-app">
+  <main class="content">
+    <div class="page-head">
+      <div class="page-titles">
+        <h1 class="page-title" id="ola">Olá</h1>
+        <p class="page-sub">Seus dados para doar, quando você pode doar de novo e o histórico das suas doações.</p>
+      </div>
+    </div>
+    <div id="situacao"></div>
+    <div class="row stack-md">
+      <div class="col grow">
+        <form class="card gap-12" id="dados" novalidate aria-labelledby="t-dados">
+          <div><h2 class="card-title" id="t-dados">Meus dados</h2><p class="card-sub">Usados pela triagem do hemocentro. O tipo sanguíneo é confirmado na primeira coleta.</p></div>
+          <div id="erroDados"></div>
+          <div class="form-grid">
+            <label class="field full"><span class="field-label">Nome completo</span><span class="input"><input name="nome" maxlength="120" required></span></label>
+            <label class="field"><span class="field-label">Tipo sanguíneo</span><span class="input"><select name="tipoSanguineo" required></select></span></label>
+            <label class="field"><span class="field-label">Sexo</span><span class="input"><select name="sexo" required><option value="">Selecione</option><option value="FEMININO">Feminino</option><option value="MASCULINO">Masculino</option></select></span></label>
+            <label class="field"><span class="field-label">Data de nascimento</span><span class="input"><input type="date" name="dataNascimento" required></span></label>
+            <label class="field"><span class="field-label">Peso (kg)</span><span class="input"><input type="number" name="pesoKg" min="1" max="400" step="0.1" inputmode="decimal" required></span></label>
+            <label class="field"><span class="field-label">Telefone</span><span class="input"><input type="tel" name="telefone" maxlength="20"></span></label>
+            <label class="field"><span class="field-label">CPF</span><span class="input ro"><input name="cpf" readonly aria-readonly="true"></span></label>
+          </div>
+          <button type="submit" class="btn btn-primary" id="salvar">Salvar dados</button>
+        </form>
+        <section class="card gap-12" aria-labelledby="t-hist">
+          <div><h2 class="card-title" id="t-hist">Minhas doações</h2><p class="card-sub">Registradas pelo hemocentro na coleta</p></div>
+          <div id="historico"></div>
+        </section>
+      </div>
+      <div class="col col-380">
+        <section class="card gap-12" id="tipoCard"></section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/core.js"></script>
+  <script src="../js/ui.js"></script>
+  <script>
+    (function () {
+      const { ui, esc } = RV;
+      const s = ui.shell('doador', 'Meu painel');
+      if (!s) return;
+      const $ = (id) => document.getElementById(id);
+      const f = $('dados');
+      RV.TIPOS.forEach((t) => f.tipoSanguineo.insertAdjacentHTML('beforeend', `<option value="${t}">${RV.tipoLabel(t)}</option>`));
+      f.dataNascimento.max = RV.hojeISO();
+
+      function render(p) {
+        $('ola').textContent = `${RV.saudacao()}, ${p.nome.split(' ')[0]}`;
+        $('situacao').innerHTML = p.apto
+          ? ui.alertBox('success', 'Você pode doar', 'Procure o hemocentro com um documento com foto. Cada doação pode ajudar até 4 pessoas.')
+          : ui.alertBox('warn', RV.diasAte(p.proximaDataPossivel) > 0 ? `Próxima doação a partir de ${RV.fmtDate(p.proximaDataPossivel)}` : 'No momento você não pode doar', (p.motivos || []).join('; ') + '.');
+        f.nome.value = p.nome || ''; f.tipoSanguineo.value = p.tipoSanguineo || ''; f.sexo.value = p.sexo || '';
+        f.dataNascimento.value = p.dataNascimento || ''; f.pesoKg.value = p.pesoKg ?? ''; f.telefone.value = p.telefone || '';
+        f.cpf.value = p.cpfMascarado || '';
+        const receptores = RV.receptoresDe(p.tipoSanguineo);
+        $('tipoCard').innerHTML = `<h2 class="card-title">Seu tipo sanguíneo</h2>
+          <div class="tipo-grande">${ui.blood(p.tipoSanguineo, 64)}<div><b style="font-size:18px">${RV.tipoLabel(p.tipoSanguineo)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${p.dataUltimaDoacao ? RV.fmtDate(p.dataUltimaDoacao) : 'nenhuma ainda'}</p></div></div>
+          <div class="stack" style="gap:8px"><span class="t-muted" style="font-size:13px;font-weight:500">Suas hemácias podem ir para</span><div class="receptores">${receptores.map((t) => ui.blood(t, 32)).join('')}</div></div>
+          <div class="muted-box"><b>Requisitos gerais</b><p>16 a 69 anos, pelo menos 50 kg, descansado e alimentado. Intervalo de 60 dias (homens) ou 90 dias (mulheres) entre doações.</p></div>`;
+        $('historico').innerHTML = p.doacoes && p.doacoes.length
+          ? `<div class="table doa"><div class="tr thead"><span>Data</span><span>Componente</span><span>Situação</span></div>` +
+            p.doacoes.map((d) => `<div class="tr"><span>${RV.fmtDate(d.dataColeta)}</span><span>${esc(RV.compLabel(d.hemoComponente))}</span><span>${ui.badgeBolsa(d.status)}</span></div>`).join('') + '</div>'
+          : ui.empty('Nenhuma doação registrada', 'Depois da sua primeira coleta, ela aparece aqui.');
+      }
+
+      async function carregar() {
+        $('situacao').innerHTML = ui.skeletonRows(1, 64);
+        try { render(await RV.api('/api/doador/me')); }
+        catch (e) { $('situacao').innerHTML = ui.alertBox('error', 'Não foi possível carregar seus dados', ui.erroMsg(e)); }
+      }
+
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const peso = Number(f.pesoKg.value);
+        if (!f.nome.value.trim() || !f.sexo.value || !f.dataNascimento.value || !(peso > 0)) {
+          $('erroDados').innerHTML = ui.alertBox('error', 'Revise os dados', 'Nome, sexo, data de nascimento e peso são obrigatórios.');
+          return;
+        }
+        $('erroDados').innerHTML = '';
+        const b = $('salvar'); b.disabled = true;
+        try {
+          render(await RV.api('/api/doador/me', { method: 'PUT', body: {
+            nome: f.nome.value.trim(), tipoSanguineo: f.tipoSanguineo.value, sexo: f.sexo.value,
+            dataNascimento: f.dataNascimento.value, pesoKg: peso, telefone: f.telefone.value.trim() || null } }));
+          ui.toast('success', 'Dados salvos', 'Sua situação para doar foi recalculada.');
+        } catch (err) {
+          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
+          $('erroDados').innerHTML = ui.alertBox('error', 'Não foi possível salvar', campos || ui.erroMsg(err));
+        } finally { b.disabled = false; }
+      });
+      carregar();
+    })();
+  </script>
+</body>
+</html>

@@ -21,6 +21,7 @@ public class GlobalExceptionHandler {
             EstoqueInsuficienteException.class,
             DoadorInativoException.class,
             DoacaoForaDoIntervaloException.class,
+            DoadorInaptoException.class,
             VeiculoIncompativelException.class,
             NenhumaBolsaCompativelException.class,
             RotaIndisponivelException.class
@@ -46,6 +47,27 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DiasPrevisaoInvalidoException.class)
     public ResponseEntity<Map<String, Object>> handleDiasPrevisao(DiasPrevisaoInvalidoException ex) {
         return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    @ExceptionHandler(ConflitoCadastroException.class)
+    public ResponseEntity<Map<String, Object>> handleConflitoCadastro(ConflitoCadastroException ex) {
+        return corpoErro(HttpStatus.CONFLICT, ex);
+    }
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<Map<String, Object>> handleCredenciais(CredenciaisInvalidasException ex) {
+        return corpoErro(HttpStatus.UNAUTHORIZED, ex);
+    }
+
+    @ExceptionHandler(DadosBolsaInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> handleDadosBolsa(DadosBolsaInvalidosException ex) {
+        return corpoErro(HttpStatus.BAD_REQUEST, ex);
+    }
+
+    // Recurso de outro tenant (hospital/doador): 404, igual a inexistente.
+    @ExceptionHandler(AcessoNegadoRecursoException.class)
+    public ResponseEntity<Map<String, Object>> handleOutroTenant(AcessoNegadoRecursoException ex) {
+        return corpoErro(HttpStatus.NOT_FOUND, ex);
     }
 
     @ExceptionHandler(FiltroValidadeInvalidoException.class)
