@@ -113,8 +113,7 @@
             dataNascimento: f.dataNascimento.value, pesoKg: peso, telefone: f.telefone.value.trim() || null } }));
           ui.toast('success', 'Dados salvos', 'Sua situação para doar foi recalculada.');
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erroDados').innerHTML = ui.alertBox('error', 'Não foi possível salvar', campos || ui.erroMsg(err));
+          $('erroDados').innerHTML = ui.alertBox('error', 'Não foi possível salvar', ui.erroMsg(err));
         } finally { b.disabled = false; }
       });
       carregar();

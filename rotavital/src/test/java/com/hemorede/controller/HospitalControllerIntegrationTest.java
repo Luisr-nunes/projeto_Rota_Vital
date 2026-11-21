@@ -78,4 +78,16 @@ class HospitalControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(org.hamcrest.Matchers.greaterThanOrEqualTo(1))));
     }
+
+    @Test
+    @DisplayName("POST /api/hospitais com CNPJ e nome inválidos responde 400 com os campos")
+    void deveRecusarHospitalInvalido() throws Exception {
+        mockMvc.perform(post("/api/hospitais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"\",\"cnpj\":\"123\",\"latitude\":120}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros.nome").exists())
+                .andExpect(jsonPath("$.erros.cnpj").value("CNPJ inválido; use 14 dígitos"))
+                .andExpect(jsonPath("$.erros.latitude").exists());
+    }
 }

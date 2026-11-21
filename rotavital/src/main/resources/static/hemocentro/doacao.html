@@ -132,8 +132,7 @@
           b.innerHTML = 'Registrar doação';
           await mostrarDoador();
         } catch (err) {
-          const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-          $('erro').innerHTML = ui.alertBox('error', 'Doação não registrada', campos || ui.erroMsg(err));
+          $('erro').innerHTML = ui.alertBox('error', 'Doação não registrada', ui.erroMsg(err));
           b.innerHTML = 'Registrar doação'; b.disabled = false;
         }
       });

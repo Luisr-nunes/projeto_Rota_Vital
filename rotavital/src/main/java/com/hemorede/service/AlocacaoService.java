@@ -53,19 +53,19 @@ public class AlocacaoService {
     @Transactional
     public AlocacaoResponse alocarRequisicao(Long requisicaoId) {
         if (requisicaoRepository == null || roteirizacaoService == null) {
-            throw new IllegalStateException("Alocacao de requisicao exige os servicos integrados");
+            throw new IllegalStateException("A alocação de requisições exige os serviços integrados");
         }
 
         Requisicao requisicao = requisicaoRepository.findById(requisicaoId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Requisicao nao encontrada: " + requisicaoId));
+                        "Requisição não encontrada: " + requisicaoId));
 
         if (!RegraTransicaoRequisicao.permitida(requisicao.getStatus(), StatusRequisicao.ALOCADA)) {
             throw new IllegalStateException(
-                    "A requisicao deve estar PENDENTE para ser alocada: " + requisicaoId);
+                    "A requisição precisa estar pendente para ser alocada: " + requisicaoId);
         }
         if (requisicao.getItens() == null || requisicao.getItens().isEmpty()) {
-            throw new IllegalStateException("A requisicao nao possui itens para alocar: " + requisicaoId);
+            throw new IllegalStateException("A requisição não tem itens para alocar: " + requisicaoId);
         }
 
         // Calcula antes de reservar. Se nao houver rota, nenhuma bolsa e alterada.
@@ -151,7 +151,7 @@ public class AlocacaoService {
         if (item == null || item.getHemoComponente() == null
                 || item.getTipoSanguineo() == null || item.getQuantidade() == null
                 || item.getQuantidade() <= 0) {
-            throw new IllegalStateException("Item de requisicao invalido para alocacao");
+            throw new IllegalStateException("Item de requisição inválido para alocação");
         }
     }
 
