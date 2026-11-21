@@ -69,7 +69,7 @@
       function render(p) {
         $('ola').textContent = `${RV.saudacao()}, ${p.nome.split(' ')[0]}`;
         $('situacao').innerHTML = p.apto
-          ? ui.alertBox('success', 'Você pode doar', 'Procure o hemocentro com um documento com foto. Cada doação pode ajudar até 4 pessoas.')
+          ? ui.alertBox('success', 'Você pode doar', 'Procure o hemocentro com um documento com foto. Cada doação pode ajudar até 4 pessoas.', `<a class="btn btn-secondary sm" href="orientacoes.html">Como se preparar</a>`)
           : ui.alertBox('warn', RV.diasAte(p.proximaDataPossivel) > 0 ? `Próxima doação a partir de ${RV.fmtDate(p.proximaDataPossivel)}` : 'No momento você não pode doar', (p.motivos || []).join('; ') + '.');
         f.nome.value = p.nome || ''; f.tipoSanguineo.value = p.tipoSanguineo || ''; f.sexo.value = p.sexo || '';
         f.dataNascimento.value = p.dataNascimento || ''; f.pesoKg.value = p.pesoKg ?? ''; f.telefone.value = p.telefone || '';
