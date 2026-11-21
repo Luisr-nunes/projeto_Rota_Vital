@@ -195,7 +195,7 @@ public class IndicadoresService {
             throw new DiasPrevisaoInvalidoException("O numero de dias deve ser maior que zero");
         }
         if (bolsaRepository == null) {
-            throw new IllegalStateException("Repositorio de bolsas nao configurado");
+            throw new IllegalStateException("Repositório de bolsas não configurado");
         }
 
         LocalDate fim = LocalDate.now();
@@ -244,7 +244,7 @@ public class IndicadoresService {
         }
         if (bolsaRepository == null) {
             throw new ModeloProbabilisticoIndisponivelException(
-                    "Repositorio de estoque nao configurado");
+                    "Repositório de estoque não configurado");
         }
 
         return calcularRiscoDesabastecimento(
@@ -303,14 +303,14 @@ public class IndicadoresService {
     private void validarLambdas(Map<TipoSanguineo, Double> lambdasDiarios) {
         if (lambdasDiarios == null) {
             throw new ModeloProbabilisticoIndisponivelException(
-                    "Modelo de demanda ainda nao foi configurado");
+                    "O modelo de demanda ainda não foi configurado");
         }
 
         for (TipoSanguineo tipo : TipoSanguineo.values()) {
             Double lambda = lambdasDiarios.get(tipo);
             if (lambda == null || !Double.isFinite(lambda) || lambda < 0.0) {
                 throw new ModeloProbabilisticoIndisponivelException(
-                        "Lambda diario ausente ou invalido para " + tipo);
+                        "Lambda diário ausente ou inválido para " + tipo);
             }
         }
     }

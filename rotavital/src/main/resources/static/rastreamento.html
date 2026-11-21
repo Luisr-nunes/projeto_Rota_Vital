@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acompanhar entrega · Rota Vital</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,7 +41,7 @@
     <div class="row stack-md">
       <section class="card grow gap-12" aria-labelledby="t-mapa">
         <div class="card-head">
-          <div><h2 class="card-title" id="t-mapa">Trajeto</h2><p class="card-sub">Menor rota (Dijkstra) do hemocentro até o hospital · posição estimada pelo tempo de viagem</p></div>
+          <div><h2 class="card-title" id="t-mapa">Trajeto</h2><p class="card-sub">Menor rota do hemocentro até o hospital · posição estimada pelo tempo de viagem</p></div>
           <span id="chip"></span>
         </div>
         <div id="mapa" role="region" aria-label="Mapa do trajeto da entrega"></div>
@@ -138,7 +140,7 @@
         const situacao = entregue ? 'Entregue ao hospital' : emRota ? 'Em trânsito' : ['ALOCADA', 'APROVADA'].includes(r.status) ? 'Bolsas reservadas, aguardando despacho' : 'Rota prevista · aguardando alocação das bolsas';
         $('resumo').innerHTML = `
           <h2 class="card-title">${esc(situacao)}</h2>
-          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted" style="font-size:13px;font-weight:500">Trajeto concluído</span><b style="font-size:13px;color:var(--ink)">${RV.num(pct, 0)}%</b></div>
+          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted fs-sm fw-500">Trajeto concluído</span><b class="fs-sm t-ink">${RV.num(pct, 0)}%</b></div>
             <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><span style="width:${pct}%"></span></div></div>
           <div class="kv">
             <div><span class="k">Trecho atual</span><span class="v">${esc(trecho)}</span></div>
