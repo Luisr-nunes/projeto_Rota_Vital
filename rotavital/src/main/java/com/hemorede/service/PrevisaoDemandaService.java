@@ -96,7 +96,7 @@ public class PrevisaoDemandaService {
     private Map<TipoSanguineo, Long> carregarDemandaRecente() {
         if (requisicaoRepository == null) {
             throw new ModeloProbabilisticoIndisponivelException(
-                    "Repositorio de requisicoes nao configurado para estimar demanda");
+                    "Repositório de requisições não configurado para estimar a demanda");
         }
         LocalDate hoje = LocalDate.now();
         LocalDate inicio = hoje.minusDays(JANELA_PREVISAO_DIAS - 1L);
@@ -144,7 +144,7 @@ public class PrevisaoDemandaService {
         }
         if (modeloProbabilisticoDemanda == null) {
             throw new ModeloProbabilisticoIndisponivelException(
-                    "Modelo de referencia PI2-177 nao configurado para tipos sem historico");
+                    "Modelo de referência não configurado para tipos sem histórico");
         }
         return modeloProbabilisticoDemanda.obterLambdasValidados();
     }

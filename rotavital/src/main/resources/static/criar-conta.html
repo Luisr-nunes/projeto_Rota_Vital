@@ -122,8 +122,7 @@
         RV.sessao.entrar(sessao, true);
         irParaHome(sessao.perfil);
       } catch (err) {
-        const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-        mostrarErro(campos || ui.erroMsg(err));
+        mostrarErro(ui.erroMsg(err));
       } finally {
         botao.disabled = false;
       }
