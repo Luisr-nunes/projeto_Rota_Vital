@@ -609,7 +609,9 @@ a.req-row:hover { border-color: #C3D3CF; background: #EFF3F2; }
   .row { flex-direction: column; align-items: stretch; }
   .row > *, .col-380, .col-420 { width: 100%; }
   .col-400 { width: 100% !important; } /* gestor/painel.html fixa 400 px inline */
-  .seg { max-width: 100%; overflow-x: auto; }
+  .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tr .acoes, .tr .acoes-linha { grid-column: 1 / -1; justify-content: flex-start; flex-wrap: wrap; }
+  .tr .btn-ghost { margin-left: 0; }
   .seg button { flex: none; }
   .kpi { padding: 14px; }
   .thead { display: none; }
