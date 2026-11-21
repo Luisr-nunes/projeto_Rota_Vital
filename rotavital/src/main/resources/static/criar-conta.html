@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Criar conta · Rota Vital</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Cadastre-se como doador de sangue e veja quando você pode doar de novo.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Rota Vital">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Criar conta de doador · Rota Vital">
+  <meta property="og:description" content="Cadastre-se como doador de sangue e veja quando você pode doar de novo.">
+  <meta property="og:url" content="https://rota-vital-jnmx.onrender.com/criar-conta.html">
+  <meta property="og:image" content="https://rota-vital-jnmx.onrender.com/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,7 +45,7 @@
 
       <div class="auth-grid">
         <label class="field full"><span class="field-label">Nome completo</span><span class="input glass-input"><input name="nome" autocomplete="name" placeholder="Seu nome" required maxlength="120"></span></label>
-        <label class="field"><span class="field-label">E-mail</span><span class="input glass-input"><input type="email" name="email" autocomplete="email" placeholder="voce@email.com" required></span></label>
+        <label class="field"><span class="field-label">E-mail</span><span class="input glass-input"><input type="email" name="email" maxlength="254" autocomplete="email" placeholder="voce@email.com" required></span></label>
         <label class="field"><span class="field-label">CPF</span><span class="input glass-input"><input name="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" required></span></label>
         <label class="field"><span class="field-label">Tipo sanguíneo</span><span class="input glass-input" data-icr="chevD"><select name="tipoSanguineo" class="ph" required><option value="" selected>Selecione</option></select></span></label>
         <label class="field"><span class="field-label">Sexo</span><span class="input glass-input" data-icr="chevD"><select name="sexo" class="ph" required><option value="" selected>Selecione</option><option value="FEMININO">Feminino</option><option value="MASCULINO">Masculino</option></select></span></label>
@@ -122,8 +134,7 @@
         RV.sessao.entrar(sessao, true);
         irParaHome(sessao.perfil);
       } catch (err) {
-        const campos = err.body && err.body.erros ? Object.values(err.body.erros).join('; ') : '';
-        mostrarErro(campos || ui.erroMsg(err));
+        mostrarErro(ui.erroMsg(err));
       } finally {
         botao.disabled = false;
       }

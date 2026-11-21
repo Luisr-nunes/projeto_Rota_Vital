@@ -3,9 +3,29 @@
   'use strict';
 
   /* ---------- API ---------- */
+  // Mensagem para o usuário: o que houve + o que fazer. Erros por campo vêm em body.erros.
+  const MSG_STATUS = {
+    401: 'Sua sessão expirou. Entre de novo.',
+    403: 'Seu perfil não tem acesso a esta ação.',
+    404: 'Não encontramos o que você procurou.',
+    500: 'O servidor não conseguiu concluir a operação. Tente de novo em instantes.',
+    502: 'O servidor está iniciando. Aguarde alguns segundos e tente de novo.',
+    503: 'O servidor está iniciando. Aguarde alguns segundos e tente de novo.',
+    504: 'O servidor demorou a responder. Tente de novo em instantes.',
+  };
+  function mensagemErro(status, body) {
+    const b = body && typeof body === 'object' ? body : {};
+    let msg = b.mensagem || MSG_STATUS[status] || `Não foi possível concluir (erro ${status}).`;
+    if (b.erros && typeof b.erros === 'object') {
+      const campos = Object.values(b.erros).filter(Boolean);
+      if (campos.length) msg += ' ' + campos.map((c) => c.charAt(0).toUpperCase() + c.slice(1)).join('; ') + '.';
+    }
+    return msg;
+  }
+
   class ApiError extends Error {
     constructor(status, body) {
-      super((body && (body.mensagem || body.message)) || ('Erro ' + status));
+      super(mensagemErro(status, body));
       this.status = status;
       this.body = body || {};
     }
