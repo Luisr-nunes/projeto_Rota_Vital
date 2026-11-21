@@ -37,6 +37,8 @@ public class RequisicaoService {
     private final RequisicaoRepository requisicaoRepository;
     private final HospitalRepository hospitalRepository;
     private final AlocacaoService alocacaoService;
+    /** Opcional para manter o construtor dos testes unitários; encerra a rota na entrega. */
+    private RastreamentoService rastreamentoService;
 
     public RequisicaoService(RequisicaoRepository requisicaoRepository,
                              HospitalRepository hospitalRepository,
@@ -54,6 +56,11 @@ public class RequisicaoService {
     public Requisicao buscarPorId(Long id) {
         return requisicaoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Requisição não encontrada: " + id));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setRastreamentoService(RastreamentoService rastreamentoService) {
+        this.rastreamentoService = rastreamentoService;
     }
 
     /**
@@ -147,6 +154,9 @@ public class RequisicaoService {
         }
 
         requisicao.setStatus(StatusRequisicao.ENTREGUE);
+        if (rastreamentoService != null) {
+            rastreamentoService.encerrarRota(requisicao);
+        }
         return requisicaoRepository.save(requisicao);
     }
 }
