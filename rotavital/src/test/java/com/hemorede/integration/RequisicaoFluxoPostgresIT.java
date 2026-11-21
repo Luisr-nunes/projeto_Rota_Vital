@@ -1,6 +1,7 @@
 package com.hemorede.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.Prioridade;
 import com.hemorede.domain.enums.StatusBolsa;
@@ -44,6 +45,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * para provar o que de fato ficou no banco: mapeamento dos enums como texto, tabela de junção
  * {@code item_requisicao_bolsa} e rollback de transação.</p>
  */
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class RequisicaoFluxoPostgresIT extends PostgresIntegrationTestBase {
 
     @Autowired

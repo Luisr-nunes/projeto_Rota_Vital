@@ -21,6 +21,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** MockMvc executa controllers e servicos reais; apenas o banco e sintetico (H2). */
 public class RequisicaoSteps {
+
+    /** Os passos agem como operador do hemocentro (a API exige o perfil desde a autenticação JWT). */
+    private static final org.springframework.test.web.servlet.request.RequestPostProcessor HEMOCENTRO =
+            org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("hemocentro").roles("HEMOCENTRO");
     @Autowired private MockMvc mvc;
     @Autowired private HospitalRepository hospitais;
     @Autowired private RequisicaoRepository requisicoes;
@@ -105,7 +109,7 @@ public class RequisicaoSteps {
 
     @Quando("solicito a alocacao da requisicao")
     public void alocar() throws Exception {
-        resposta = mvc.perform(post("/api/v1/requisicoes/{id}/alocacao", requisicaoId));
+        resposta = mvc.perform(post("/api/v1/requisicoes/{id}/alocacao", requisicaoId).with(HEMOCENTRO));
     }
 
     @Entao("a API responde {int}")
@@ -170,6 +174,6 @@ public class RequisicaoSteps {
 
     @Quando("confirmo a entrega da requisicao")
     public void confirmarEntrega() throws Exception {
-        resposta = mvc.perform(patch("/api/v1/requisicoes/{id}/entrega", requisicaoId));
+        resposta = mvc.perform(patch("/api/v1/requisicoes/{id}/entrega", requisicaoId).with(HEMOCENTRO));
     }
 }

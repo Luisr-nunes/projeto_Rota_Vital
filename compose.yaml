@@ -36,6 +36,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rotavital}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
       HEMOREDE_SEED_ENABLED: ${HEMOREDE_SEED_ENABLED:-true}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no arquivo .env (mínimo de 32 caracteres)}
+      DEMO_SENHA: ${DEMO_SENHA:-}
     ports:
       - "${API_PORT:-8080}:8080"
     healthcheck:

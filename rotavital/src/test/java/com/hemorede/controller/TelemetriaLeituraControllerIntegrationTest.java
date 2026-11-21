@@ -1,6 +1,7 @@
 package com.hemorede.controller;
 
 import com.hemorede.service.AgregadorTelemetria;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+// Operações do hemocentro: a API exige o perfil HEMOCENTRO desde a autenticação JWT.
+@WithMockUser(roles = "HEMOCENTRO")
 class TelemetriaLeituraControllerIntegrationTest {
 
     private static final String URL = "/api/v1/telemetria/leituras";
