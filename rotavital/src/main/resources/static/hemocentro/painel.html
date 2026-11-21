@@ -104,7 +104,7 @@
         const txt = v.n <= 1 ? v.txt : `vence em ${v.n} dias`;
         return `<a class="cell" href="estoque.html?bolsa=${b.id}" style="gap:12px">${ui.blood(b.tipoSanguineo, 36)}
           <span class="stack" style="flex:1"><span class="semi" style="color:var(--ink)">${RV.codigoBolsa(b)}</span><span class="sub">${RV.compLabel(b.hemoComponente)}</span></span>
-          <span class="semi ${v.cls}" style="font-size:13px">${txt}</span></a>`;
+          <span class="semi ${v.cls} fs-sm">${txt}</span></a>`;
       }).join('') : '<p class="sub">Nenhuma bolsa disponível.</p>';
 
       // Estoque mínimo

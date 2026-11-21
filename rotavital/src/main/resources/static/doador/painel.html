@@ -83,8 +83,8 @@
           : 'Você pode corrigir até a primeira coleta, quando o tipo é confirmado em laboratório.';
         const receptores = RV.receptoresDe(p.tipoSanguineo);
         $('tipoCard').innerHTML = `<h2 class="card-title">Seu tipo sanguíneo</h2>
-          <div class="tipo-grande">${ui.blood(p.tipoSanguineo, 64)}<div><b style="font-size:18px">${RV.tipoLabel(p.tipoSanguineo)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${p.dataUltimaDoacao ? RV.fmtDate(p.dataUltimaDoacao) : 'nenhuma ainda'}</p></div></div>
-          <div class="stack" style="gap:8px"><span class="t-muted" style="font-size:13px;font-weight:500">Suas hemácias podem ir para</span><div class="receptores">${receptores.map((t) => ui.blood(t, 32)).join('')}</div></div>
+          <div class="tipo-grande">${ui.blood(p.tipoSanguineo, 64)}<div><b class="fs-xl">${RV.tipoLabel(p.tipoSanguineo)}</b><p class="sub" style="margin:4px 0 0">Última doação: ${p.dataUltimaDoacao ? RV.fmtDate(p.dataUltimaDoacao) : 'nenhuma ainda'}</p></div></div>
+          <div class="stack" style="gap:8px"><span class="t-muted fs-sm fw-500">Suas hemácias podem ir para</span><div class="receptores">${receptores.map((t) => ui.blood(t, 32)).join('')}</div></div>
           <div class="muted-box"><b>Requisitos gerais</b><p>16 a 69 anos, pelo menos 50 kg, descansado e alimentado. Intervalo de 60 dias (homens) ou 90 dias (mulheres) entre doações.</p></div>`;
         $('historico').innerHTML = p.doacoes && p.doacoes.length
           ? `<div class="table doa"><div class="tr thead"><span>Data</span><span>Componente</span><span>Situação</span></div>` +

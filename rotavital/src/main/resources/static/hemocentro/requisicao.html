@@ -77,7 +77,7 @@
       // Itens solicitados
       $('itens').innerHTML = (req.itens || []).map((i) => `<div class="item-row">${ui.blood(i.tipoSanguineo, 52)}
         <div class="grow"><h3>${i.quantidade} ${i.quantidade === 1 ? 'bolsa' : 'bolsas'} de ${esc(RV.compLabel(i.hemoComponente))} ${RV.tipoLabel(i.tipoSanguineo)}</h3>
-          <span class="sub" style="font-size:13px">Transporte ${esc((RV.COMPONENTE[i.hemoComponente] || {}).frase || '')}</span></div>
+          <span class="sub fs-sm">Transporte ${esc((RV.COMPONENTE[i.hemoComponente] || {}).frase || '')}</span></div>
         <div class="compat">Doadores compatíveis (ABO/Rh)<div>${RV.DOADORES[i.tipoSanguineo].map((t) => ui.blood(t, 28)).join('')}</div></div></div>`).join('');
 
       if (req.status !== 'PENDENTE') return mostrarAlocadas();
@@ -110,7 +110,7 @@
           const linhas = cand.slice(0, item.quantidade + 1);
           const corpo = linhas.length ? linhas.map((b, i) => {
             const on = escolhidas.includes(b); const v = RV.validade(b.dataValidade);
-            return `<div class="tr${on ? '' : ' dim'}"><span class="cbx${on ? ' on' : ''}">${on ? ui.icon('check', 13, '#fff', 3) : ''}</span>
+            return `<div class="tr${on ? '' : ' dim'}"><span class="cbx${on ? ' on' : ''}">${on ? ui.icon('check', 13, '#fff', 2) : ''}</span>
               <span style="font-weight:500">${i + 1}º</span><span class="td-strong">${RV.codigoBolsa(b)}</span><span>${ui.blood(b.tipoSanguineo, 32)}</span>
               <span class="stack"><span style="font-weight:500">${RV.fmtDate(b.dataValidade)}</span><span class="sub semi ${v.cls}">${v.txt}</span></span><span>${ui.badgeBolsa('DISPONIVEL')}</span></div>`;
           }).join('') : `<div class="tr"><span></span><span class="t-muted" style="grid-column:2/-1">Nenhuma bolsa compatível disponível.</span></div>`;
@@ -125,7 +125,7 @@
         const tipos = [...new Set(plano.flatMap((p) => p.escolhidas.map((b) => RV.tipoLabel(b.tipoSanguineo))))];
         $('resumo').innerHTML = `
           <h2 class="card-title">Resumo da alocação</h2>
-          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted" style="font-size:13px;font-weight:500">Bolsas selecionadas</span><b style="font-size:13px;color:var(--ink)">${encontrado} / ${necessario}</b></div>
+          <div class="stack" style="gap:8px"><div class="card-head"><span class="t-muted fs-sm fw-500">Bolsas selecionadas</span><b class="fs-sm t-ink">${encontrado} / ${necessario}</b></div>
             <div class="progress${ok ? '' : ' err'}"><span style="width:${pct}%"></span></div></div>
           <div class="checks">
             ${ui.checkItem(true, 'Compatibilidade ABO/Rh', tipos.length ? `Bolsas ${tipos.join(' e ')}, compatíveis com o pedido` : 'Somente tipos doadores compatíveis')}
@@ -172,10 +172,10 @@
         const bolsas = ((r && r.itens) || []).flatMap((i) => i.bolsasAlocadas || []);
         const proxima = reqs.find((x) => x.status === 'PENDENTE' && x.id !== req.id);
         const n = bolsas.length || necessario;
-        ui.overlay(`<span class="status-circle">${ui.icon('check', 30, '#fff', 2.6)}</span>
+        ui.overlay(`<span class="status-circle">${ui.icon('check', 30, '#fff', 2)}</span>
           <h2>Requisição #${req.id} aprovada</h2>
           <p>${n} ${n === 1 ? 'bolsa foi reservada' : 'bolsas foram reservadas'} por FEFO. Agora é só despachar para a entrega e acompanhar o trajeto.</p>
-          <div class="kv" style="width:100%;gap:8px">${bolsas.map((b) => `<div style="align-items:center"><span class="cell">${ui.blood(b.tipoSanguineo, 28)}<span class="semi" style="font-size:13px">${RV.codigoBolsa(b)}</span></span>${ui.badgeBolsa('RESERVADA')}</div>`).join('')}</div>
+          <div class="kv" style="width:100%;gap:8px">${bolsas.map((b) => `<div style="align-items:center"><span class="cell">${ui.blood(b.tipoSanguineo, 28)}<span class="semi fs-sm">${RV.codigoBolsa(b)}</span></span>${ui.badgeBolsa('RESERVADA')}</div>`).join('')}</div>
           <div class="modal-actions"><a class="btn btn-secondary" href="requisicoes.html">Voltar à fila</a>
             ${proxima ? `<a class="btn btn-primary" href="requisicao.html?id=${proxima.id}">Próxima requisição ${ui.icon('arrowR', 18, '#fff', 2)}</a>` : `<a class="btn btn-primary" href="painel.html">Ir ao painel</a>`}</div>`, { cls: 'center w500' });
         $('badges').innerHTML = (req.prioridade === 'URGENTE' ? ui.urgent() : '') + ui.badgeReq('APROVADA');
