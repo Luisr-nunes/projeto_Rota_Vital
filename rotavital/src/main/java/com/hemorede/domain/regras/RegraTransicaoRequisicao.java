@@ -1,6 +1,6 @@
 package com.hemorede.domain.regras;
 
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 
 import java.util.EnumMap;
 import java.util.EnumSet;

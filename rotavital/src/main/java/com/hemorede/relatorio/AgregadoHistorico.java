@@ -2,7 +2,7 @@ package com.hemorede.relatorio;
 
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.Prioridade;
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.dto.RelatorioHistoricoResponse;
 

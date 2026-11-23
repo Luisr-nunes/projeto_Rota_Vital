@@ -1,7 +1,7 @@
 package com.hemorede.domain.regras;
 
 import com.hemorede.domain.enums.HemoComponente;
-import com.hemorede.domain.enums.TipoRefrigeracao;
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
 
 import java.util.Collection;
 import java.util.EnumSet;

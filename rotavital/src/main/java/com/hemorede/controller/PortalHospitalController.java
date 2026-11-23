@@ -1,9 +1,9 @@
 package com.hemorede.controller;
 
 import com.hemorede.domain.model.Hospital;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import com.hemorede.dto.HospitalRequisicaoRequest;
-import com.hemorede.dto.RastreamentoResponse;
+import com.hemorede.expedicao.application.dto.RastreamentoResponse;
 import com.hemorede.service.PortalHospitalService;
 import com.hemorede.seguranca.UsuarioAtual;
 import jakarta.validation.Valid;

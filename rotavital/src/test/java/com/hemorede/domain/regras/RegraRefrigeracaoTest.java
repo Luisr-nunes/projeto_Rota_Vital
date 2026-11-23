@@ -1,6 +1,6 @@
 package com.hemorede.domain.regras;
 
-import com.hemorede.domain.enums.TipoRefrigeracao;
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

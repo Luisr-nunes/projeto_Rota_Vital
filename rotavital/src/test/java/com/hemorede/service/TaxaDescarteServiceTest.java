@@ -6,7 +6,7 @@ import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.exception.DiasPrevisaoInvalidoException;
 import com.hemorede.repository.BolsaRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;

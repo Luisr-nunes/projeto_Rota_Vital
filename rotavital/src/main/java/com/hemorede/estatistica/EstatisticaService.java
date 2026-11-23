@@ -3,7 +3,7 @@ package com.hemorede.estatistica;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
-import com.hemorede.domain.model.ItemRequisicao;
+import com.hemorede.requisicao.domain.model.ItemRequisicao;
 import com.hemorede.estatistica.EstatisticaDtos.Descritiva;
 import com.hemorede.estatistica.EstatisticaDtos.FeatureAvaliada;
 import com.hemorede.estatistica.EstatisticaDtos.LinhaMemoria;
@@ -15,7 +15,7 @@ import com.hemorede.estatistica.EstatisticaDtos.Variavel;
 import com.hemorede.estatistica.HistoricoSintetico.Coluna;
 import com.hemorede.estatistica.HistoricoSintetico.Conjunto;
 import com.hemorede.repository.BolsaRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

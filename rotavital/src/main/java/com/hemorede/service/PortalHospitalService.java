@@ -1,13 +1,15 @@
 package com.hemorede.service;
 
 import com.hemorede.domain.model.Hospital;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import com.hemorede.dto.HospitalRequisicaoRequest;
-import com.hemorede.dto.RastreamentoResponse;
-import com.hemorede.dto.RequisicaoRequest;
+import com.hemorede.expedicao.application.dto.RastreamentoResponse;
+import com.hemorede.requisicao.application.dto.RequisicaoRequest;
 import com.hemorede.exception.AcessoNegadoRecursoException;
 import com.hemorede.repository.HospitalRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
+import com.hemorede.requisicao.application.service.RequisicaoService;
+import com.hemorede.expedicao.application.service.RastreamentoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

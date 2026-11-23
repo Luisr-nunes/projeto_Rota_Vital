@@ -2,6 +2,7 @@ package com.hemorede.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;

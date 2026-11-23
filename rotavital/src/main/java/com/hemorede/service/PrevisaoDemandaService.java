@@ -1,15 +1,15 @@
 package com.hemorede.service;
 
 import com.hemorede.domain.enums.HemoComponente;
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
-import com.hemorede.domain.model.ItemRequisicao;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.ItemRequisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import com.hemorede.dto.PrevisaoDemandaResponse;
 import com.hemorede.exception.DiasPrevisaoInvalidoException;
 import com.hemorede.exception.ModeloProbabilisticoIndisponivelException;
 import com.hemorede.indicadores.ModeloProbabilisticoDemanda;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -5,7 +5,7 @@ import com.hemorede.domain.enums.Prioridade;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

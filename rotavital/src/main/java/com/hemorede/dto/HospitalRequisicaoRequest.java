@@ -1,5 +1,7 @@
 package com.hemorede.dto;
 
+import com.hemorede.requisicao.application.dto.ItemRequisicaoRequest;
+
 import com.hemorede.domain.enums.Prioridade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

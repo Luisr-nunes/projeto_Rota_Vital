@@ -1,10 +1,10 @@
 package com.hemorede.service;
 
 import com.hemorede.domain.enums.StatusBolsa;
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import com.hemorede.dto.IndicadoresResponse;
 import com.hemorede.dto.RiscoDesabastecimentoResponse;
 import com.hemorede.dto.TaxaDescarteResponse;
@@ -15,7 +15,7 @@ import com.hemorede.exception.ModeloProbabilisticoIndisponivelException;
 import com.hemorede.indicadores.ModeloProbabilisticoDemanda;
 import com.hemorede.indicadores.DadosIndicadoresSinteticos.AtendimentoSintetico;
 import com.hemorede.repository.BolsaRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.hemorede.simulador;
 
-import com.hemorede.domain.enums.TipoRefrigeracao;
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
 import com.hemorede.dto.LeituraTemperaturaResponse;
 import com.hemorede.service.TelemetriaService;
 import org.junit.jupiter.api.DisplayName;

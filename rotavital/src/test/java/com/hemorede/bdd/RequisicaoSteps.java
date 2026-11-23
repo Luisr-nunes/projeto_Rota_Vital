@@ -1,8 +1,17 @@
 package com.hemorede.bdd;
 
-import com.hemorede.domain.enums.*;
-import com.hemorede.domain.model.*;
-import com.hemorede.repository.*;
+import com.hemorede.domain.enums.HemoComponente;
+import com.hemorede.domain.enums.Prioridade;
+import com.hemorede.domain.enums.StatusBolsa;
+import com.hemorede.domain.enums.TipoSanguineo;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
+import com.hemorede.domain.model.Bolsa;
+import com.hemorede.domain.model.Hospital;
+import com.hemorede.requisicao.domain.model.ItemRequisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
+import com.hemorede.repository.BolsaRepository;
+import com.hemorede.repository.HospitalRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.pt.*;
 import org.springframework.beans.factory.annotation.Autowired;

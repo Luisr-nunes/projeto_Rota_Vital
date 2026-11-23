@@ -1,5 +1,7 @@
 package com.hemorede.algoritmos;
 
+import com.hemorede.expedicao.domain.algorithm.GrafoRotas;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.hemorede.domain.enums.HemoComponente;
-import com.hemorede.domain.enums.TipoRefrigeracao;
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.exception.EstoqueInsuficienteException;

@@ -1,6 +1,6 @@
 package com.hemorede.dto;
 
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 
 import java.time.LocalDateTime;

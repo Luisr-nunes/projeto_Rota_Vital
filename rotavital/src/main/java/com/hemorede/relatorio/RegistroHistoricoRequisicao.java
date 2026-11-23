@@ -2,14 +2,14 @@ package com.hemorede.relatorio;
 
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.Prioridade;
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 
 /**
  * Um registro do histórico nacional de requisições de hemocomponentes,
  * usado pelo relatório de estatísticas ({@link RelatorioHistoricoService}).
  *
- * É um recorte simplificado de {@link com.hemorede.domain.model.Requisicao}
+ * É um recorte simplificado de {@link com.hemorede.requisicao.domain.model.Requisicao}
  * (mais o item alocado e o tempo de atendimento), o suficiente para as
  * agregações do relatório, sem depender do banco de dados: em escala
  * nacional, o histórico é gerado sinteticamente em memória

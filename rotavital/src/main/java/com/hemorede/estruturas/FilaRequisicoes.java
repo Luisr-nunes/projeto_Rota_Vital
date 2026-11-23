@@ -1,6 +1,6 @@
 package com.hemorede.estruturas;
 
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 
 import java.util.ArrayList;
 import java.util.List;

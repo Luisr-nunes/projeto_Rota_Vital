@@ -1,5 +1,7 @@
 package com.hemorede.domain.enums;
 
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
+
 /**
  * Tipos de hemocomponente, com metadados usados nas regras de validade
  * e de transporte (refrigeração).
