@@ -1,0 +1,13 @@
+flowchart LR
+    CAP[Captação] -->|CF| EST["Estoque (core)"]
+    EST -->|CF| REQ[Requisição]
+    REQ -->|CF| EXP["Expedição (core)"]
+    EST -->|ACL na Expedição| EXP
+    SEN[Sensores<br/>externo] -->|ACL| TEL[Telemetria]
+    TEL -->|evento| EXP
+    MAP[Mapas<br/>externo, futuro] -->|ACL| EXP
+    EXP -->|conformista| IND[Indicadores]
+    classDef core fill:#e8f0fb,stroke:#2f6fc4,stroke-width:2px
+    classDef ext fill:#ffffff,stroke:#999,stroke-dasharray:4 3
+    class EST,EXP core
+    class SEN,MAP ext

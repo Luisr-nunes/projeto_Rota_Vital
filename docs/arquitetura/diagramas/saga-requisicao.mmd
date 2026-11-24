@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant R as Requisição (orquestradora)
+    participant E as Estoque
+    participant X as Expedição
+    R->>R: 1. registra a requisição (PENDENTE)
+    R->>E: 2. ReservarBolsas (todos os itens, chave = requisicaoId)
+    alt reservou
+        E-->>R: BolsasReservadas
+        R->>R: 3. aprova (APROVADA) e grava RequisicaoAprovada
+        R--)X: RequisicaoAprovada (fila)
+        X->>X: 4. calcula a rota, escolhe veículo e motorista
+        alt rota possível
+            X--)R: RotaPlanejada
+            X--)R: 5. RotaIniciada (EM_ROTA)
+            X--)E: RotaIniciada (bolsas EM_TRANSITO)
+            X--)R: 6. EntregaConfirmada (ENTREGUE)
+            X--)E: EntregaConfirmada (bolsas UTILIZADA)
+        else rota impossível
+            X--)R: RotaImpossivel
+            R->>E: LiberarReserva (compensação)
+            E-->>R: bolsas voltam a DISPONIVEL
+            R->>R: requisição volta a PENDENTE
+        end
+    else recusou
+        E-->>R: ReservaRecusada
+        R->>R: requisição permanece PENDENTE
+    end
