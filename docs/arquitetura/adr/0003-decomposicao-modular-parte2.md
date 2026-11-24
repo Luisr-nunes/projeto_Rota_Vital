@@ -2,7 +2,7 @@
 
 **Status:** Aceito
 **Data:** 23/11/2026 (registra a decisão do squad de 17/11/2026)
-**Responsável:** Luis Felipe Farias Nunes
+**Responsável:** Micaella Maria Barbosa Cabral
 **Complementa:** [ADR 0001](0001-decomposicao-por-contexto.md) (decomposição por contexto e camada, 19/11/2026). Não o substitui: o 0001 continua valendo e descreve o primeiro passo já feito em Requisição e Expedição. Este ADR acrescenta a decisão de manter um único deploy, a estrutura de pacotes alinhada à entrega de 24/11 e a Telemetria como primeiro contexto a sair.
 **Relacionados:** seções A.2, C.3, D e E do trabalho U2 Parte 2
 
