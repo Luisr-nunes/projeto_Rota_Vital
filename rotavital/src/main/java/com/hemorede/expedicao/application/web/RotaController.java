@@ -1,0 +1,71 @@
+package com.hemorede.expedicao.application.web;
+
+import com.hemorede.expedicao.domain.algorithm.GrafoRotas;
+import com.hemorede.requisicao.domain.model.Requisicao;
+import com.hemorede.expedicao.domain.model.Veiculo;
+import com.hemorede.expedicao.application.dto.CalcularRotaRequest;
+import com.hemorede.expedicao.application.dto.RotaCalculadaResponse;
+import com.hemorede.requisicao.application.service.RequisicaoService;
+import com.hemorede.expedicao.application.service.RoteirizacaoService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/rotas")
+public class RotaController {
+
+    private final RoteirizacaoService roteirizacaoService;
+    private final RequisicaoService requisicaoService;
+
+    @Value("${hemorede.rota.velocidade-media-kmh:60}")
+    private double velocidadeMediaKmH;
+
+    public RotaController(RoteirizacaoService roteirizacaoService, RequisicaoService requisicaoService) {
+        this.roteirizacaoService = roteirizacaoService;
+        this.requisicaoService = requisicaoService;
+    }
+
+    @GetMapping("/proximas-requisicoes")
+    public List<Requisicao> proximasParaRoteirizar() {
+        return roteirizacaoService.proximasParaRoteirizar();
+    }
+
+    @GetMapping("/veiculo-compativel/{requisicaoId}")
+    public Veiculo veiculoCompativel(@PathVariable Long requisicaoId) {
+        Requisicao requisicao = requisicaoService.buscarPorId(requisicaoId);
+        return roteirizacaoService.selecionarVeiculoCompativel(requisicao);
+    }
+
+    /**
+     * HU05 - Planejar rota de entrega.
+     * <p>
+     * Aciona o algoritmo de caminho mínimo (Dijkstra manual, {@link GrafoRotas})
+     * via {@link RoteirizacaoService#calcularRotaMinima(Requisicao)} para
+     * calcular a rota de menor custo do Hemocentro até o hospital solicitante
+     * da requisição informada, conforme {@code doc/contratos-api.md}.
+     * </p>
+     * <p>
+     * Se o hospital não tiver rota alcançável no grafo, ou não tiver um nó
+     * associado, a exceção correspondente é tratada pelo
+     * {@code GlobalExceptionHandler} (HTTP 422).
+     * </p>
+     */
+    @PostMapping("/calcular")
+    public ResponseEntity<RotaCalculadaResponse> calcular(@RequestBody CalcularRotaRequest requestBody) {
+        Requisicao requisicao = requisicaoService.buscarPorId(requestBody.requisicaoId());
+
+        GrafoRotas.ResultadoRota resultado = roteirizacaoService.calcularRotaMinima(requisicao);
+        double tempoEstimadoMinutos = (resultado.custoTotal() / velocidadeMediaKmH) * 60.0;
+
+        RotaCalculadaResponse response = new RotaCalculadaResponse(
+                requisicao.getId(),
+                resultado.caminho(),
+                resultado.custoTotal(),
+                tempoEstimadoMinutos);
+
+        return ResponseEntity.ok(response);
+    }
+}

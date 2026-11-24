@@ -1,5 +1,7 @@
 package com.hemorede.algoritmos;
 
+import com.hemorede.expedicao.domain.algorithm.GrafoRotas;
+
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.StatusBolsa;
 import com.hemorede.domain.enums.TipoSanguineo;

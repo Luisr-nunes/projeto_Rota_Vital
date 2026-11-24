@@ -2,7 +2,7 @@ package com.hemorede.controller;
 
 import com.hemorede.exception.GlobalExceptionHandler;
 import com.hemorede.repository.BolsaRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import com.hemorede.service.IndicadoresService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

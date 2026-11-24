@@ -3,12 +3,12 @@ package com.hemorede.service;
 import com.hemorede.domain.enums.HemoComponente;
 import com.hemorede.domain.enums.Sexo;
 import com.hemorede.domain.enums.StatusBolsa;
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import com.hemorede.domain.enums.TipoSanguineo;
 import com.hemorede.domain.model.Bolsa;
 import com.hemorede.domain.model.Doador;
-import com.hemorede.domain.model.ItemRequisicao;
-import com.hemorede.domain.model.Requisicao;
+import com.hemorede.requisicao.domain.model.ItemRequisicao;
+import com.hemorede.requisicao.domain.model.Requisicao;
 import com.hemorede.exception.DadosBolsaInvalidosException;
 import com.hemorede.exception.DoacaoForaDoIntervaloException;
 import com.hemorede.exception.DoadorInaptoException;
@@ -17,7 +17,11 @@ import com.hemorede.exception.TransicaoStatusInvalidaException;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.DoadorRepository;
 import com.hemorede.repository.HospitalRepository;
-import com.hemorede.repository.RequisicaoRepository;
+import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
+import com.hemorede.estoque.api.ReservaEstoque;
+import com.hemorede.estoque.application.service.ReservaEstoqueService;
+import com.hemorede.estoque.application.service.CompatibilidadeSanguineaService;
+import com.hemorede.requisicao.application.service.RequisicaoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -46,18 +50,18 @@ class RegrasAplicadasNosServicosTest {
         @DisplayName("Requisição ENTREGUE não volta para APROVADA: 409 e nenhuma bolsa é tocada")
         void entregueNaoPodeSerAprovada() {
             RequisicaoRepository repo = mock(RequisicaoRepository.class);
-            AlocacaoService alocacao = mock(AlocacaoService.class);
+            ReservaEstoque reservaEstoque = mock(ReservaEstoque.class);
             Requisicao req = new Requisicao();
             req.setId(7L);
             req.setStatus(StatusRequisicao.ENTREGUE);
             req.setItens(List.of(new ItemRequisicao()));
             when(repo.findById(7L)).thenReturn(Optional.of(req));
 
-            RequisicaoService service = new RequisicaoService(repo, mock(HospitalRepository.class), alocacao);
+            RequisicaoService service = new RequisicaoService(repo, mock(HospitalRepository.class), reservaEstoque);
 
             assertThrows(TransicaoStatusInvalidaException.class, () -> service.aprovar(7L));
             assertEquals(StatusRequisicao.ENTREGUE, req.getStatus());
-            verifyNoInteractions(alocacao);
+            verifyNoInteractions(reservaEstoque);
             verify(repo, never()).save(any());
         }
     }
@@ -89,9 +93,10 @@ class RegrasAplicadasNosServicosTest {
                     .thenReturn(List.of(oNeg, aPos));
 
             ItemRequisicao item = item(TipoSanguineo.A_POS, 1);
-            new AlocacaoService(repo).alocar(item);
+            List<Bolsa> reservadas = new ReservaEstoqueService(repo, new CompatibilidadeSanguineaService()).reservar(
+                    item.getHemoComponente(), item.getTipoSanguineo(), item.getQuantidade());
 
-            assertEquals(List.of(aPos), item.getBolsasAlocadas());
+            assertEquals(List.of(aPos), reservadas);
             assertEquals(StatusBolsa.DISPONIVEL, oNeg.getStatus());
         }
 
@@ -105,9 +110,10 @@ class RegrasAplicadasNosServicosTest {
                     .thenReturn(List.of(aPos, oNeg));
 
             ItemRequisicao item = item(TipoSanguineo.A_POS, 1);
-            new AlocacaoService(repo).alocar(item);
+            List<Bolsa> reservadas = new ReservaEstoqueService(repo, new CompatibilidadeSanguineaService()).reservar(
+                    item.getHemoComponente(), item.getTipoSanguineo(), item.getQuantidade());
 
-            assertEquals(List.of(oNeg), item.getBolsasAlocadas());
+            assertEquals(List.of(oNeg), reservadas);
         }
 
         @Test
@@ -121,11 +127,12 @@ class RegrasAplicadasNosServicosTest {
             when(repo.findByHemoComponenteAndStatus(HemoComponente.HEMACIAS, StatusBolsa.DISPONIVEL)).thenReturn(estoque);
 
             ItemRequisicao item = item(TipoSanguineo.O_POS, 3);
-            new AlocacaoService(repo).alocar(item);
+            List<Bolsa> reservadas = new ReservaEstoqueService(repo, new CompatibilidadeSanguineaService()).reservar(
+                    item.getHemoComponente(), item.getTipoSanguineo(), item.getQuantidade());
 
-            LocalDate maisLongaQueSaiu = item.getBolsasAlocadas().stream().map(Bolsa::getDataValidade)
+            LocalDate maisLongaQueSaiu = reservadas.stream().map(Bolsa::getDataValidade)
                     .max(LocalDate::compareTo).orElseThrow();
-            estoque.stream().filter(b -> !item.getBolsasAlocadas().contains(b))
+            estoque.stream().filter(b -> !reservadas.contains(b))
                     .forEach(b -> assertFalse(b.getDataValidade().isBefore(maisLongaQueSaiu)));
         }
     }

@@ -1,12 +1,12 @@
 package com.hemorede.domain.regras;
 
-import com.hemorede.domain.enums.StatusRequisicao;
+import com.hemorede.requisicao.domain.enums.StatusRequisicao;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import static com.hemorede.domain.enums.StatusRequisicao.*;
+import static com.hemorede.requisicao.domain.enums.StatusRequisicao.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("RN-09 - Máquina de estados da requisição")

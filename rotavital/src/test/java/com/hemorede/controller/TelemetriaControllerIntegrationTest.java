@@ -1,10 +1,10 @@
 package com.hemorede.controller;
 
-import com.hemorede.domain.enums.StatusVeiculo;
+import com.hemorede.expedicao.domain.enums.StatusVeiculo;
 import org.springframework.security.test.context.support.WithMockUser;
-import com.hemorede.domain.enums.TipoRefrigeracao;
-import com.hemorede.domain.model.Veiculo;
-import com.hemorede.repository.VeiculoRepository;
+import com.hemorede.expedicao.domain.enums.TipoRefrigeracao;
+import com.hemorede.expedicao.domain.model.Veiculo;
+import com.hemorede.expedicao.infrastructure.repository.VeiculoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
