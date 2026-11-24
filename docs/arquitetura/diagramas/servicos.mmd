@@ -1,0 +1,21 @@
+flowchart TB
+    N[Navegadores<br/>hemocentro · hospital · gestor] -->|HTTPS/443| B[Borda TLS]
+    V[Veículos] -->|HTTPS/443| B
+    B -->|HTTP/8080| REQ["Requisição<br/>(orquestra a saga)"]
+    B -->|HTTP/8080| EST["Estoque + Captação<br/>(core)"]
+    B -->|HTTP/8080| EXP["Expedição<br/>(core)"]
+    B -->|HTTP/8080| TEL["Telemetria<br/>1 instância fixa"]
+    B -->|HTTP/8080| IND["Indicadores<br/>(leitura)"]
+    REQ -->|REST: ReservarBolsas| EST
+    REQ -.->|RequisicaoAprovada| BR((Broker))
+    BR -.-> EXP
+    EXP -.->|RotaIniciada · EntregaConfirmada| BR
+    BR -.-> REQ
+    BR -.-> EST
+    TEL -.->|TemperaturaForaDaFaixa| BR
+    EST -.->|BolsaVencida · EstoqueAbaixoDoMinimo| BR
+    BR -.-> IND
+    REQ -->|JDBC/5432| DR[(Banco Requisição)]
+    EST -->|JDBC/5432| DE[(Banco Estoque)]
+    EXP -->|JDBC/5432| DX[(Banco Expedição)]
+    IND -->|JDBC/5432| DI[(Banco Indicadores)]

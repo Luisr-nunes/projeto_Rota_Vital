@@ -1,0 +1,6 @@
+flowchart LR
+    U[Navegadores<br/>10 usuários] -->|HTTPS/443| B[Borda Render<br/>TLS]
+    V[Veículos<br/>2 leituras/s] -->|HTTPS/443| B
+    B -->|HTTP/8080| A["API Spring Boot<br/>1 instância Starter<br/>0,5 vCPU · 512 MB"]
+    A -->|JDBC/5432 TLS| D[(Supabase Free<br/>PostgreSQL 500 MB)]
+    G[GitHub Actions] -->|HTTPS/443 deploy após CI verde| A

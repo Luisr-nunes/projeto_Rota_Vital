@@ -1,0 +1,13 @@
+flowchart LR
+    U[Navegadores<br/>100 usuários] -->|HTTPS/443| B[Borda Render<br/>TLS + balanceamento]
+    V[Veículos<br/>500 leituras/s] -->|HTTPS/443<br/>/api/v1/telemetria/*| T
+    B -->|HTTP/8080| A1["API · instância 1<br/>Standard"]
+    B -->|HTTP/8080| A2["API · instâncias 2 a 4<br/>autoscaling por CPU 70%"]
+    T["Serviço de telemetria<br/>1 instância Pro · 2 vCPU<br/>fila + agregador únicos"]
+    A1 -->|JDBC/5432 TLS| D[(Supabase Pro<br/>compute Small · 2 GB)]
+    A2 -->|JDBC/5432 TLS| D
+    A1 -.->|JDBC/5432 leitura<br/>só se o gatilho disparar| R[(Réplica de leitura<br/>Small)]
+    A2 -.-> R
+    T -->|JDBC/5432 TLS| D
+    G[GitHub Actions] -->|HTTPS/443 deploy após CI verde| A1
+    G --> T
