@@ -2,7 +2,7 @@
 
 **Status:** Aceito
 **Data:** 23/11/2026 (registra a decisão do squad de 17/11/2026)
-**Responsável:** Luis Felipe Farias Nunes
+**Responsável:** Micaella Maria Barbosa Cabral
 **Complementa:** [ADR 0002](0002-mapeamento-jpa-nas-entidades.md) (mapeamento JPA nas entidades, 19/11/2026). Não o invalida: o 0002 descreve a decisão tomada para o estado atual do código e segue valendo para as classes ainda não migradas. Este ADR registra o alvo alinhado à regra de dependência da entrega de 24/11 (C.2), válido para os agregados migrados na Parte 3, começando pelo Estoque.
 **Relacionados:** seções B, C.2 e C.3 do trabalho U2 Parte 2
 
