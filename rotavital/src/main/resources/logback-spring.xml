@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Observabilidade: mantém o console de sempre (com traceId/spanId quando o tracing está ativo,
+  via LOG_CORRELATION_PATTERN do Spring Boot) e acrescenta um appender assíncrono que empurra os
+  mesmos logs para o Loki (push HTTP, sem precisar de Promtail nem do socket do Docker).
+
+  A URL vem de LOKI_URL (default: rede interna do Compose em observabilidade/docker-compose.yml).
+  Como o appender do Loki4j é assíncrono, se o Loki não estiver no ar (ex.: `mvn test`, dev local
+  sem o stack de observabilidade) o envio falha em segundo plano sem afetar a aplicação.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty name="LOKI_URL" source="LOKI_URL" defaultValue="http://loki:3100"/>
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="hemorede"/>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${LOKI_URL}/loki/api/v1/push</url>
+        </http>
+        <format>
+            <label>
+                <pattern>application=${APP_NAME},level=%level</pattern>
+                <readMarkers>true</readMarkers>
+            </label>
+            <message>
+                <!-- Texto simples (não JSON): o derivedField do datasource do Loki no Grafana
+                     extrai o traceId por regex, sem risco de quebrar por aspas não escapadas
+                     numa mensagem de exceção. -->
+                <pattern>%d{ISO8601} %-5level [%thread] %logger{36} traceId=%mdc{traceId} spanId=%mdc{spanId} - %msg%n</pattern>
+            </message>
+        </format>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+</configuration>
