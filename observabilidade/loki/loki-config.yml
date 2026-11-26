@@ -1,0 +1,32 @@
+# Loki de instância única (sem cluster), armazenamento local em disco — suficiente para a
+# janela de correção. Lido pelo container "loki" do docker-compose.yml.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # recebe os logs de toda a demonstração sem rejeitar por limite de linha/volume
+  reject_old_samples: false
+  allow_structured_metadata: false

@@ -1,0 +1,125 @@
+# Rota Vital — ambiente completo de observabilidade (Actuator + Prometheus + Grafana + Loki + Tempo)
+# Pensado pra rodar numa VM dedicada (ex.: Oracle Cloud Always Free) durante a janela de correção.
+# Subir do zero:  cp .env.example .env  &&  docker compose up -d --build
+#
+# Só o Grafana publica porta (3000) — API, banco, Prometheus, Loki e Tempo ficam só na rede
+# interna do Compose (R5 do enunciado: "restringir à rede interna do Docker").
+name: rotavital-observabilidade
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rotavital}
+      POSTGRES_USER: ${POSTGRES_USER:-rotavital}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: ../rotavital
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Sem SPRING_PROFILES_ACTIVE=prod de propósito: o perfil prod (usado no Render) restringe
+      # o Actuator só a "health" — aqui queremos o /actuator/prometheus completo (R1). O driver
+      # Postgres é setado via variável de ambiente, por cima do application.yml padrão (H2).
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rotavital}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rotavital}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      HEMOREDE_SEED_ENABLED: ${HEMOREDE_SEED_ENABLED:-true}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no arquivo .env (mínimo de 32 caracteres)}
+      DEMO_SENHA: ${DEMO_SENHA:-}
+      # Loki e Tempo: resolvidos pelo DNS interno do Compose, sem precisar de porta publicada.
+      LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318/v1/traces
+    # Sem "ports": só o Prometheus (rede interna) e quem estiver no host acessam a API.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # R3: métricas de infraestrutura do host da VM (CPU, memória, disco, rede, load average).
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+
+  # R3: métricas de CPU e memória por contêiner.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # Sem "ports": só o Grafana consulta o Prometheus, pela rede interna.
+
+  loki:
+    image: grafana/loki:3.2.1
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/tmp/tempo
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?defina GRAFANA_PASSWORD no arquivo .env}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      # Único serviço exposto na internet — libere só esta porta no firewall/security list da VM.
+      - "${GRAFANA_PORT:-3000}:3000"
+
+volumes:
+  pgdata:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:
