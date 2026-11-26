@@ -17,6 +17,9 @@ import com.hemorede.repository.HospitalRepository;
 import com.hemorede.requisicao.infrastructure.repository.RequisicaoRepository;
 import com.hemorede.estoque.api.ReservaEstoque;
 import com.hemorede.expedicao.application.service.RastreamentoService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,12 +45,23 @@ public class RequisicaoService {
     /** Opcional para manter o construtor dos testes unitários; encerra a rota na entrega. */
     private RastreamentoService rastreamentoService;
 
+    /** Métricas de negócio (observabilidade): contador de requisições e tempo de alocação. */
+    private final Counter requisicoesCriadas;
+    private final Timer tempoAlocacao;
+
     public RequisicaoService(RequisicaoRepository requisicaoRepository,
                              HospitalRepository hospitalRepository,
-                             ReservaEstoque reservaEstoque) {
+                             ReservaEstoque reservaEstoque,
+                             MeterRegistry registry) {
         this.requisicaoRepository = requisicaoRepository;
         this.hospitalRepository = hospitalRepository;
         this.reservaEstoque = reservaEstoque;
+        this.requisicoesCriadas = Counter.builder("hemorede.requisicoes.criadas")
+                .description("Total de requisições hospitalares registradas")
+                .register(registry);
+        this.tempoAlocacao = Timer.builder("hemorede.requisicoes.alocacao")
+                .description("Tempo para reservar as bolsas compatíveis de uma requisição aprovada")
+                .register(registry);
     }
 
     public List<Requisicao> listar() {
@@ -93,7 +107,9 @@ public class RequisicaoService {
         }
         requisicao.setItens(itens);
 
-        return requisicaoRepository.save(requisicao);
+        Requisicao salva = requisicaoRepository.save(requisicao);
+        requisicoesCriadas.increment();
+        return salva;
     }
 
     @Transactional
@@ -113,21 +129,27 @@ public class RequisicaoService {
         // (PENDENTE), coerente com a HU04. Um "save" explícito aqui antes de
         // relançar a exceção seria desfeito pelo próprio rollback, por isso
         // não é necessário.
-        for (ItemRequisicao item : requisicao.getItens()) {
-            try {
-                int jaAlocadas = item.getBolsasAlocadas() == null ? 0 : item.getBolsasAlocadas().size();
-                int quantidadeRestante = item.getQuantidade() - jaAlocadas;
-                if (quantidadeRestante > 0) {
-                    if (item.getBolsasAlocadas() == null) {
-                        item.setBolsasAlocadas(new ArrayList<>());
+        Timer.Sample amostraAlocacao = Timer.start();
+        try {
+            for (ItemRequisicao item : requisicao.getItens()) {
+                try {
+                    int jaAlocadas = item.getBolsasAlocadas() == null ? 0 : item.getBolsasAlocadas().size();
+                    int quantidadeRestante = item.getQuantidade() - jaAlocadas;
+                    if (quantidadeRestante > 0) {
+                        if (item.getBolsasAlocadas() == null) {
+                            item.setBolsasAlocadas(new ArrayList<>());
+                        }
+                        item.getBolsasAlocadas().addAll(reservaEstoque.reservar(
+                                item.getHemoComponente(), item.getTipoSanguineo(), quantidadeRestante));
                     }
-                    item.getBolsasAlocadas().addAll(reservaEstoque.reservar(
-                            item.getHemoComponente(), item.getTipoSanguineo(), quantidadeRestante));
+                } catch (NenhumaBolsaCompativelException | EstoqueCompativelInsuficienteException ex) {
+                    // Preserva o contrato 422 do endpoint legado /aprovar.
+                    throw new EstoqueInsuficienteException(ex.getMessage());
                 }
-            } catch (NenhumaBolsaCompativelException | EstoqueCompativelInsuficienteException ex) {
-                // Preserva o contrato 422 do endpoint legado /aprovar.
-                throw new EstoqueInsuficienteException(ex.getMessage());
             }
+        } finally {
+            // Mede a alocação mesmo quando falha (estoque insuficiente): tempo gasto até a exceção importa pro painel.
+            amostraAlocacao.stop(tempoAlocacao);
         }
 
         requisicao.setStatus(StatusRequisicao.APROVADA);

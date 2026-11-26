@@ -13,6 +13,9 @@ public interface BolsaRepository extends JpaRepository<Bolsa, Long> {
 
     List<Bolsa> findByStatus(StatusBolsa status);
 
+    // Observabilidade: base do gauge hemorede.estoque.bolsas.disponiveis (EstoqueService).
+    long countByStatus(StatusBolsa status);
+
     // Usada pelo AlocacaoService para aplicar FEFO: ordena por validade crescente.
     List<Bolsa> findByHemoComponenteAndTipoSanguineoAndStatusOrderByDataValidadeAsc(
             HemoComponente hemoComponente, TipoSanguineo tipoSanguineo, StatusBolsa status);
