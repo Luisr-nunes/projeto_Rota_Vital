@@ -289,6 +289,59 @@ A equipe usou o **Claude (Anthropic)** como assistente. A IA rascunha; a equipe 
 
 ---
 
+## Desafio de Observabilidade — Actuator, Prometheus e Grafana
+
+Entrega da disciplina de Infraestrutura de Comunicação. Detalhes de código em
+[`doc/observabilidade.md`](doc/observabilidade.md), decisões de arquitetura no
+[ADR 0005](docs/arquitetura/adr/0005-observabilidade-stack.md) e o ambiente completo em
+[`observabilidade/`](observabilidade/README.md).
+
+### Arquitetura
+
+A aplicação expõe métricas (Actuator/Micrometer), logs (push pro Loki) e traces (OTLP pro Tempo).
+Um `docker-compose.yml` dedicado em `observabilidade/` sobe a aplicação de novo — separada do
+deploy de produção no Render, que continua só com `/actuator/health` exposto — junto com
+Prometheus, Grafana, Loki, Tempo, Node Exporter e cAdvisor, numa VM só para a janela de correção.
+
+### Como rodar
+
+```bash
+cd observabilidade
+cp .env.example .env   # edite as senhas
+docker compose up -d --build
+```
+
+Passo a passo completo (setup da VM, portas, dashboards) em
+[`observabilidade/README.md`](observabilidade/README.md).
+
+### Acesso remoto
+
+Grafana publicado numa VM gratuita (Oracle Cloud Always Free), com usuário **Viewer** para o
+professor. URL e credenciais informadas só pelo PDF da entrega ou pela atividade do Google
+Classroom — nunca no repositório.
+
+### Métricas de negócio
+
+| Métrica | Tipo | O que mede |
+|---|---|---|
+| `hemorede_requisicoes_criadas_total` | Counter | Requisições hospitalares registradas |
+| `hemorede_requisicoes_alocacao_seconds` | Timer | Tempo de reserva das bolsas compatíveis de uma requisição |
+| `hemorede_estoque_bolsas_disponiveis` | Gauge | Bolsas disponíveis em estoque, na rede toda |
+
+### Decisões
+
+| Decisão | Escolha | Alternativas | Por quê |
+|---|---|---|---|
+| Coleta de métricas | Prometheus + Grafana | VictoriaMetrics, InfluxDB, Mimir, Thanos, Graphite, Zabbix | Já era a escolha existente (`micrometer-registry-prometheus`); nenhuma alternativa resolve algo que falte aqui. |
+| Traces | Micrometer Tracing + bridge OTel, via OTLP para o Tempo | Spring Cloud Sleuth | Sleuth está descontinuado; Micrometer Tracing é o sucessor oficial e já vem gerenciado pelo BOM do Spring Boot. |
+| Logs | Push direto da aplicação pro Loki (Loki4j/Logback) | Promtail + socket do Docker | Evita mais um contêiner com acesso ao socket do Docker; funciona igual local ou na VM. |
+| Ambiente de observabilidade | VM dedicada (Oracle Cloud Always Free), separada do Render | Rodar contra o Render de produção | Produção já restringe o Actuator a `health`; reabrir isso arriscaria o deploy real por uma entrega de curso. Node Exporter/cAdvisor também precisam de um host de verdade. |
+| Acesso remoto | Porta do Grafana liberada no firewall da VM | Cloudflare Tunnel, ngrok | Com a VM já necessária pelos exporters, liberar uma porta é mais direto que mais um serviço de túnel. |
+
+Detalhamento completo das alternativas consideradas: [ADR 0005](docs/arquitetura/adr/0005-observabilidade-stack.md).
+
+---
+
 ## Entregas
 
 ### Entrega 01
