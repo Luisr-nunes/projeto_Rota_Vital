@@ -72,6 +72,13 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
     restart: unless-stopped
     privileged: true
+    # Docker 29 / Docker Desktop guardam imagens no containerd (snapshotter) e o leitor "docker"
+    # do cAdvisor não acha as camadas dos contêineres (painéis por contêiner ficavam sem dados).
+    # Lê direto do containerd do Docker (namespace "moby") e desliga o leitor docker.
+    command:
+      - --containerd=/var/run/containerd/containerd.sock
+      - --containerd-namespace=moby
+      - --docker=unix:///var/run/sem-docker.sock
     devices:
       - /dev/kmsg
     volumes:
