@@ -87,8 +87,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[1m]))",
-          "refId": "A"
+          "expr": "label_replace(sum by (image) (rate(container_cpu_usage_seconds_total{image!=\"\"}[1m])), \"servico\", \"$1\", \"image\", \"(?:.*/)?([^/:]+)(?::.*)?\")",
+          "refId": "A",
+          "legendFormat": "{{servico}}"
         }
       ],
       "title": "CPU por conteiner",
@@ -118,8 +119,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "container_memory_usage_bytes{name!=\"\"}",
-          "refId": "A"
+          "expr": "label_replace(sum by (image) (container_memory_working_set_bytes{image!=\"\"}), \"servico\", \"$1\", \"image\", \"(?:.*/)?([^/:]+)(?::.*)?\")",
+          "refId": "A",
+          "legendFormat": "{{servico}}"
         }
       ],
       "title": "Memoria por conteiner",

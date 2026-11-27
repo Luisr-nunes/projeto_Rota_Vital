@@ -17,6 +17,9 @@ Fonte editável: [`docs/arquitetura/diagramas/observabilidade.mmd`](../docs/arqu
 - Uma máquina com Docker e o plugin Docker Compose instalados (`docker compose version`).
 - No Docker Desktop (Windows/macOS), o Node Exporter e o cAdvisor medem a VM Linux do Docker, não
   o sistema operacional da máquina — comportamento aceito pelo enunciado, desde que explicado.
+- O cAdvisor lê os contêineres direto do containerd do Docker (namespace `moby`): no Docker 29 /
+  Docker Desktop as imagens ficam no containerd e o leitor "docker" do cAdvisor não as encontra.
+  Por isso os painéis por contêiner agrupam pela imagem (`image`), não pelo nome do contêiner.
 - Acesso remoto só pelo Grafana (porta 3000) — API, banco, Prometheus, Loki e Tempo ficam na rede
   interna do Compose, sem porta publicada.
 
@@ -91,7 +94,7 @@ Opcional, como complemento: importar os dashboards públicos **4701** (JVM Micro
 | Heap da JVM em uso | `sum(jvm_memory_used_bytes{application="hemorede", area="heap"})` |
 | Pool HikariCP (conexões ativas) | `hikaricp_connections_active{application="hemorede"}` |
 | CPU do host (%) | `100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)` |
-| CPU por contêiner | `sum by (name) (rate(container_cpu_usage_seconds_total{name!=""}[1m]))` |
+| CPU por contêiner | `label_replace(sum by (image) (rate(container_cpu_usage_seconds_total{image!=""}[1m])), "servico", "$1", "image", "(?:.*/)?([^/:]+)(?::.*)?")` |
 
 ### Métricas de negócio (ponto adicional)
 
@@ -106,7 +109,7 @@ Opcional, como complemento: importar os dashboards públicos **4701** (JVM Micro
 O serviço `carga` (k6) sobe junto com o `docker compose up -d` e fica gerando tráfego o tempo todo
 (o script roda 30 min e o `restart: unless-stopped` o reinicia). Ele usa a `DEMO_SENHA` do `.env`
 e gera tanto o caminho feliz (cria e aprova requisições, alimentando as métricas de negócio)
-quanto um caso de erro (404), que aparece no painel de erros e nos logs com `traceId`.
+quanto casos de erro (404 de requisição inexistente e 422 de estoque insuficiente), que aparecem no painel de erros 4xx/5xx; o 422 também gera log `WARN` com `traceId` no Loki.
 
 ```bash
 docker compose logs -f carga   # acompanhar a carga
