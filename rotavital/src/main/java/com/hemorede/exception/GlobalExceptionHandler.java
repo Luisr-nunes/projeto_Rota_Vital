@@ -175,6 +175,8 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> corpoErro(HttpStatus status, String erro, String mensagem) {
+        // Log com traceId (MDC) para cada erro tratado: permite navegar do log de erro ao trace no Grafana.
+        log.warn("HTTP {} {}: {}", status.value(), erro, mensagem);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("erro", erro);
