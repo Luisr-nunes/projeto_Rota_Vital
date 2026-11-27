@@ -21,9 +21,18 @@ Docker Compose de vários serviços ao lado da API.
 ## Decisão
 
 **Ambiente próprio, separado da produção.** A aplicação sobe de novo, com o perfil padrão (não
-`prod`), num `docker-compose.yml` dedicado em `observabilidade/`, numa VM gratuita (Oracle Cloud
-Always Free) só durante a janela de correção. Zero mudança no Render e no fluxo de deploy
-existente (`doc/pipeline-deploy.md`).
+`prod`), num `docker-compose.yml` dedicado em `observabilidade/`. Zero mudança no Render e no
+fluxo de deploy existente (`doc/pipeline-deploy.md`).
+
+**Onde esse ambiente roda (atualizado em 26/11/2026):** a ideia inicial era uma VM gratuita
+(Oracle Cloud Always Free). Na prática, a região `sa-saopaulo-1` esgotou a capacidade gratuita
+tanto do shape ARM (`VM.Standard.A1.Flex`) quanto do x86 (`VM.Standard.E2.1.Micro`) — erro `Out
+of capacity` repetido em várias tentativas, em horários diferentes, para os dois shapes
+elegíveis ao Always Free. Trocar de região exigiria assinar uma região adicional na tenancy, sem
+garantia de que teria capacidade e sem tempo hábil para a entrega. Decisão: rodar o ambiente na
+própria máquina da equipe (já com Docker instalado), expondo só o Grafana pela internet via
+**Cloudflare Tunnel** (binário `cloudflared`, sem instalação, sem precisar abrir porta no
+roteador). Ver seção "Acesso remoto" abaixo, atualizada para refletir essa troca.
 
 **Stack de coleta: Prometheus + Grafana, sem trocar.** O `pom.xml` já trazia
 `micrometer-registry-prometheus`; nenhuma das alternativas da Seção 3 do enunciado
@@ -41,10 +50,10 @@ no Promtail). Descartada porque: (a) mais um contêiner com acesso ao socket do 
 extra sem necessidade — só uma aplicação gera log aqui; (b) o push direto funciona igual rodando
 local ou na VM, sem depender de onde o Docker guarda os logs do contêiner.
 
-**Acesso remoto: VM com porta do Grafana liberada no firewall, não Cloudflare Tunnel/ngrok.**
-Com o ambiente já rodando numa VM (necessário pelo Node Exporter/cAdvisor monitorarem um host
-real), expor a porta do Grafana no firewall da própria VM é mais direto que adicionar mais um
-serviço (`cloudflared`) só para encaminhar tráfego para o mesmo host.
+**Acesso remoto: Cloudflare Tunnel, a partir da máquina que já roda o ambiente.** Com a
+capacidade gratuita de VM esgotada (ver acima), o `cloudflared` conecta a própria máquina da
+equipe à internet sem abrir porta nenhuma localmente — Grafana continua sendo o único serviço
+alcançável de fora, exatamente como seria numa VM.
 
 ## Consequências
 
@@ -58,18 +67,22 @@ serviço (`cloudflared`) só para encaminhar tráfego para o mesmo host.
 
 **Negativas e riscos aceitos**
 
-- Dois lugares onde a aplicação roda (Render e VM) durante a correção; a VM não reflete uso real
-  de produção, só a demonstração.
+- Dois lugares onde a aplicação roda (Render e a máquina da observabilidade) durante a correção;
+  esse ambiente não reflete uso real de produção, só a demonstração.
+- A máquina que roda o ambiente precisa ficar ligada (com o `cloudflared` ativo) durante toda a
+  janela de correção — igual precisaria de uma VM ligada, só que sem o custo/disponibilidade de
+  nuvem garantidos por um provedor.
 - O appender do Loki é assíncrono: se o Loki cair durante a correção, logs daquele intervalo se
   perdem (aceitável para uma demonstração; não seria para produção real).
-- Setup manual da VM (Oracle Cloud) e dos dashboards (import + export) não é 100% reproduzível
-  por script — documentado passo a passo em `observabilidade/README.md`.
+- Dashboards (import + export) não são 100% reproduzíveis por script — documentado passo a passo
+  em `observabilidade/README.md`.
 
 ## Alternativas consideradas
 
 | Alternativa | Por que não |
 |---|---|
+| VM gratuita em nuvem (Oracle Cloud Always Free) | Era a escolha original; abandonada depois de esgotar a capacidade Always Free (ARM e x86) na região disponível da tenancy, sem tempo hábil para resolver via assinatura de outra região. |
 | Promtail + socket do Docker | Mais um contêiner com acesso sensível, sem necessidade real (só uma aplicação gera log). |
-| Cloudflare Tunnel / ngrok | Resolvido mais simples liberando a porta do Grafana na própria VM, já que o Node Exporter/cAdvisor exigem uma VM de qualquer forma. |
+| ngrok | Cloudflare Tunnel preferido por não ter limite de conexões do plano gratuito nem trocar a URL a cada reinício. |
 | Rodar contra o Render de produção | `application-prod.yml` já restringe o Actuator; reabrir isso pra observabilidade colocaria produção em risco por uma entrega de curso. |
 | Alternativa de coleta (VictoriaMetrics, Mimir, etc.) | Nenhum ganho concreto para o escopo desta entrega; Prometheus já era a escolha existente. |
