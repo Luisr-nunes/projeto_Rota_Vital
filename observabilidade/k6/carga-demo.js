@@ -2,7 +2,8 @@
 // de produção). Mantém o Grafana com dado fresco durante a janela de correção e alimenta as
 // métricas de negócio (hemorede.requisicoes.criadas / .alocacao) com tráfego real.
 //
-// Uso: k6 run -e BASE_URL=http://localhost:8080 -e DEMO_SENHA=troque-esta-senha observabilidade/k6/carga-demo.js
+// Uso: sobe sozinho como o serviço "carga" do docker-compose.yml (BASE_URL=http://api:8080 e
+// DEMO_SENHA vêm das variáveis de ambiente do serviço).
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 

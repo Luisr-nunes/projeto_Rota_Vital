@@ -2,8 +2,8 @@
 # Pensado pra rodar numa VM dedicada (ex.: Oracle Cloud Always Free) durante a janela de correção.
 # Subir do zero:  cp .env.example .env  &&  docker compose up -d --build
 #
-# Só o Grafana publica porta (3000) — API, banco, Prometheus, Loki e Tempo ficam só na rede
-# interna do Compose (R5 do enunciado: "restringir à rede interna do Docker").
+# Só o Grafana vai pra internet (via túnel). Grafana e Prometheus publicam porta apenas em
+# 127.0.0.1; API, banco, Loki e Tempo ficam só na rede interna do Compose (R5 do enunciado).
 name: rotavital-observabilidade
 
 services:
@@ -86,7 +86,10 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    # Sem "ports": só o Grafana consulta o Prometheus, pela rede interna.
+    ports:
+      # Só em localhost (nunca na LAN/internet, R5): permite abrir Status -> Targets no navegador
+      # da própria máquina para a evidência do PDF. O Grafana continua consultando pela rede interna.
+      - "127.0.0.1:9090:9090"
 
   loki:
     image: grafana/loki:3.2.1
@@ -125,6 +128,21 @@ services:
       # Só em localhost: quem expõe pra internet é o Cloudflare Tunnel (cloudflared), que já
       # alcança localhost direto — não precisa (e não deve) abrir a porta pra rede/LAN.
       - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+
+  # Gerador de carga contínuo (seção 7 do enunciado): mantém os painéis com dado fresco durante a
+  # correção. O script roda 30 min e encerra; o restart sobe de novo, então a carga nunca para.
+  carga:
+    image: grafana/k6:0.54.0
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["run", "--quiet", "/scripts/carga-demo.js"]
+    environment:
+      BASE_URL: http://api:8080
+      DEMO_SENHA: ${DEMO_SENHA:-}
+    volumes:
+      - ./k6:/scripts:ro
 
 volumes:
   pgdata:
