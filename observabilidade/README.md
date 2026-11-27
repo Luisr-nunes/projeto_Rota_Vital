@@ -6,9 +6,20 @@ Render continua só com `/actuator/health` exposto (veja `rotavital/src/main/res
 e sem tracing nem envio de logs. Este ambiente sobe a aplicação de novo, com o perfil padrão (não
 `prod`), numa máquina dedicada só para a janela de correção.
 
+## Arquitetura
+
+![Arquitetura de observabilidade](../docs/arquitetura/diagramas/observabilidade.png)
+
+Fonte editável: [`docs/arquitetura/diagramas/observabilidade.mmd`](../docs/arquitetura/diagramas/observabilidade.mmd).
+
 ## Pré-requisitos
 
 - Uma máquina com Docker e o plugin Docker Compose instalados (`docker compose version`).
+- No Docker Desktop (Windows/macOS), o Node Exporter e o cAdvisor medem a VM Linux do Docker, não
+  o sistema operacional da máquina — comportamento aceito pelo enunciado, desde que explicado.
+- O cAdvisor lê os contêineres direto do containerd do Docker (namespace `moby`): no Docker 29 /
+  Docker Desktop as imagens ficam no containerd e o leitor "docker" do cAdvisor não as encontra.
+  Por isso os painéis por contêiner agrupam pela imagem (`image`), não pelo nome do contêiner.
 - Acesso remoto só pelo Grafana (porta 3000) — API, banco, Prometheus, Loki e Tempo ficam na rede
   interna do Compose, sem porta publicada.
 
@@ -27,7 +38,7 @@ docker compose ps       # confirma que todos os serviços estão healthy/running
 |---|---|---|
 | Grafana | `http://localhost:3000` (local) ou a URL do túnel | Único serviço exposto pra internet |
 | API (rotavital) | rede interna (`api:8080`) | Sem porta publicada — R5 do enunciado |
-| Prometheus | rede interna (`prometheus:9090`) | Consultado só pelo Grafana |
+| Prometheus | `http://localhost:9090` (só na própria máquina) | Porta presa em `127.0.0.1`; nunca exposto pela internet |
 | Loki | rede interna (`loki:3100`) | Recebe push HTTP da própria aplicação |
 | Tempo | rede interna (`tempo:3200`, OTLP em `4317`/`4318`) | Recebe traces via OTLP da aplicação |
 
@@ -64,19 +75,14 @@ usada: rodar numa máquina já disponível (com Docker) e expor só o Grafana pe
 4. Clonar o repositório, copiar `.env.example` para `.env` e preencher os valores.
 5. `docker compose up -d --build`.
 
-## Dashboards (passo manual, com o stack no ar)
+## Dashboards
 
-Não dá pra escrever um JSON válido de dashboard do Grafana sem uma instância rodando — monte os
-dashboards com o ambiente no ar e exporte:
+Os dashboards próprios **Aplicação** (HTTP, JVM, HikariCP e as 3 métricas de negócio) e
+**Infraestrutura** (host e contêineres) estão versionados em `grafana/dashboards/` e sobem
+sozinhos pelo provisionamento (pasta "Projeto Integrador" no Grafana), sem passo manual.
 
-1. No Grafana, **Dashboards → New → Import**, usando os dashboards públicos:
-   - **4701** — JVM (Micrometer)
-   - **1860** — Node Exporter Full
-   - **14282** — cAdvisor
-2. Crie um dashboard próprio "Aplicação" com os painéis (consultas PromQL abaixo).
-3. **Dashboards → Export → Save JSON to file** e salve em `grafana/dashboards/` (ex.:
-   `aplicacao.json`, `infraestrutura.json`). Como `grafana/dashboards` já está montado no
-   container, esses arquivos entram no provisionamento automático na próxima subida.
+Opcional, como complemento: importar os dashboards públicos **4701** (JVM Micrometer), **1860**
+(Node Exporter Full) e **14282** (cAdvisor) em **Dashboards → New → Import**.
 
 ### Consultas PromQL dos painéis próprios
 
@@ -84,11 +90,11 @@ dashboards com o ambiente no ar e exporte:
 |---|---|
 | Requisições por segundo, por rota | `sum by (uri) (rate(http_server_requests_seconds_count{application="hemorede"}[1m]))` |
 | Latência p95 | `histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{application="hemorede"}[5m])))` |
-| Taxa de erros 5xx | `sum(rate(http_server_requests_seconds_count{application="hemorede", status=~"5.."}[5m]))` |
+| Taxa de erros (4xx e 5xx) | `sum by (status) (rate(http_server_requests_seconds_count{application="hemorede", status=~"4..\|5.."}[5m]))` |
 | Heap da JVM em uso | `sum(jvm_memory_used_bytes{application="hemorede", area="heap"})` |
 | Pool HikariCP (conexões ativas) | `hikaricp_connections_active{application="hemorede"}` |
 | CPU do host (%) | `100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)` |
-| CPU por contêiner | `sum by (name) (rate(container_cpu_usage_seconds_total{name!=""}[1m]))` |
+| CPU por contêiner | `label_replace(sum by (image) (rate(container_cpu_usage_seconds_total{image!=""}[1m])), "servico", "$1", "image", "(?:.*/)?([^/:]+)(?::.*)?")` |
 
 ### Métricas de negócio (ponto adicional)
 
@@ -100,18 +106,26 @@ dashboards com o ambiente no ar e exporte:
 
 ## Gerar carga durante a correção
 
-Mantém os gráficos com dado fresco e alimenta as métricas de negócio (nunca aponte para o Render):
+O serviço `carga` (k6) sobe junto com o `docker compose up -d` e fica gerando tráfego o tempo todo
+(o script roda 30 min e o `restart: unless-stopped` o reinicia). Ele usa a `DEMO_SENHA` do `.env`
+e gera tanto o caminho feliz (cria e aprova requisições, alimentando as métricas de negócio)
+quanto casos de erro (404 de requisição inexistente e 422 de estoque insuficiente), que aparecem no painel de erros 4xx/5xx; o 422 também gera log `WARN` com `traceId` no Loki.
 
 ```bash
-k6 run -e BASE_URL=http://localhost:8080 -e DEMO_SENHA=<a mesma do .env> k6/carga-demo.js
+docker compose logs -f carga   # acompanhar a carga
+docker compose stop carga      # pausar, se precisar
 ```
 
 ## Acesso remoto do professor
 
 1. No Grafana, **Administration → Users** → criar um usuário com papel **Viewer**.
+   Em seguida, em **Dashboards → pasta Rota Vital → Permissions**, dar **View** ao papel Viewer:
+   a pasta criada pelo provisionamento nasce sem permissões, e sem isso o Viewer só enxerga os
+   dashboards públicos importados (por API: `POST /api/folders/<uid>/permissions` com
+   `{"items":[{"role":"Viewer","permission":1},{"role":"Editor","permission":2}]}`).
 2. Informar ao professor a URL do túnel (`https://....trycloudflare.com`), o usuário e a senha
    **só pelo PDF ou pela atividade do Google Classroom** — nunca no repositório.
-3. Manter o `k6 run` (ou um loop simples de `curl`) **e** o `cloudflared tunnel` rodando durante a
+3. Manter o serviço `carga` **e** o `cloudflared tunnel` rodando durante a
    janela de correção para os painéis terem dado em tempo real e o acesso continuar no ar.
 
 ## Verificação rápida
@@ -119,7 +133,7 @@ k6 run -e BASE_URL=http://localhost:8080 -e DEMO_SENHA=<a mesma do .env> k6/carg
 ```bash
 docker compose ps                                                    # tudo healthy/running
 docker compose exec api curl -s http://localhost:8080/actuator/prometheus | grep hemorede_
-# Prometheus: Status -> Targets, todos UP
+# Prometheus: http://localhost:9090/targets, todos UP
 # Grafana -> Explore -> Loki: {application="hemorede"}
 # Grafana -> Explore -> Tempo: um trace de POST /api/requisicoes/{id}/aprovar
 ```

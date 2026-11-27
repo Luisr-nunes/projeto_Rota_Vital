@@ -1,0 +1,17 @@
+flowchart LR
+    PROF[Professor<br/>usuário Viewer] -->|HTTPS/443| CF[Cloudflare Tunnel<br/>cloudflared]
+    CF -->|HTTP 127.0.0.1:3000| G
+
+    subgraph COMPOSE["docker compose · rede interna rotavital-observabilidade_default"]
+        direction LR
+        K6["carga (k6)<br/>tráfego contínuo"] -->|HTTP/8080| API["api · Rota Vital<br/>Spring Boot :8080<br/>application=hemorede"]
+        API -->|JDBC/5432| DB[(db · PostgreSQL<br/>:5432)]
+        API -->|push OTLP HTTP/4318| T["tempo<br/>:4318 OTLP · :3200 API"]
+        API -->|push HTTP/3100| L["loki<br/>:3100"]
+        P["prometheus<br/>:9090"] -->|scrape /actuator/prometheus :8080| API
+        P -->|scrape /metrics :9100| NE["node-exporter<br/>host / VM Docker"]
+        P -->|scrape /metrics :8080| CA["cadvisor<br/>CPU e memória por contêiner"]
+        G["grafana<br/>:3000<br/>único serviço exposto"] -->|PromQL :9090| P
+        G -->|LogQL :3100| L
+        G -->|TraceQL :3200| T
+    end

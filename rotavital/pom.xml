@@ -76,6 +76,12 @@
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
+        <!-- Observabilidade: spans das consultas JDBC (conexão/query) dentro do trace da requisição -->
+        <dependency>
+            <groupId>net.ttddyy.observation</groupId>
+            <artifactId>datasource-micrometer-spring-boot</artifactId>
+            <version>1.0.6</version>
+        </dependency>
         <!-- Observabilidade: appender Logback que envia logs por push HTTP ao Loki (não gerenciado pelo BOM do Spring Boot) -->
         <dependency>
             <groupId>com.github.loki4j</groupId>
