@@ -29,4 +29,6 @@ schema_config:
 limits_config:
   # recebe os logs de toda a demonstração sem rejeitar por limite de linha/volume
   reject_old_samples: false
-  allow_structured_metadata: false
+  # o appender loki-logback-appender manda metadados estruturados por padrão (ex.: traceId) —
+  # desligado isso rejeita o push inteiro com 400.
+  allow_structured_metadata: true

@@ -19,18 +19,18 @@
         <http>
             <url>${LOKI_URL}/loki/api/v1/push</url>
         </http>
-        <format>
-            <label>
-                <pattern>application=${APP_NAME},level=%level</pattern>
-                <readMarkers>true</readMarkers>
-            </label>
-            <message>
-                <!-- Texto simples (não JSON): o derivedField do datasource do Loki no Grafana
-                     extrai o traceId por regex, sem risco de quebrar por aspas não escapadas
-                     numa mensagem de exceção. -->
-                <pattern>%d{ISO8601} %-5level [%thread] %logger{36} traceId=%mdc{traceId} spanId=%mdc{spanId} - %msg%n</pattern>
-            </message>
-        </format>
+        <!-- Schema da v2.x do loki-logback-appender: "labels"/"message" direto na raiz do
+             appender, sem o wrapper <format> das versões antigas (silenciosamente ignorado). -->
+        <labels>
+            application = ${APP_NAME}
+            level = %level
+        </labels>
+        <message>
+            <!-- Texto simples (não JSON): o derivedField do datasource do Loki no Grafana
+                 extrai o traceId por regex, sem risco de quebrar por aspas não escapadas
+                 numa mensagem de exceção. -->
+            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} traceId=%mdc{traceId} spanId=%mdc{spanId} - %msg%n</pattern>
+        </message>
     </appender>
 
     <root level="INFO">
