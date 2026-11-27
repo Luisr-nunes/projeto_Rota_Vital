@@ -20,6 +20,8 @@ import com.hemorede.expedicao.application.service.RastreamentoService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,8 @@ import java.util.Set;
  */
 @Service
 public class RequisicaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(RequisicaoService.class);
 
     /** Status de bolsa que podem passar a UTILIZADA na entrega. */
     private static final Set<StatusBolsa> BOLSAS_ENTREGAVEIS =
@@ -109,6 +113,7 @@ public class RequisicaoService {
 
         Requisicao salva = requisicaoRepository.save(requisicao);
         requisicoesCriadas.increment();
+        log.info("Requisição {} registrada para o hospital {}", salva.getId(), hospital.getId());
         return salva;
     }
 
@@ -153,7 +158,9 @@ public class RequisicaoService {
         }
 
         requisicao.setStatus(StatusRequisicao.APROVADA);
-        return requisicaoRepository.save(requisicao);
+        Requisicao aprovada = requisicaoRepository.save(requisicao);
+        log.info("Requisição {} aprovada", requisicaoId);
+        return aprovada;
     }
 
     /**
