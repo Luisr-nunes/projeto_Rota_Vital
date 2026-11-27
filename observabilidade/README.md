@@ -119,6 +119,10 @@ docker compose stop carga      # pausar, se precisar
 ## Acesso remoto do professor
 
 1. No Grafana, **Administration → Users** → criar um usuário com papel **Viewer**.
+   Em seguida, em **Dashboards → pasta Rota Vital → Permissions**, dar **View** ao papel Viewer:
+   a pasta criada pelo provisionamento nasce sem permissões, e sem isso o Viewer só enxerga os
+   dashboards públicos importados (por API: `POST /api/folders/<uid>/permissions` com
+   `{"items":[{"role":"Viewer","permission":1},{"role":"Editor","permission":2}]}`).
 2. Informar ao professor a URL do túnel (`https://....trycloudflare.com`), o usuário e a senha
    **só pelo PDF ou pela atividade do Google Classroom** — nunca no repositório.
 3. Manter o serviço `carga` **e** o `cloudflared tunnel` rodando durante a
