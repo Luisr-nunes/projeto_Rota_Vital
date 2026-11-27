@@ -31,9 +31,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Sem SPRING_PROFILES_ACTIVE=prod de propósito: o perfil prod (usado no Render) restringe
-      # o Actuator só a "health" — aqui queremos o /actuator/prometheus completo (R1). O driver
-      # Postgres é setado via variável de ambiente, por cima do application.yml padrão (H2).
+      # O Dockerfile do rotavital/ vem com ENV SPRING_PROFILES_ACTIVE=prod embutido (usado no
+      # Render). Aqui isso precisa ser sobrescrito pra vazio: o perfil prod restringe o Actuator
+      # só a "health" — queremos o /actuator/prometheus completo (R1). O driver Postgres é
+      # setado via variável de ambiente, por cima do application.yml padrão (H2).
+      SPRING_PROFILES_ACTIVE: ""
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rotavital}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rotavital}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
@@ -60,7 +62,10 @@ services:
       - "--path.rootfs=/host"
     pid: host
     volumes:
-      - /:/host:ro,rslave
+      # Sem "rslave": essa opção de propagação de montagem só funciona em host Linux nativo.
+      # No Docker Desktop (Windows/macOS) ela derruba o container ("not a shared or slave
+      # mount"); sem ela, o Node Exporter mede o host real (VM do Docker Desktop no Windows/Mac).
+      - /:/host:ro
 
   # R3: métricas de CPU e memória por contêiner.
   cadvisor:
@@ -94,6 +99,9 @@ services:
   tempo:
     image: grafana/tempo:2.6.1
     restart: unless-stopped
+    # A imagem roda como usuário não-root por padrão; o volume nomeado é criado pelo Docker
+    # com dono root, o que derruba o Tempo ("permission denied" ao criar /tmp/tempo/traces).
+    user: "0"
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
@@ -114,8 +122,9 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     ports:
-      # Único serviço exposto na internet — libere só esta porta no firewall/security list da VM.
-      - "${GRAFANA_PORT:-3000}:3000"
+      # Só em localhost: quem expõe pra internet é o Cloudflare Tunnel (cloudflared), que já
+      # alcança localhost direto — não precisa (e não deve) abrir a porta pra rede/LAN.
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
 
 volumes:
   pgdata:
