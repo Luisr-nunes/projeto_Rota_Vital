@@ -176,3 +176,47 @@ cd rotavital
 # 3. Executar toda a suíte de telemetria
 ./mvnw test -Dtest="AgregadorTelemetriaTest,AgregadorTelemetriaBenchmarkTest,TelemetriaServiceTest,TelemetriaControllerIntegrationTest"
 ```
+
+---
+
+## 6. Resultados finais: carga concorrente nos 3 cenários (J4 · PI2-192)
+
+**Responsável:** Lucas · **Data:** 27/11/2026 · **Teste:** `rotavital/src/test/java/com/hemorede/service/CargaConcorrenteTelemetriaTest.java`
+
+O benchmark da seção 4 mede só o agregador. Aqui o teste usa o **caminho completo da ingestão**, o mesmo da aplicação: `TelemetriaIngestaoService` → fila `LinkedBlockingQueue` de 1.000 posições → 2 consumidores (`ConsumidorTelemetria`) → `AgregadorTelemetria` e `MetricasTelemetria`. Cada veículo é uma thread produtora, com o número de veículos dos cenários de [`so-u2-arquitetura-cenarios.md`](so-u2-arquitetura-cenarios.md) (`hemorede.simulador.cenarios`).
+
+### 6.1 Metodologia
+
+- 30 leituras por veículo em cada cenário, enviadas com o intervalo do cenário **dividido por 50** (compressão de tempo para caber no CI: baixo 5.000 → 100 ms, moderado 1.000 → 20 ms, alto 200 → 4 ms). O cenário alto roda, portanto, a ~50 vezes a taxa real de 500 leituras/s.
+- Todas as threads largam juntas (`CountDownLatch`). Temperaturas aleatórias (média 4 °C, desvio 2 °C), com parte fora de 2–6 °C.
+- **Referência independente do agregador:** cada veículo conta o que a fila de fato aceitou e quantos alertas isso gerou. Depois de esvaziar a fila, o teste exige que o agregador bata **por veículo** (leituras e alertas) e no total.
+- **Saturação:** 100 veículos × 2.000 leituras sem pausa (200.000 leituras) contra a mesma fila de 1.000 posições, para forçar descarte. Aqui a invariante é `enviadas = processadas + descartadas`.
+
+### 6.2 Resultados
+
+Saída do teste (execução de 27/11/2026, JVM 26, Windows, `./mvnw test -Dtest=CargaConcorrenteTelemetriaTest`):
+
+| Cenário | Veículos | Intervalo efetivo | Enviadas | Processadas | Descartadas | Alertas (fora de 2–6 °C) | Resultado |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Baixo | 10 | 100 ms | 300 | **300** | 0 | 82 | enviadas = processadas |
+| Moderado | 50 | 20 ms | 1.500 | **1.500** | 0 | 423 | enviadas = processadas |
+| Alto | 100 | 4 ms | 3.000 | **3.000** | 0 | 858 | enviadas = processadas (~24.500 leituras/s) |
+| Saturação | 100 | sem pausa | 200.000 | 4.534 | 195.466 | 1.370 | enviadas = processadas + descartadas |
+
+Os alertas variam a cada execução porque as temperaturas são aleatórias; o que o teste cobra é que o agregador conte exatamente os alertas das leituras que a fila aceitou.
+
+### 6.3 Conclusões
+
+1. **Sem perda nos três cenários.** Em baixo, moderado e alto, toda leitura enviada foi processada, com contagens e alertas por veículo idênticos aos da referência. Mesmo com o alto 50 vezes mais rápido que o real, a fila não encheu: 2 consumidores dão conta de ~24.500 leituras/s, contra as 500 leituras/s previstas.
+2. **Sobra de capacidade.** A margem entre 500 leituras/s (cenário alto real) e o que o pipeline absorveu sem descartar confirma a decisão de [`so-u2-arquitetura-cenarios.md`](so-u2-arquitetura-cenarios.md) de manter a telemetria em um único processo, sem fila externa.
+3. **Sob saturação a perda é explícita e contada.** Quando os veículos enviam sem pausa, a fila cheia recusa a leitura (`FilaTelemetriaCheiaException`) e o descarte entra em `leiturasDescartadas`. Nenhuma leitura some sem ser contada: 4.534 + 195.466 = 200.000. Esse é o comportamento desejado, porque a ingestão nunca bloqueia o veículo.
+4. **Efeito da sincronização.** Sem ela, a seção 2 mostra perda de 75% a 78% das contagens com 16 threads. Com `ConcurrentHashMap` + `LongAdder` + CAS, o mesmo padrão de concorrência (até 100 produtores e 2 consumidores) fecha com **0% de perda** nas contagens.
+
+### 6.4 Como reproduzir
+
+```bash
+cd rotavital
+./mvnw test -Dtest=CargaConcorrenteTelemetriaTest
+```
+
+As linhas `CARGA-TELEMETRIA | ...` na saída trazem os números da tabela.
