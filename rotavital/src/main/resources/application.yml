@@ -22,12 +22,26 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,prometheus
+        include: health,info,metrics,prometheus
   metrics:
+    tags:
+      # diferencia a aplicação nas consultas do Grafana (ex.: http_server_requests_seconds{application="hemorede"})
+      application: ${spring.application.name}
     distribution:
       # baldes fixos de latência para o p50/p95 agregado de /api/v1/metricas/rede (PI2-173)
       slo:
         http.server.requests: 5ms,10ms,25ms,50ms,100ms,250ms,500ms,1s,2500ms,5s
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://tempo:4318/v1/traces}
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: Rota Vital — gestão e distribuição de hemocomponentes
 
 hemorede:
   seed:

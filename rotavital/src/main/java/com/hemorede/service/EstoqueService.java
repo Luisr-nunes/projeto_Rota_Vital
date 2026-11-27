@@ -16,6 +16,8 @@ import com.hemorede.exception.FiltroValidadeInvalidoException;
 import com.hemorede.domain.model.Estoque;
 import com.hemorede.repository.BolsaRepository;
 import com.hemorede.repository.EstoqueRepository;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 
 /**
  * Regra de negócio 7: estoque mínimo de segurança.
@@ -28,9 +30,15 @@ public class EstoqueService {
     private final BolsaRepository bolsaRepository;
     private final EstoqueRepository estoqueRepository;
 
-    public EstoqueService(BolsaRepository bolsaRepository, EstoqueRepository estoqueRepository) {
+    public EstoqueService(BolsaRepository bolsaRepository, EstoqueRepository estoqueRepository,
+                           MeterRegistry registry) {
         this.bolsaRepository = bolsaRepository;
         this.estoqueRepository = estoqueRepository;
+        // Métrica de negócio (observabilidade): bolsas disponíveis na rede, lida a cada scrape do Prometheus.
+        Gauge.builder("hemorede.estoque.bolsas.disponiveis", bolsaRepository,
+                        repo -> repo.countByStatus(StatusBolsa.DISPONIVEL))
+                .description("Bolsas em estoque com status DISPONIVEL em toda a rede")
+                .register(registry);
     }
 
     public List<Estoque> listarEstoques() {

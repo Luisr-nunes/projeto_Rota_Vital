@@ -104,6 +104,11 @@ public class SegurancaConfig {
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/auth/login"),
                                 antMatcher(HttpMethod.POST, "/api/auth/cadastro-doador")).permitAll()
                         .requestMatchers(antMatcher("/actuator/health"), antMatcher("/actuator/health/**")).permitAll()
+                        // Scrape do Prometheus não tem como mandar um JWT. Sem risco: no perfil prod o
+                        // endpoint nem existe (fora do management.endpoints.web.exposure.include do
+                        // application-prod.yml) e, no ambiente de observabilidade, a porta da API nunca
+                        // é publicada na internet — só o container do Prometheus a alcança.
+                        .requestMatchers(antMatcher("/actuator/prometheus/**")).permitAll()
                         // console H2 só existe em dev (desligado no perfil prod)
                         .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                         .requestMatchers(antMatcher("/api/auth/**")).authenticated()

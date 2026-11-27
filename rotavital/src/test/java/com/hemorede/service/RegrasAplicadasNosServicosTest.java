@@ -22,6 +22,7 @@ import com.hemorede.estoque.api.ReservaEstoque;
 import com.hemorede.estoque.application.service.ReservaEstoqueService;
 import com.hemorede.estoque.application.service.CompatibilidadeSanguineaService;
 import com.hemorede.requisicao.application.service.RequisicaoService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,8 @@ class RegrasAplicadasNosServicosTest {
             req.setItens(List.of(new ItemRequisicao()));
             when(repo.findById(7L)).thenReturn(Optional.of(req));
 
-            RequisicaoService service = new RequisicaoService(repo, mock(HospitalRepository.class), reservaEstoque);
+            RequisicaoService service = new RequisicaoService(repo, mock(HospitalRepository.class), reservaEstoque,
+                    new SimpleMeterRegistry());
 
             assertThrows(TransicaoStatusInvalidaException.class, () -> service.aprovar(7L));
             assertEquals(StatusRequisicao.ENTREGUE, req.getStatus());

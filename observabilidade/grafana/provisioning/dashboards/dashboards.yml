@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: rota-vital
+    folder: Rota Vital
+    type: file
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
